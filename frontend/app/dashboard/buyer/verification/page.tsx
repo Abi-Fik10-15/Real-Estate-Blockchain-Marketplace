@@ -5,20 +5,17 @@ import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { PageHeader } from "@/components/dashboard/page-header";
 import { BUYER_NAV } from "@/components/dashboard/nav-configs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { usePropertyStore } from "@/store/property-store";
 import { useSavedStore } from "@/store/saved-store";
 import { useWalletStore } from "@/store/wallet-store";
-import { mockBlockchain } from "@/services/mock-blockchain";
-import { formatCurrency, shortenAddress } from "@/lib/utils";
-import { Search, ShieldCheck, Activity, Award, Loader2, Map, CheckCircle2, FileText, Sparkles, Network } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import { Search, ShieldCheck, Activity, Award, Loader2, CheckCircle2, Sparkles, Network } from "lucide-react";
 import { toast } from "sonner";
 
 function VerificationContent() {
@@ -136,8 +133,6 @@ function VerificationContent() {
 
   return (
     <DashboardShell title="Ownership Verification" roleLabel="Buyer / Renter" nav={BUYER_NAV}>
-      
-
       <div className="grid gap-6 lg:grid-cols-5">
         {/* Left Side: Autocomplete Selector & Verification Trigger */}
         <div className="lg:col-span-2 space-y-6">
@@ -154,10 +149,10 @@ function VerificationContent() {
             <CardContent className="space-y-4 pt-2">
               {/* Dropdown Selector */}
               <div className="space-y-1.5">
-                <Label htmlFor="dropdown-select" className="text-xs font-semibold">Saved Listings</Label>
+                <Label htmlFor="dropdown-select" className="text-xs font-semibold text-muted-foreground">Saved Listings</Label>
                 <select
                   id="dropdown-select"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="w-full rounded-xl border border-border/80 bg-background/50 backdrop-blur-sm px-3 py-2.5 text-xs text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
                   value={selectedPropId}
                   onChange={handleSelectChange}
                 >
@@ -172,16 +167,16 @@ function VerificationContent() {
 
               {/* Direct Chain ID Search Form */}
               <form onSubmit={handleSearchSubmit} className="space-y-2.5 pt-2 border-t border-border/30">
-                <Label htmlFor="search-id" className="text-xs font-semibold">Or Search Property Chain ID (e.g. EST-1001)</Label>
+                <Label htmlFor="search-id" className="text-xs font-semibold text-muted-foreground">Or Search Property Chain ID (e.g. EST-1001)</Label>
                 <div className="flex gap-2">
                   <Input
                     id="search-id"
                     placeholder="e.g. EST-1000"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-8.5 text-xs bg-background/50"
+                    className="h-9 text-xs bg-background/50 rounded-xl"
                   />
-                  <Button type="submit" size="sm" variant="outline" className="h-8.5 shrink-0 px-3">
+                  <Button type="submit" size="sm" variant="outline" className="h-9 shrink-0 px-4 rounded-xl text-xs font-semibold">
                     Load
                   </Button>
                 </div>
@@ -189,18 +184,18 @@ function VerificationContent() {
 
               {/* Loaded Property Quick Information */}
               {activeProperty && (
-                <div className="rounded-lg bg-background/40 border border-border/40 p-3 mt-3 space-y-2 text-xs">
-                  <div className="flex justify-between">
+                <div className="rounded-xl bg-background/40 border border-border/40 p-4 mt-3 space-y-3 text-xs shadow-inner">
+                  <div className="flex justify-between items-center pb-2 border-b border-border/20">
                     <span className="text-muted-foreground font-medium">Deed Title</span>
-                    <span className="font-bold text-foreground">{activeProperty.title}</span>
+                    <span className="font-bold text-foreground truncate max-w-[150px]">{activeProperty.title}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center pb-2 border-b border-border/20">
                     <span className="text-muted-foreground font-medium">Asset Value</span>
                     <span className="font-semibold text-foreground">{formatCurrency(activeProperty.price)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-muted-foreground font-medium">Registry Status</span>
-                    <Badge variant={isVerified ? "verified" : "warning"} className="h-4 px-1.5 py-0 text-[9px] font-bold">
+                    <Badge variant={isVerified ? "verified" : "warning"} className="h-5 px-2 py-0 text-[10px] font-bold">
                       {isVerified ? "Verified ✓" : "Pending Verification"}
                     </Badge>
                   </div>
@@ -212,11 +207,15 @@ function VerificationContent() {
           {/* Verification Logs Console Card */}
           {activeProperty && (isVerifying || verifyLogs.length > 0) && (
             <Card className="border border-border/80 bg-zinc-950 text-zinc-300 font-mono shadow-md overflow-hidden">
-              <CardHeader className="bg-zinc-900/50 pb-2.5 border-b border-zinc-800">
+              <CardHeader className="bg-zinc-900/50 pb-2.5 border-b border-zinc-800 flex flex-row items-center justify-between">
                 <CardTitle className="text-xs text-zinc-400 flex items-center gap-1.5 font-bold">
-                  <Activity className="h-3.5 w-3.5 text-primary" />
+                  <Activity className="h-3.5 w-3.5 text-emerald-500 animate-pulse" />
                   ORACLE LEDGER CONSOLE
                 </CardTitle>
+                <div className="flex items-center gap-1.5 text-[9px] text-emerald-500 font-bold tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  ONLINE
+                </div>
               </CardHeader>
               <CardContent className="p-3 text-[10px] space-y-2 max-h-56 overflow-y-auto leading-relaxed">
                 {verifyLogs.map((log, index) => (
@@ -239,7 +238,7 @@ function VerificationContent() {
           {activeProperty && !isVerifying && (
             <Button
               variant="hero"
-              className="w-full text-xs py-2 shadow-md shadow-primary/20"
+              className="w-full text-xs py-2 shadow-md shadow-primary/20 rounded-xl"
               onClick={handleOracleVerify}
               disabled={isVerifying}
             >
@@ -262,7 +261,7 @@ function VerificationContent() {
               <div className="border-b-2 border-amber-500/20 pb-4 space-y-2 text-center">
                 <div className="flex justify-center">
                   <div className="rounded-full bg-amber-500/15 p-3.5 border-2 border-amber-500/30 text-amber-500 shadow-md">
-                    <Award className="h-8 w-8 text-amber-500" />
+                    <Award className="h-8 w-8 text-amber-500 animate-pulse" />
                   </div>
                 </div>
                 <div>
@@ -272,6 +271,22 @@ function VerificationContent() {
                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">
                     Immutable Smart Contract Title Proof
                   </p>
+                </div>
+              </div>
+
+              {/* Property Card Detail Panel inside Certificate */}
+              <div className="mt-4 flex flex-col sm:flex-row items-center gap-3.5 bg-background/40 border border-border/40 rounded-xl p-3.5 shadow-sm">
+                <img
+                  src={activeProperty.images[0]}
+                  alt={activeProperty.title}
+                  className="h-16 w-24 object-cover rounded-lg border border-border/60 shadow-sm shrink-0"
+                />
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="font-extrabold text-sm text-foreground truncate">{activeProperty.title}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                    {activeProperty.location.address}, {activeProperty.location.city}
+                  </p>
+                  <p className="font-bold text-[11px] text-primary mt-1">{formatCurrency(activeProperty.price)}</p>
                 </div>
               </div>
 

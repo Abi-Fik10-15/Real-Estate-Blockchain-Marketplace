@@ -103,7 +103,7 @@ export default function BuyerDashboard() {
               </span>
               <span className="font-mono text-muted-foreground">{shortenAddress(wallet.address)}</span>
               <span className="rounded-md bg-primary/10 border border-primary/30 px-2 py-0.5 text-xs font-semibold text-primary">
-                {wallet.networkName || "Sepolia Testnet"}
+                {wallet.network || "Sepolia Testnet"}
               </span>
             </div>
           ) : (
