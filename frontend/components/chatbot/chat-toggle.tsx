@@ -6,9 +6,10 @@ import { Sparkles, X } from "lucide-react";
 interface ChatToggleProps {
   isOpen: boolean;
   onClick: () => void;
+  unreadCount?: number;
 }
 
-export function ChatToggle({ isOpen, onClick }: ChatToggleProps) {
+export function ChatToggle({ isOpen, onClick, unreadCount = 0 }: ChatToggleProps) {
   return (
     <motion.button
       onClick={onClick}
@@ -18,6 +19,8 @@ export function ChatToggle({ isOpen, onClick }: ChatToggleProps) {
           : "animate-float bg-gradient-to-br from-[hsl(var(--brand-1))] via-[hsl(var(--brand-2))] to-[hsl(var(--brand-3))]"
       }`}
       aria-label={isOpen ? "Close chat" : "Open AI Assistant"}
+      whileHover={{ scale: 1.08 }}
+      whileTap={{ scale: 0.94 }}
     >
       <AnimatePresence mode="wait">
         {isOpen ? (
@@ -43,11 +46,27 @@ export function ChatToggle({ isOpen, onClick }: ChatToggleProps) {
         )}
       </AnimatePresence>
 
-      {/* Notification dot */}
-      {!isOpen && (
+      {/* Unread badge */}
+      <AnimatePresence>
+        {!isOpen && unreadCount > 0 && (
+          <motion.span
+            key="badge"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 360, damping: 20 }}
+            className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-background bg-destructive text-[10px] font-bold text-white"
+          >
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </motion.span>
+        )}
+      </AnimatePresence>
+
+      {/* Idle pulse ring (shown when no unread count) */}
+      {!isOpen && unreadCount === 0 && (
         <span className="absolute right-0 top-0 flex h-3.5 w-3.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
-          <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-[hsl(var(--brand-2))] bg-white"></span>
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+          <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-[hsl(var(--brand-2))] bg-white" />
         </span>
       )}
     </motion.button>

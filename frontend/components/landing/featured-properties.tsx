@@ -204,41 +204,36 @@ const FEATURED_PROPERTIES = [
 
 export function FeaturedProperties() {
   return (
-    <section id="featured-properties" className="relative overflow-hidden py-20 lg:py-28">
-      {/* Background */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-muted/30 to-transparent" />
-        <div className="glow-orb left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 bg-[hsl(221,83%,53%)] opacity-[0.05]" />
-      </div>
-
-      <div className="container">
-        <FadeIn className="mx-auto max-w-2xl text-center">
+    <section id="featured-properties" className="border-b border-border/50 py-16 lg:py-20 bg-primary-50/20">
+      <div className="container mx-auto px-6 lg:px-8">
+        {/* Header */}
+        <FadeIn className="mb-10 flex flex-col items-center gap-3 text-center">
           <Badge
-            variant="info"
-            className="mb-5 border border-accent/20 px-4 py-1.5"
+            variant="outline"
+            className="border-primary/30 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary"
           >
-            <BadgeCheck className="h-3.5 w-3.5" /> Blockchain Verified
+            <BadgeCheck className="h-3 w-3" /> Blockchain verified
           </Badge>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+          <h2 className="max-w-2xl text-balance text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Featured{" "}
-            <span className="text-gradient">Properties</span>
+            <span className="text-primary">Properties</span>
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
+          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
             Explore our curated selection of premium blockchain-verified real
             estate opportunities across the globe.
           </p>
         </FadeIn>
 
         {/* Filter tabs */}
-        <FadeIn delay={0.15} className="mt-10 flex flex-wrap items-center justify-center gap-2">
+        <FadeIn delay={0.1} className="mb-8 flex flex-wrap items-center justify-center gap-2">
           {["All", "Luxury Villas", "Apartments", "Commercial", "Smart Homes", "Resorts"].map(
             (tab, i) => (
               <button
                 key={tab}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                className={`rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-all ${
                   i === 0
-                    ? "bg-gradient-brand text-white shadow-glow"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-border/80 hover:bg-muted/50 hover:text-foreground"
                 }`}
               >
                 {tab}
@@ -247,12 +242,12 @@ export function FeaturedProperties() {
           )}
         </FadeIn>
 
-        <StaggerContainer className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {FEATURED_PROPERTIES.map((property) => (
             <StaggerItem key={property.id}>
               <Link
                 href={`/property/${property.id}`}
-                className="group block h-full overflow-hidden rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:border-border hover:shadow-card-hover"
+                className="group block h-full overflow-hidden rounded-xl border border-border bg-card transition-all duration-200 hover:border-border/80 hover:shadow-sm"
               >
                 {/* Image */}
                 <div className="relative aspect-[4/3] overflow-hidden">
@@ -335,10 +330,14 @@ export function FeaturedProperties() {
           ))}
         </StaggerContainer>
 
-        <FadeIn delay={0.4} className="mt-12 text-center">
-          <Button variant="outline" size="lg" asChild>
+        <FadeIn delay={0.4} className="mt-8 text-center">
+          <Button
+            variant="outline"
+            className="gap-2 rounded-lg border-border px-5 text-sm font-semibold"
+            asChild
+          >
             <Link href="/marketplace">
-              View All Properties <ArrowRight className="h-4 w-4" />
+              View all properties <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </FadeIn>

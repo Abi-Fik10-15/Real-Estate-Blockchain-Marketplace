@@ -1,4 +1,5 @@
 import {
+  Activity,
   ArrowLeftRight,
   BarChart3,
   Building2,
@@ -22,6 +23,7 @@ export const OWNER_NAV: NavItem[] = [
   { label: "Verification", icon: ShieldCheck, href: "/dashboard/owner/verification" },
   { label: "Ownership Transfer", icon: ArrowLeftRight, href: "/dashboard/owner/transfers" },
   { label: "Buyer Inquiries", icon: MessageSquare, href: "/dashboard/owner/inquiries" },
+  { label: "Web3 Sandbox", icon: Activity, href: "/dashboard/sandbox" },
 ];
 
 export const AGENT_NAV: NavItem[] = [
@@ -29,6 +31,7 @@ export const AGENT_NAV: NavItem[] = [
   { label: "Assigned Properties", icon: Building2, href: "/dashboard/agent/properties" },
   { label: "Buyer Requests", icon: MessageSquare, href: "/dashboard/agent/requests" },
   { label: "Verification Center", icon: ShieldCheck, href: "/dashboard/agent/verification" },
+  { label: "Web3 Sandbox", icon: Activity, href: "/dashboard/sandbox" },
 ];
 
 export const ADMIN_NAV: NavItem[] = [
@@ -37,6 +40,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Properties", icon: Building2, href: "/dashboard/admin/properties" },
   { label: "Ownership Records", icon: ShieldCheck, href: "/dashboard/admin/records" },
   { label: "Reports", icon: BarChart3, href: "/dashboard/admin/reports" },
+  { label: "Web3 Sandbox", icon: Activity, href: "/dashboard/sandbox" },
 ];
 
 export const BUYER_NAV: NavItem[] = [
@@ -45,4 +49,5 @@ export const BUYER_NAV: NavItem[] = [
   { label: "Purchase Requests", icon: ShoppingBag, href: "/dashboard/buyer/requests" },
   { label: "Verification", icon: ShieldCheck, href: "/dashboard/buyer/verification" },
   { label: "Profile", icon: UserCircle, href: "/dashboard/buyer/profile" },
+  { label: "Web3 Sandbox", icon: Activity, href: "/dashboard/sandbox" },
 ];
