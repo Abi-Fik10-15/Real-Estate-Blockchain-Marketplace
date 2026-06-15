@@ -1,8 +1,7 @@
 import { sleep } from "@/lib/utils";
+import { usePropertyStore } from "@/store/property-store";
+import { useInquiryStore } from "@/store/inquiry-store";
 import {
-  MOCK_INQUIRIES,
-  MOCK_OWNERSHIP_RECORDS,
-  MOCK_PROPERTIES,
   MOCK_USERS,
   PLATFORM_STATS,
 } from "./mock-data";
@@ -12,7 +11,7 @@ import type { Property, PropertyFilters } from "@/types";
 export const mockApi = {
   async getProperties(filters?: Partial<PropertyFilters>): Promise<Property[]> {
     await sleep(700);
-    let result = [...MOCK_PROPERTIES];
+    let result = [...usePropertyStore.getState().properties];
     if (!filters) return result;
 
     const { search, type, minPrice, maxPrice, bedrooms, bathrooms, location, status, listingType, sort } =
@@ -59,17 +58,17 @@ export const mockApi = {
 
   async getProperty(id: string): Promise<Property | undefined> {
     await sleep(500);
-    return MOCK_PROPERTIES.find((p) => p.id === id || p.chainId === id);
+    return usePropertyStore.getState().properties.find((p) => p.id === id || p.chainId === id);
   },
 
   async getPropertiesByOwner(ownerId: string): Promise<Property[]> {
     await sleep(500);
-    return MOCK_PROPERTIES.filter((p) => p.ownerId === ownerId);
+    return usePropertyStore.getState().properties.filter((p) => p.ownerId === ownerId);
   },
 
   async getPropertiesByAgent(agentId: string): Promise<Property[]> {
     await sleep(500);
-    return MOCK_PROPERTIES.filter((p) => p.agentId === agentId);
+    return usePropertyStore.getState().properties.filter((p) => p.agentId === agentId);
   },
 
   async getUsers() {
@@ -84,12 +83,20 @@ export const mockApi = {
 
   async getInquiries() {
     await sleep(500);
-    return MOCK_INQUIRIES;
+    return useInquiryStore.getState().inquiries;
   },
 
   async getOwnershipRecords() {
     await sleep(500);
-    return MOCK_OWNERSHIP_RECORDS;
+    const properties = usePropertyStore.getState().properties;
+    return properties.map((p) => ({
+      propertyId: p.chainId,
+      propertyTitle: p.title,
+      ownerWallet: p.ownerWallet,
+      agentWallet: p.agentWallet,
+      verificationStatus: p.verification.status,
+      transfers: p.history.filter((h) => h.type === "transfer" || h.type === "verification"),
+    }));
   },
 
   async getStats() {
@@ -97,3 +104,4 @@ export const mockApi = {
     return PLATFORM_STATS;
   },
 };
+

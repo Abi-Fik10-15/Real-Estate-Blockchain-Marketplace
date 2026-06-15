@@ -25,6 +25,8 @@ import { PropertyGallery } from "@/components/property/property-gallery";
 import { OwnershipVerification } from "@/components/property/ownership-verification";
 import { useProperty } from "@/hooks/use-properties";
 import { useSavedStore } from "@/store/saved-store";
+import { useInquiryStore } from "@/store/inquiry-store";
+import { useAuthStore } from "@/store/auth-store";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const PropertyMap = dynamic(() => import("@/components/property/property-map"), {
@@ -36,6 +38,8 @@ export default function PropertyDetailsPage() {
   const params = useParams<{ id: string }>();
   const { data: property, isLoading } = useProperty(params.id);
   const { isSaved, toggleSaved } = useSavedStore();
+  const addInquiry = useInquiryStore((s) => s.add);
+  const user = useAuthStore((s) => s.user);
 
   if (isLoading) {
     return (
@@ -112,7 +116,7 @@ export default function PropertyDetailsPage() {
                     <MapPin className="h-4 w-4" /> {property.location.address}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right w-full sm:w-auto">
                   <p className="text-3xl font-bold text-primary">{priceLabel}</p>
                   <Button
                     variant="outline"
@@ -128,7 +132,7 @@ export default function PropertyDetailsPage() {
 
               <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
                 {stats.map((s) => (
-                  <Card key={s.label}>
+                  <Card key={s.label} className="glass-card transition-all hover:scale-[1.02] hover:shadow-soft duration-300">
                     <CardContent className="flex flex-col items-center gap-1 p-4 text-center">
                       <s.icon className="h-5 w-5 text-primary" />
                       <span className="text-sm font-semibold">{s.value}</span>
@@ -139,7 +143,7 @@ export default function PropertyDetailsPage() {
               </div>
             </div>
 
-            <Card>
+            <Card className="glass-card shadow-soft">
               <CardHeader>
                 <CardTitle className="text-base">Description</CardTitle>
               </CardHeader>
@@ -148,7 +152,7 @@ export default function PropertyDetailsPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="glass-card shadow-soft">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <MapPin className="h-5 w-5 text-primary" /> Location
@@ -165,7 +169,7 @@ export default function PropertyDetailsPage() {
           <div className="space-y-6">
             <OwnershipVerification property={property} />
 
-            <Card>
+            <Card className="glass-card shadow-soft">
               <CardHeader>
                 <CardTitle className="text-base">Interested?</CardTitle>
               </CardHeader>
@@ -173,28 +177,61 @@ export default function PropertyDetailsPage() {
                 <Button
                   variant="hero"
                   className="w-full"
-                  onClick={() => toast.success("Inquiry sent to the agent")}
+                  onClick={() => {
+                    addInquiry({
+                      propertyId: property.id,
+                      propertyTitle: property.title,
+                      buyerId: user?.id ?? "u-buyer-1",
+                      buyerName: user?.name ?? "Elena Cruz",
+                      type: "question",
+                      message: "Hi, I am interested in this listing and would like to get more information from the agent.",
+                    });
+                    toast.success("Inquiry sent to the agent");
+                  }}
                 >
                   <MessageSquare className="h-4 w-4" /> Contact Agent
                 </Button>
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => toast.success("Inquiry sent to the owner")}
+                  onClick={() => {
+                    addInquiry({
+                      propertyId: property.id,
+                      propertyTitle: property.title,
+                      buyerId: user?.id ?? "u-buyer-1",
+                      buyerName: user?.name ?? "Elena Cruz",
+                      type: "question",
+                      message: "Hi, I am interested in this listing and would like to directly contact the owner.",
+                    });
+                    toast.success("Inquiry sent to the owner");
+                  }}
                 >
                   Contact Owner
                 </Button>
                 <Button
                   variant="secondary"
                   className="w-full"
-                  onClick={() => toast.success("Purchase request submitted")}
+                  onClick={() => {
+                    const isRent = property.listingType === "rent";
+                    addInquiry({
+                      propertyId: property.id,
+                      propertyTitle: property.title,
+                      buyerId: user?.id ?? "u-buyer-1",
+                      buyerName: user?.name ?? "Elena Cruz",
+                      type: isRent ? "rental" : "purchase",
+                      message: isRent
+                        ? `I would like to submit a rental application for ${formatCurrency(property.price)}/mo.`
+                        : `I would like to submit a purchase offer of ${formatCurrency(property.price)}.`,
+                    });
+                    toast.success(isRent ? "Rental request submitted" : "Purchase request submitted");
+                  }}
                 >
                   {property.listingType === "rent" ? "Submit Rental Request" : "Submit Purchase Request"}
                 </Button>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="glass-card shadow-soft">
               <CardHeader>
                 <CardTitle className="text-base">Verification History</CardTitle>
               </CardHeader>

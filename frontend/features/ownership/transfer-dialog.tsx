@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { mockBlockchain } from "@/services/mock-blockchain";
+import { usePropertyStore } from "@/store/property-store";
+import { MOCK_USERS } from "@/services/mock-data";
 import { shortenAddress } from "@/lib/utils";
 import { transferSchema, type TransferValues } from "@/lib/validations";
 
@@ -31,6 +34,10 @@ export function TransferOwnershipDialog({
   propertyChainId: string;
   trigger?: React.ReactNode;
 }) {
+  const queryClient = useQueryClient();
+  const updateProperty = usePropertyStore((s) => s.updateProperty);
+  const properties = usePropertyStore((s) => s.properties);
+
   const [open, setOpen] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const {
@@ -44,6 +51,37 @@ export function TransferOwnershipDialog({
     setPending(true);
     try {
       const ev = await mockBlockchain.transferOwnership(currentOwner, values.newOwner, propertyChainId);
+      
+      const targetProperty = properties.find((p) => p.chainId === propertyChainId);
+      if (targetProperty) {
+        const matchedUser = MOCK_USERS.find(
+          (u) => u.walletAddress.toLowerCase() === values.newOwner.toLowerCase()
+        );
+
+        updateProperty(targetProperty.id, {
+          ownerWallet: values.newOwner,
+          ownerId: matchedUser ? matchedUser.id : `u-external-${Date.now()}`,
+          agentId: undefined,
+          agentWallet: undefined,
+          history: [
+            {
+              id: `evt-${Date.now()}`,
+              type: "transfer",
+              description: `Ownership transferred from ${shortenAddress(currentOwner, 6)} to ${shortenAddress(values.newOwner, 6)}`,
+              txHash: ev.txHash,
+              actor: values.newOwner,
+              timestamp: ev.timestamp,
+            },
+            ...targetProperty.history,
+          ],
+        });
+
+        // Refresh dynamic UI caches
+        queryClient.invalidateQueries({ queryKey: ["property", targetProperty.id] });
+        queryClient.invalidateQueries({ queryKey: ["property", targetProperty.chainId] });
+        queryClient.invalidateQueries({ queryKey: ["properties"] });
+      }
+
       toast.success("Ownership transferred", {
         description: `Tx ${shortenAddress(ev.txHash, 8)}`,
       });
