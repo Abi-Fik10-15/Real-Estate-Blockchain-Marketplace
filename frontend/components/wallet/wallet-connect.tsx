@@ -16,7 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import { useWalletStore } from "@/store/wallet-store";
 import { shortenAddress } from "@/lib/utils";
 
-export function WalletConnect({ size = "default" }: { size?: "default" | "sm" | "lg" }) {
+export function WalletConnect({
+  size = "default",
+  variant = "hero",
+}: {
+  size?: "default" | "sm" | "lg";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "hero";
+}) {
   const { wallet, isConnecting, connect, disconnect } = useWalletStore();
   const [copied, setCopied] = React.useState(false);
 
@@ -31,7 +37,7 @@ export function WalletConnect({ size = "default" }: { size?: "default" | "sm" | 
   if (!wallet) {
     return (
       <Button
-        variant="hero"
+        variant={variant}
         size={size}
         onClick={() => {
           connect();
