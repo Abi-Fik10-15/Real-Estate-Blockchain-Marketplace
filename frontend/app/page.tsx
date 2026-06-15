@@ -33,7 +33,7 @@ export default function HomePage() {
         <Features />
 
         {/* 4. Blockchain ownership benefits (6 cards) */}
-        <BlockchainBenefits />
+        {/* <BlockchainBenefits /> */}
 
         {/* 5. Featured properties showcase (12 cards) */}
         <FeaturedProperties />
@@ -42,34 +42,34 @@ export default function HomePage() {
         <HowItWorks />
 
         {/* 7. Traditional vs ChainEstate comparison */}
-        <Comparison />
+        {/* <Comparison /> */}
 
         {/* 8. Interactive global map preview */}
         <MapPreview />
 
         {/* 9. Success stories / case studies */}
-        <SuccessStories />
+        {/* <SuccessStories /> */}
 
         {/* 10. Trusted by enterprise partners */}
-        <TrustedBy />
+        {/* <TrustedBy /> */}
 
         {/* 11. Agent ecosystem benefits */}
-        <AgentEcosystem />
+        {/* <AgentEcosystem /> */}
 
         {/* 12. Security & compliance */}
-        <SecurityCompliance />
+        {/* <SecurityCompliance /> */}
 
         {/* 13. Testimonials */}
         <Testimonials />
 
         {/* 14. Investor section */}
-        <InvestorSection />
+        {/* <InvestorSection /> */}
 
         {/* 15. Platform roadmap */}
-        <Roadmap />
+        {/* <Roadmap /> */}
 
         {/* 16. FAQ accordion */}
-        <FAQ />
+        {/* <FAQ /> */}
 
         {/* 17. Premium final CTA */}
         <FinalCTA />
