@@ -8,6 +8,7 @@ interface AuthState {
   login: (email: string) => User | null;
   loginAs: (role: UserRole) => void;
   register: (data: { name: string; email: string; role: UserRole; phone?: string }) => void;
+  updateUser: (patch: Partial<Pick<User, "name" | "email" | "phone" | "avatar">>) => void;
   logout: () => void;
 }
 
@@ -39,6 +40,11 @@ export const useAuthStore = create<AuthState>()(
           verified: false,
         };
         set({ user });
+      },
+      updateUser: (patch) => {
+        set((state) => ({
+          user: state.user ? { ...state.user, ...patch } : null,
+        }));
       },
       logout: () => set({ user: null }),
     }),
