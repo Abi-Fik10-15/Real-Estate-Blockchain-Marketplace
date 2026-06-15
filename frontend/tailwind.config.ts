@@ -69,10 +69,17 @@ const config: Config = {
           "linear-gradient(135deg, hsl(var(--brand-1)) 0%, hsl(var(--brand-2)) 50%, hsl(var(--brand-3)) 100%)",
         "gradient-subtle":
           "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%)",
+        "gradient-mesh":
+          "radial-gradient(at 40% 20%, hsl(var(--brand-1) / 0.08) 0px, transparent 50%), radial-gradient(at 80% 0%, hsl(var(--brand-3) / 0.06) 0px, transparent 50%), radial-gradient(at 0% 50%, hsl(var(--brand-2) / 0.06) 0px, transparent 50%)",
+        "gradient-hero":
+          "radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--brand-1) / 0.15), transparent)",
       },
       boxShadow: {
         soft: "0 4px 24px -8px hsl(var(--shadow-color) / 0.18)",
         glow: "0 0 40px -8px hsl(var(--brand-2) / 0.45)",
+        "glow-lg": "0 0 60px -12px hsl(var(--brand-2) / 0.55)",
+        glass: "0 8px 32px -8px hsl(var(--shadow-color) / 0.12), 0 0 0 1px hsl(var(--border) / 0.5)",
+        "card-hover": "0 20px 60px -15px hsl(var(--shadow-color) / 0.25), 0 0 40px -8px hsl(var(--brand-2) / 0.2)",
       },
       keyframes: {
         "accordion-down": {
@@ -94,6 +101,27 @@ const config: Config = {
         shimmer: {
           "100%": { transform: "translateX(100%)" },
         },
+        "gradient-shift": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "0.6", transform: "scale(1)" },
+          "50%": { opacity: "1", transform: "scale(1.05)" },
+        },
+        "slide-down": {
+          from: { opacity: "0", transform: "translateY(-8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "float-slow": {
+          "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
+          "33%": { transform: "translateY(-8px) rotate(1deg)" },
+          "66%": { transform: "translateY(4px) rotate(-1deg)" },
+        },
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -101,6 +129,11 @@ const config: Config = {
         "fade-up": "fade-up 0.6s ease-out both",
         float: "float 6s ease-in-out infinite",
         shimmer: "shimmer 1.6s infinite",
+        "gradient-shift": "gradient-shift 6s ease infinite",
+        "pulse-glow": "pulse-glow 3s ease-in-out infinite",
+        "slide-down": "slide-down 0.3s ease-out",
+        "float-slow": "float-slow 8s ease-in-out infinite",
+        "spin-slow": "spin-slow 20s linear infinite",
       },
     },
   },

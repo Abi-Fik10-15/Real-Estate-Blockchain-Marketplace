@@ -86,6 +86,9 @@
   * {
     @apply border-border;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -96,8 +99,36 @@
   .glass {
     @apply border border-white/10 bg-white/70 backdrop-blur-xl dark:bg-white/5;
   }
+  .glass-card {
+    @apply rounded-2xl border border-white/15 bg-white/60 backdrop-blur-2xl dark:bg-white/[0.06];
+    box-shadow: 0 8px 32px -8px hsl(var(--shadow-color) / 0.12), 0 0 0 1px hsl(var(--border) / 0.5);
+  }
   .text-gradient {
     @apply bg-gradient-brand bg-clip-text text-transparent;
+  }
+  .text-gradient-animated {
+    background: linear-gradient(
+      135deg,
+      hsl(221 83% 53%) 0%,
+      hsl(199 89% 48%) 25%,
+      hsl(262 83% 58%) 50%,
+      hsl(199 89% 48%) 75%,
+      hsl(221 83% 53%) 100%
+    );
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-shift 6s ease infinite;
+  }
+  .section-gradient {
+    @apply bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-50/50 dark:from-slate-950 dark:via-blue-950/20 dark:to-indigo-950/20;
+  }
+  .section-gradient-alt {
+    @apply bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50 dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-slate-950;
+  }
+  .glow-orb {
+    @apply pointer-events-none absolute rounded-full blur-[100px] opacity-20;
   }
   .skeleton {
     @apply relative overflow-hidden rounded-md bg-muted;
