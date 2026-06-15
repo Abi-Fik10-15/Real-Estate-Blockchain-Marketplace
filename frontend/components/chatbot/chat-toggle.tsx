@@ -1,0 +1,55 @@
+"use client";
+
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, X } from "lucide-react";
+
+interface ChatToggleProps {
+  isOpen: boolean;
+  onClick: () => void;
+}
+
+export function ChatToggle({ isOpen, onClick }: ChatToggleProps) {
+  return (
+    <motion.button
+      onClick={onClick}
+      className={`relative flex h-14 w-14 items-center justify-center rounded-full text-white shadow-glow transition-all hover:scale-105 active:scale-95 ${
+        isOpen
+          ? "bg-muted-foreground/80 shadow-none"
+          : "animate-float bg-gradient-to-br from-[hsl(var(--brand-1))] via-[hsl(var(--brand-2))] to-[hsl(var(--brand-3))]"
+      }`}
+      aria-label={isOpen ? "Close chat" : "Open AI Assistant"}
+    >
+      <AnimatePresence mode="wait">
+        {isOpen ? (
+          <motion.div
+            key="close"
+            initial={{ opacity: 0, rotate: -90 }}
+            animate={{ opacity: 1, rotate: 0 }}
+            exit={{ opacity: 0, rotate: 90 }}
+            transition={{ duration: 0.2 }}
+          >
+            <X className="h-6 w-6" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="open"
+            initial={{ opacity: 0, rotate: 90 }}
+            animate={{ opacity: 1, rotate: 0 }}
+            exit={{ opacity: 0, rotate: -90 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Sparkles className="h-6 w-6" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Notification dot */}
+      {!isOpen && (
+        <span className="absolute right-0 top-0 flex h-3.5 w-3.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
+          <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-[hsl(var(--brand-2))] bg-white"></span>
+        </span>
+      )}
+    </motion.button>
+  );
+}
