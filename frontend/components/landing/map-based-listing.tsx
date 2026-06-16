@@ -85,32 +85,78 @@ function ZoomWatcher({ onZoom }: { onZoom: (z: number) => void }) {
 
 function useGlowIcon(active: boolean) {
   const [icon, setIcon] = React.useState<any>(null);
+
   React.useEffect(() => {
     import("leaflet").then((L) => {
-      const color = active ? "#5DCAA5" : "#1D9E75";
+      const color = active ? "#2463eb" : "#1D4ED8";
+
       const html = `
         <style>
-          @keyframes propPulse {
-            0%,100% { transform: scale(1);   opacity: 0.3; }
-            50%      { transform: scale(1.8); opacity: 0.1; }
+          @keyframes pinPing {
+            75%,100% {
+              transform: scale(2);
+              opacity: 0;
+            }
           }
         </style>
-        <div style="position:relative;width:20px;height:20px;display:flex;align-items:center;justify-content:center;">
-          <div style="position:absolute;width:30px;height:30px;border-radius:50%;
-            background:${color};opacity:0.15;
-            animation:propPulse 2.2s ease-in-out infinite 0.4s;"></div>
-          <div style="position:absolute;width:20px;height:20px;border-radius:50%;
-            background:${color};opacity:0.25;
-            animation:propPulse 2.2s ease-in-out infinite;"></div>
-          <div style="width:10px;height:10px;border-radius:50%;
-            background:${color};position:relative;z-index:1;
-            box-shadow:0 0 6px ${color},0 0 14px ${color}80;"></div>
-        </div>`;
+
+        <div style="
+          position:relative;
+          width:28px;
+          height:28px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">
+          
+          <!-- Pulse Ring -->
+          <div style="
+            position:absolute;
+            width:28px;
+            height:28px;
+            border-radius:9999px;
+            background:${color};
+            opacity:.25;
+            animation:pinPing 1.8s cubic-bezier(0,0,0.2,1) infinite;
+          "></div>
+
+          <!-- Pin Circle -->
+          <div style="
+            position:relative;
+            width:22px;
+            height:22px;
+            border-radius:9999px;
+            background:${color};
+            border:2px solid white;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            box-shadow:
+              0 0 0 4px rgba(29,158,117,.15),
+              0 0 15px rgba(29,158,117,.4);
+          ">
+            <div style="
+              width:6px;
+              height:6px;
+              border-radius:9999px;
+              background:white;
+            "></div>
+          </div>
+
+        </div>
+      `;
+
       setIcon(
-        L.divIcon({ html, className: "", iconSize: [20, 20], iconAnchor: [10, 10] })
+        L.divIcon({
+          html,
+          className: "",
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+        })
       );
     });
   }, [active]);
+
   return icon;
 }
 
@@ -120,12 +166,12 @@ function usePriceIcon(label: string, active: boolean, dark: boolean) {
   const [icon, setIcon] = React.useState<any>(null);
   React.useEffect(() => {
     import("leaflet").then((L) => {
-      const bg     = active ? "#1D9E75"  : dark ? "#1a2332"  : "#ffffff";
-      const fg     = active ? "#ffffff"  : dark ? "#e2e8f0"  : "#0f172a";
-      const border = active ? "#0F6E56"  : dark ? "#2d4a3e"  : "#cbd5e1";
-      const shadow = active
-        ? "0 2px 12px rgba(29,158,117,0.5)"
-        : "0 2px 8px rgba(0,0,0,0.2)";
+     const bg     = active ? "#2463eb" : dark ? "#1a2332" : "#ffffff";
+const fg     = active ? "#ffffff" : dark ? "#e2e8f0" : "#0f172a";
+const border = active ? "#1d4ed8" : dark ? "#2d4a3e" : "#cbd5e1";
+const shadow = active
+  ? "0 2px 12px rgba(36,99,235,0.5)"
+  : "0 2px 8px rgba(0,0,0,0.2)";
       const html = `
         <div style="
           background:${bg};color:${fg};border:1.5px solid ${border};
@@ -292,73 +338,117 @@ function PopupCard({
 }
 
 // ─── Listings sidebar ─────────────────────────────────────────────────────────
-
 function Sidebar({
   properties, activeId, onSelect,
 }: {
   properties: MapProperty[]; activeId: string | null; onSelect: (id: string) => void;
 }) {
   const activeRef = React.useRef<HTMLDivElement>(null);
+
   React.useEffect(() => {
     activeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [activeId]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden border-l border-border/60 bg-background/90 backdrop-blur-sm">
+      
       <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-        <p className="text-sm font-semibold text-foreground">{properties.length} listings</p>
+        <p className="text-sm font-semibold text-foreground">
+          {properties.length} listings
+        </p>
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="h-3 w-3" />Tap a pin
         </span>
       </div>
+
       <div className="flex-1 overflow-y-auto">
         {properties.map((p) => {
           const isActive = p.id === activeId;
+
           return (
             <div
               key={p.id}
               ref={isActive ? (activeRef as React.RefObject<HTMLDivElement>) : undefined}
               className={cn(
                 "group relative cursor-pointer border-b border-border/40 transition-colors",
-                isActive ? "bg-emerald-50/70 dark:bg-emerald-950/20" : "hover:bg-muted/40"
+                isActive
+                  ? "bg-blue-50/70 dark:bg-blue-950/20"
+                  : "hover:bg-muted/40"
               )}
               onClick={() => onSelect(p.id)}
             >
+              {/* active left indicator */}
               {isActive && (
-                <div className="absolute inset-y-0 left-0 w-0.5 rounded-r bg-emerald-500" />
+                <div className="absolute inset-y-0 left-0 w-0.5 rounded-r bg-[#2463eb]" />
               )}
+
               <div className="flex gap-3 p-3">
                 <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
                   {p.images[0] ? (
                     <img
-                      src={p.images[0]} alt={p.title}
+                      src={p.images[0]}
+                      alt={p.title}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-2xl opacity-30">🏢</div>
+                    <div className="flex h-full items-center justify-center text-2xl opacity-30">
+                      🏢
+                    </div>
                   )}
+
                   {p.isVerified && (
-                    <span className="absolute bottom-1 left-1 rounded bg-emerald-500/90 px-1 py-0.5 text-[9px] font-semibold text-white">✓</span>
+                    <span className="absolute bottom-1 left-1 rounded bg-blue-600/90 px-1 py-0.5 text-[9px] font-semibold text-white">
+                      ✓
+                    </span>
                   )}
                 </div>
+
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-1">
-                    <p className="truncate text-sm font-semibold text-foreground leading-snug">{p.title}</p>
+                    <p className="truncate text-sm font-semibold text-foreground leading-snug">
+                      {p.title}
+                    </p>
                     <StatusBadge status={p.status} />
                   </div>
+
                   <p className="mt-0.5 flex items-center gap-0.5 truncate text-xs text-muted-foreground">
-                    <MapPin className="h-2.5 w-2.5 shrink-0" />{p.location}
+                    <MapPin className="h-2.5 w-2.5 shrink-0" />
+                    {p.location}
                   </p>
+
                   <div className="mt-1.5 flex items-baseline gap-1.5">
-                    <span className="text-sm font-bold text-foreground">{p.priceLabel}</span>
+                    <span className="text-sm font-bold text-foreground">
+                      {p.priceLabel}
+                    </span>
+
                     {p.ethPrice && (
-                      <span className="text-xs font-medium text-emerald-500">{p.ethPrice}</span>
+                      <span className="text-xs font-medium text-blue-500">
+                        {p.ethPrice}
+                      </span>
                     )}
                   </div>
+
                   <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                    {p.beds    != null && <span className="flex items-center gap-0.5"><Bed       className="h-3 w-3" />{p.beds}</span>}
-                    {p.baths   != null && <span className="flex items-center gap-0.5"><Bath      className="h-3 w-3" />{p.baths}</span>}
-                    {p.areaSqm != null && <span className="flex items-center gap-0.5"><Maximize2 className="h-3 w-3" />{p.areaSqm}m²</span>}
+                    {p.beds != null && (
+                      <span className="flex items-center gap-0.5">
+                        <Bed className="h-3 w-3" />
+                        {p.beds}
+                      </span>
+                    )}
+
+                    {p.baths != null && (
+                      <span className="flex items-center gap-0.5">
+                        <Bath className="h-3 w-3" />
+                        {p.baths}
+                      </span>
+                    )}
+
+                    {p.areaSqm != null && (
+                      <span className="flex items-center gap-0.5">
+                        <Maximize2 className="h-3 w-3" />
+                        {p.areaSqm}m²
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -404,6 +494,15 @@ export function MapBasedListing({ properties, className, onViewProperty }: MapBa
 
   return (
     <>
+    <div className="mb-6 flex flex-col items-center justify-center text-center">
+  <h2 className="max-w-2xl text-balance text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+    Map Based Listings
+  </h2>
+
+  <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+    {properties.length} properties available
+  </p>
+</div>
       <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
