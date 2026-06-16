@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WalletConnect } from "@/components/wallet/wallet-connect";
 import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
+import Image from "next/image";
 import {
   FadeIn,
   FloatingElement,
