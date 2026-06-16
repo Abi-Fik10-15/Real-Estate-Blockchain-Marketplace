@@ -16,9 +16,24 @@ import { Badge } from "@/components/ui/badge";
 import { useWalletStore } from "@/store/wallet-store";
 import { shortenAddress } from "@/lib/utils";
 
-export function WalletConnect({ size = "default" }: { size?: "default" | "sm" | "lg" }) {
+export function WalletConnect({
+  size = "default",
+  variant = "hero",
+}: {
+  size?: "default" | "sm" | "lg";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "hero";
+}) {
   const { wallet, isConnecting, connect, disconnect } = useWalletStore();
   const [copied, setCopied] = React.useState(false);
+
+  const handleConnect = async () => {
+    try {
+      await connect();
+      toast.success("Wallet connected on Sepolia");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to connect wallet");
+    }
+  };
 
   const handleCopy = async () => {
     if (!wallet) return;
@@ -31,12 +46,9 @@ export function WalletConnect({ size = "default" }: { size?: "default" | "sm" | 
   if (!wallet) {
     return (
       <Button
-        variant="hero"
+        variant={variant}
         size={size}
-        onClick={() => {
-          connect();
-          toast.promise(Promise.resolve(), { loading: "Connecting wallet..." });
-        }}
+        onClick={handleConnect}
         disabled={isConnecting}
       >
         <WalletIcon className="h-4 w-4" />
@@ -44,6 +56,9 @@ export function WalletConnect({ size = "default" }: { size?: "default" | "sm" | 
       </Button>
     );
   }
+
+  const currency =
+    wallet.chainId === 11155111 || wallet.chainId === 1 ? "ETH" : "MATIC";
 
   return (
     <DropdownMenu>
@@ -83,7 +98,9 @@ export function WalletConnect({ size = "default" }: { size?: "default" | "sm" | 
             </div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Balance</p>
-              <p className="font-medium">{wallet.balance} MATIC</p>
+              <p className="font-medium">
+                {wallet.balance} {currency}
+              </p>
             </div>
           </div>
         </div>

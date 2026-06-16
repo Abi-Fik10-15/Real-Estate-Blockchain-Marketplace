@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { mockBlockchain } from "@/services/mock-blockchain";
+import { contractClient } from "@/lib/contract";
 import type { Wallet } from "@/types";
 
 interface WalletState {
@@ -16,23 +16,27 @@ export const useWalletStore = create<WalletState>()(
     (set, get) => ({
       wallet: null,
       isConnecting: false,
+
       connect: async () => {
         set({ isConnecting: true });
         try {
-          const wallet = await mockBlockchain.connectWallet();
+          const wallet = await contractClient.connectWallet();
           set({ wallet, isConnecting: false });
-        } catch {
+        } catch (error) {
           set({ isConnecting: false });
+          throw error;
         }
       },
+
       disconnect: async () => {
-        await mockBlockchain.disconnectWallet();
+        await contractClient.disconnectWallet();
         set({ wallet: null });
       },
+
       switchNetwork: async (chainId: number) => {
         const current = get().wallet;
         if (!current) return;
-        const next = await mockBlockchain.switchNetwork(chainId);
+        const next = await contractClient.switchNetwork(chainId);
         set({ wallet: { ...current, ...next } });
       },
     }),

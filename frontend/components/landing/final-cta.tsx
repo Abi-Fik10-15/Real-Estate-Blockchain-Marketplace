@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
+<
 import { ArrowRight, ShoppingBag, Sparkles } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { FadeIn, FloatingElement } from "@/components/ui/motion";
+import { Badge } from "@/components/ui/badge";
+import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
+import { FadeIn } from "@/components/ui/motion";
 
 export function FinalCTA() {
   return (

@@ -2,13 +2,16 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Bell, LogOut, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WalletConnect } from "@/components/wallet/wallet-connect";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
+import { useNotifications } from "@/hooks/use-notifications";
 import type { LucideIcon } from "lucide-react";
 
 export interface NavItem {
@@ -29,10 +32,19 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const { count, clearCount } = useNotifications();
 
   const isActive = (href: string) =>
     pathname === href || (href !== nav[0]?.href && pathname.startsWith(`${href}/`));
+
+  const handleLogout = () => {
+    logout();
+    toast.info("Signed out");
+    router.push("/login");
+  };
 
   return (
     <div className="flex min-h-screen bg-muted/20">
@@ -62,7 +74,7 @@ export function DashboardShell({
             </Link>
           ))}
         </nav>
-        <div className="border-t border-border/60 p-4">
+        <div className="border-t border-border/60 p-4 space-y-3">
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
               <AvatarImage src={user?.avatar} alt={user?.name} />
@@ -73,6 +85,9 @@ export function DashboardShell({
               <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
             </div>
           </div>
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2" onClick={handleLogout}>
+            <LogOut className="h-4 w-4" /> Sign out
+          </Button>
         </div>
       </aside>
 
@@ -83,6 +98,20 @@ export function DashboardShell({
             <p className="text-xs text-muted-foreground">{roleLabel} workspace</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              onClick={clearCount}
+              aria-label="Notifications"
+            >
+              <Bell className="h-4 w-4" />
+              {count > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                  {count > 9 ? "9+" : count}
+                </span>
+              )}
+            </Button>
             <ThemeToggle />
             <WalletConnect size="sm" />
           </div>

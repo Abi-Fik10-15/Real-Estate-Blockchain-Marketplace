@@ -7,6 +7,8 @@ import { Menu, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WalletConnect } from "@/components/wallet/wallet-connect";
+import { useAuthStore } from "@/store/auth-store";
+import { PUBLIC_NAV_LINKS, BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -17,6 +19,21 @@ const LINKS = [
 export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
+  const user = useAuthStore((s) => s.user);
+
+  const links = PUBLIC_NAV_LINKS.map((link) => {
+    if (link.href === "/#featured-properties" && user?.role === "buyer") {
+      return { ...link, href: BUYER_MARKETPLACE_PATH, label: "Browse Listings" };
+    }
+    return link;
+  });
+
+  const isActive = (href: string) => {
+    if (href.startsWith("/#")) {
+      return pathname === "/" && typeof window !== "undefined" && false;
+    }
+    return pathname.startsWith(href);
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
@@ -31,13 +48,13 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {LINKS.map((l) => (
+          {links.map((l) => (
             <Link
-              key={l.href}
+              key={l.label}
               href={l.href}
               className={cn(
                 "rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
-                pathname.startsWith(l.href) && "text-foreground"
+                isActive(l.href) && "text-foreground"
               )}
             >
               {l.label}
@@ -47,9 +64,20 @@ export function Navbar() {
 
         <div className="hidden items-center gap-2 lg:flex">
           <ThemeToggle />
-          <Button variant="ghost" asChild>
-            <Link href="/login">Login</Link>
-          </Button>
+          {user ? (
+            <Button variant="ghost" asChild>
+              <Link href={`/dashboard/${user.role}`}>My Account</Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link href="/login">Sign In</Link>
+              </Button>
+              <Button variant="hero" asChild>
+                <Link href="/register">Get Started</Link>
+              </Button>
+            </>
+          )}
           <WalletConnect />
         </div>
 
@@ -64,9 +92,9 @@ export function Navbar() {
       {open && (
         <div className="border-t border-border/60 bg-background lg:hidden">
           <div className="container flex flex-col gap-1 py-4">
-            {LINKS.map((l) => (
+            {links.map((l) => (
               <Link
-                key={l.href}
+                key={l.label}
                 href={l.href}
                 onClick={() => setOpen(false)}
                 className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -75,11 +103,26 @@ export function Navbar() {
               </Link>
             ))}
             <div className="mt-2 flex flex-col gap-2">
-              <Button variant="outline" asChild>
-                <Link href="/login" onClick={() => setOpen(false)}>
-                  Login
-                </Link>
-              </Button>
+              {user ? (
+                <Button variant="outline" asChild>
+                  <Link href={`/dashboard/${user.role}`} onClick={() => setOpen(false)}>
+                    My Account
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" asChild>
+                    <Link href="/login" onClick={() => setOpen(false)}>
+                      Sign In
+                    </Link>
+                  </Button>
+                  <Button variant="hero" asChild>
+                    <Link href="/register" onClick={() => setOpen(false)}>
+                      Get Started
+                    </Link>
+                  </Button>
+                </>
+              )}
               <WalletConnect />
             </div>
           </div>

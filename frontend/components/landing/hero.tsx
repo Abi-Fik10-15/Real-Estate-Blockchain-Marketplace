@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -14,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WalletConnect } from "@/components/wallet/wallet-connect";
+import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 import {
   FadeIn,
   FloatingElement,

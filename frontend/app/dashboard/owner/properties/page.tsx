@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Building2, PlusCircle, Trash2 } from "lucide-react";
+import { Building2, PlusCircle, Trash2, ExternalLink, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -25,20 +25,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { usePropertyStore } from "@/store/property-store";
 import { formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { ListingStatus } from "@/types";
 
 const OWNER_ID = "u-owner-1";
 const STATUSES: ListingStatus[] = ["active", "pending", "sold", "rented", "draft"];
+
+const STATUS_COLOR: Record<ListingStatus, string> = {
+  active: "text-emerald-600 dark:text-emerald-400",
+  pending: "text-amber-600 dark:text-amber-400",
+  sold: "text-primary",
+  rented: "text-accent",
+  draft: "text-muted-foreground",
+};
 
 export default function OwnerPropertiesPage() {
   const properties = usePropertyStore((s) => s.properties).filter(
@@ -71,13 +72,17 @@ export default function OwnerPropertiesPage() {
       />
 
       {properties.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-            <Building2 className="h-10 w-10 text-muted-foreground" />
-            <p className="font-medium">No properties yet</p>
-            <p className="text-sm text-muted-foreground">
-              Create your first on-chain property listing.
-            </p>
+        <Card className="border-border/60">
+          <CardContent className="flex flex-col items-center gap-4 py-20 text-center">
+            <div className="grid h-16 w-16 place-items-center rounded-2xl border border-border/60 bg-muted/30">
+              <Building2 className="h-8 w-8 text-muted-foreground/40" />
+            </div>
+            <div>
+              <p className="font-semibold">No properties yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Create your first on-chain property listing.
+              </p>
+            </div>
             <Button variant="hero" asChild>
               <Link href="/dashboard/owner/properties/new">
                 <PlusCircle className="h-4 w-4" /> Create Property
@@ -86,74 +91,99 @@ export default function OwnerPropertiesPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="border-border/60">
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Verification</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {properties.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      <p className="font-medium">{p.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {p.location.city} · {p.chainId}
-                      </p>
-                    </TableCell>
-                    <TableCell className="font-medium">{formatCurrency(p.price)}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={p.status}
-                        onValueChange={(v) => {
-                          setStatus(p.id, v as ListingStatus);
-                          toast.success(`Status set to ${v}`);
-                        }}
-                      >
-                        <SelectTrigger className="h-8 w-32 capitalize">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {STATUSES.map((s) => (
-                            <SelectItem key={s} value={s} className="capitalize">
-                              {s}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      {p.verification.status === "verified" ? (
-                        <Badge variant="verified">Verified</Badge>
-                      ) : (
-                        <Badge variant="warning">Pending</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button size="sm" variant="ghost" asChild>
-                          <Link href={`/property/${p.id}`}>View</Link>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setToDelete(p.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+            <div className="divide-y divide-border/40">
+              {properties.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex flex-col gap-4 px-5 py-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  {/* Image + info */}
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg border border-border/60">
+                      <img
+                        src={p.images[0]}
+                        alt={p.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">{p.title}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <span className="font-mono text-[10px] text-muted-foreground">
+                          {p.chainId}
+                        </span>
+                        <span className="text-muted-foreground">·</span>
+                        <span className="text-xs text-muted-foreground">
+                          {p.location.city}
+                        </span>
+                        <span className="text-muted-foreground">·</span>
+                        <span className="text-xs font-semibold">
+                          {formatCurrency(p.price)}
+                        </span>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                  </div>
+
+                  {/* Controls */}
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    {/* Status selector */}
+                    <Select
+                      value={p.status}
+                      onValueChange={(v) => {
+                        setStatus(p.id, v as ListingStatus);
+                        toast.success(`Status set to "${v}"`);
+                      }}
+                    >
+                      <SelectTrigger
+                        className={cn(
+                          "h-8 w-32 text-xs font-semibold capitalize",
+                          STATUS_COLOR[p.status]
+                        )}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUSES.map((s) => (
+                          <SelectItem
+                            key={s}
+                            value={s}
+                            className={cn("text-xs capitalize font-medium", STATUS_COLOR[s])}
+                          >
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Verification badge */}
+                    {p.verification.status === "verified" ? (
+                      <Badge variant="verified" className="gap-1 text-[10px]">
+                        <ShieldCheck className="h-3 w-3" /> Verified
+                      </Badge>
+                    ) : (
+                      <Badge variant="warning" className="text-[10px]">Pending</Badge>
+                    )}
+
+                    {/* Actions */}
+                    <Button size="sm" variant="ghost" className="h-8 px-3 text-xs" asChild>
+                      <Link href={`/property/${p.id}`}>
+                        View <ExternalLink className="ml-1 h-3 w-3" />
+                      </Link>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setToDelete(p.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

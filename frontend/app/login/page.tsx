@@ -16,6 +16,7 @@ import { WalletConnect } from "@/components/wallet/wallet-connect";
 
 import { useAuthStore } from "@/store/auth-store";
 import { loginSchema, type LoginValues } from "@/lib/validations";
+import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
+
   });
 
   const onSubmit = (values: LoginValues) => {
@@ -40,6 +42,7 @@ export default function LoginPage() {
     toast.success(`Welcome back, ${user.name}`);
 
     router.push(`/dashboard/${user.role}`);
+
   };
 
   return (

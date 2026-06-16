@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { usePropertyStore } from "@/store/property-store";
 import { useAuthStore } from "@/store/auth-store";
-import { mockBlockchain } from "@/services/mock-blockchain";
+import { api } from "@/services/api";
 import { shortenAddress } from "@/lib/utils";
 import {
   createPropertySchema,
@@ -59,18 +59,32 @@ export default function CreatePropertyPage() {
   });
 
   const onSubmit = async (values: CreatePropertyValues) => {
+    if (!user) {
+      toast.error("Please log in to create a property");
+      return;
+    }
     setPending(true);
     try {
-      const wallet =
-        user?.walletAddress ?? "0xA4B7C2D9E1F3A5B7C9D1E3F5A7B9C1D3E5F7D81F";
-      const property = createProperty(values, {
-        id: user?.id ?? "u-owner-1",
+      const wallet = user.walletAddress || "0x0000000000000000000000000000000000000000";
+      const property = await createProperty(values, {
+        id: user.id,
         wallet,
       });
-      const ev = await mockBlockchain.verifyOwnership(property.chainId);
-      toast.success("Property minted on-chain", {
-        description: `Token ${property.chainId} · Tx ${shortenAddress(ev.txHash, 8)}`,
-      });
+
+      try {
+        const mint = await api.mintPropertyToken(wallet, `ipfs://chainestate/${property.id}`);
+        await usePropertyStore.getState().updateProperty(property.id, {
+          chainId: mint.tokenId,
+        });
+        toast.success("Property minted on-chain", {
+          description: `Token ${mint.tokenId} · Tx ${shortenAddress(mint.txHash, 8)}`,
+        });
+      } catch {
+        toast.success("Property created", {
+          description: "Blockchain mint skipped — configure contract to enable on-chain deeds.",
+        });
+      }
+
       router.push("/dashboard/owner/properties");
     } catch {
       toast.error("Failed to create property");

@@ -5,10 +5,10 @@ const COLUMNS = [
   {
     title: "Platform",
     links: [
-      { label: "Marketplace", href: "/marketplace" },
-      { label: "Owner Dashboard", href: "/dashboard/owner" },
-      { label: "Agent Dashboard", href: "/dashboard/agent" },
-      { label: "Buyer Dashboard", href: "/dashboard/buyer" },
+      { label: "Features", href: "/#features" },
+      { label: "How It Works", href: "/#how-it-works" },
+      { label: "Verified Listings", href: "/#featured-properties" },
+      { label: "Get Started", href: "/register" },
     ],
   },
   {

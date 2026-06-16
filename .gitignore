@@ -7,6 +7,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Environment — NEVER commit secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
 node_modules
 dist
 dist-ssr
@@ -15,6 +27,13 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+backend/node_modules
+backend/dist
+frontend/.next
+frontend/node_modules
+
+# Docker
+docker-compose.override.yml
 
 # Wrangler / Cloudflare
 .wrangler/

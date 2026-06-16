@@ -7,11 +7,8 @@ import {
   ShieldCheck,
   UserCheck,
 } from "lucide-react";
-import {
-  FadeIn,
-  StaggerContainer,
-  StaggerItem,
-} from "@/components/ui/motion";
+import { Badge } from "@/components/ui/badge";
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 
 const FEATURES = [
   {
@@ -19,71 +16,83 @@ const FEATURES = [
     title: "Ownership Verification",
     description:
       "Verify property ownership through immutable blockchain records with cryptographic proof.",
+    accent: "text-primary",
+    iconBg: "bg-primary/8 border-primary/20",
   },
   {
     icon: UserCheck,
     title: "Agent Authorization",
     description:
       "Property owners can authorize trusted agents to manage listings securely on-chain.",
+    accent: "text-indigo-500",
+    iconBg: "bg-indigo-500/8 border-indigo-500/20",
   },
   {
     icon: ArrowLeftRight,
     title: "Transparent Transfers",
     description:
       "Track ownership transfers with complete audit trails, recorded permanently on the blockchain.",
+    accent: "text-emerald-500",
+    iconBg: "bg-emerald-500/8 border-emerald-500/20",
   },
   {
     icon: MapPinned,
     title: "Smart Property Discovery",
     description:
       "Search and explore properties through advanced filters and interactive maps worldwide.",
+    accent: "text-amber-500",
+    iconBg: "bg-amber-500/8 border-amber-500/20",
   },
 ];
 
 export function Features() {
   return (
-    <section className="relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10 section-gradient" />
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="glow-orb right-0 top-20 h-[400px] w-[400px] bg-[hsl(262,83%,58%)] opacity-[0.06]" />
-        <div className="glow-orb left-0 bottom-20 h-[300px] w-[300px] bg-[hsl(199,89%,48%)] opacity-[0.06]" />
-      </div>
+    <section id="features" className="border-b border-border/50 py-16 lg:py-20 bg-primary-50/20">
+      <div className="container mx-auto px-6 lg:px-8">
 
-      <div className="container py-20 lg:py-28">
-        <FadeIn className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+        {/* Header */}
+        <FadeIn className="mb-12 flex flex-col items-center gap-3 text-center">
+          <Badge
+            variant="outline"
+            className="border-primary/30 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary"
+          >
+            Platform features
+          </Badge>
+          <h2 className="max-w-2xl text-balance text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Everything you need to{" "}
-            <span className="text-gradient">trust the transaction</span>
+            <span className="text-primary">trust the transaction</span>
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
+          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
             A complete toolkit for owners, agents, and buyers — backed by
             verifiable on-chain records.
           </p>
         </FadeIn>
 
-        <StaggerContainer className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Feature cards */}
+        <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f) => (
             <StaggerItem key={f.title}>
-              <div className="group relative h-full overflow-hidden rounded-2xl border border-border/50 bg-card/80 p-6 backdrop-blur-sm transition-all duration-500 hover:-translate-y-3 hover:border-border hover:shadow-card-hover">
-                {/* Hover glow */}
-                <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-brand opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-15" />
+              <div className="group flex h-full flex-col gap-4 rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:border-border/80 hover:shadow-sm">
 
                 {/* Icon */}
-                <div className="relative grid h-14 w-14 place-items-center rounded-2xl bg-gradient-brand text-primary-foreground shadow-glow transition-all duration-300 group-hover:scale-110 group-hover:shadow-glow-lg">
-                  <f.icon className="h-6 w-6" />
+                <div className={`flex h-9 w-9 items-center justify-center rounded-lg border ${f.iconBg}`}>
+                  <f.icon className={`h-4 w-4 ${f.accent}`} />
                 </div>
 
                 {/* Content */}
-                <h3 className="mt-5 text-lg font-semibold">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {f.description}
-                </p>
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <h3 className="text-lg font-bold text-primary-500">
+                    {f.title}
+                  </h3>
+                  <p className="text-[12px] leading-relaxed text-muted-foreground">
+                    {f.description}
+                  </p>
+                </div>
 
-                {/* Learn More */}
-                <div className="mt-5 flex items-center gap-1 text-sm font-medium text-primary opacity-0 transition-all duration-300 group-hover:opacity-100">
-                  Learn More
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                {/* Learn more */}
+                <div className={`flex items-center gap-1 text-[11px] font-semibold ${f.accent} opacity-0 transition-all duration-200 group-hover:opacity-100`}>
+                  Learn more
+                  <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                 </div>
               </div>
             </StaggerItem>

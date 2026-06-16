@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ChatWidget } from "@/components/chatbot";
+import { AppBootstrap } from "@/components/app-bootstrap";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -22,6 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
+        <AppBootstrap />
         {children}
         <Toaster position="top-right" richColors />
         <ChatWidget />

@@ -1,100 +1,109 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { MOCK_PROPERTIES } from "@/services/mock-data";
+import { api } from "@/services/api";
 import type { CreatePropertyValues } from "@/lib/validations";
 import type { ListingStatus, Property } from "@/types";
 
-const FALLBACK_IMAGES = [
-  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80",
-];
-
 interface PropertyState {
   properties: Property[];
+  isLoading: boolean;
+  fetchProperties: () => Promise<void>;
+  fetchByOwner: (ownerId: string) => Promise<Property[]>;
   createProperty: (
     values: CreatePropertyValues,
     owner: { id: string; wallet: string }
-  ) => Property;
-  updateProperty: (id: string, patch: Partial<Property>) => void;
+  ) => Promise<Property>;
+  updateProperty: (id: string, patch: Partial<Property>) => Promise<void>;
   deleteProperty: (id: string) => void;
-  setStatus: (id: string, status: ListingStatus) => void;
-  assignAgent: (id: string, agent: { id: string; wallet: string } | null) => void;
+  setStatus: (id: string, status: ListingStatus) => Promise<void>;
+  assignAgent: (id: string, agent: { id: string; wallet: string } | null) => Promise<void>;
+  approveProperty: (id: string) => Promise<void>;
   byOwner: (ownerId: string) => Property[];
   byAgent: (agentId: string) => Property[];
-  reset: () => void;
+  setProperties: (properties: Property[]) => void;
 }
 
-export const usePropertyStore = create<PropertyState>()(
-  persist(
-    (set, get) => ({
-      properties: MOCK_PROPERTIES,
+export const usePropertyStore = create<PropertyState>()((set, get) => ({
+  properties: [],
+  isLoading: false,
 
-      createProperty: (values, owner) => {
-        const property: Property = {
-          id: `prop-${Date.now()}`,
-          chainId: `EST-${Math.floor(2000 + Math.random() * 7000)}`,
-          title: values.title,
-          description: values.description,
-          price: values.price,
-          currency: "USD",
-          listingType: "sale",
-          status: "active",
-          type: values.type,
-          bedrooms: values.bedrooms,
-          bathrooms: values.bathrooms,
-          area: values.area,
-          location: {
-            lat: 0,
-            lng: 0,
-            city: values.location,
-            country: "",
-            address: values.location,
-          },
-          images: FALLBACK_IMAGES,
-          ownerId: owner.id,
-          ownerWallet: owner.wallet,
-          verification: { status: "pending" },
-          history: [],
-          featured: false,
-          createdAt: new Date().toISOString(),
-          views: 0,
-          saves: 0,
-        };
-        set((s) => ({ properties: [property, ...s.properties] }));
-        return property;
-      },
+  setProperties: (properties) => set({ properties }),
 
-      updateProperty: (id, patch) =>
-        set((s) => ({
-          properties: s.properties.map((p) => (p.id === id ? { ...p, ...patch } : p)),
-        })),
+  fetchProperties: async () => {
+    set({ isLoading: true });
+    try {
+      const properties = await api.getProperties();
+      set({ properties, isLoading: false });
+    } catch {
+      set({ isLoading: false });
+    }
+  },
 
-      deleteProperty: (id) =>
-        set((s) => ({ properties: s.properties.filter((p) => p.id !== id) })),
+  fetchByOwner: async (ownerId) => {
+    const properties = await api.getPropertiesByOwner(ownerId);
+    set((s) => {
+      const others = s.properties.filter((p) => p.ownerId !== ownerId);
+      return { properties: [...properties, ...others] };
+    });
+    return properties;
+  },
 
-      setStatus: (id, status) =>
-        set((s) => ({
-          properties: s.properties.map((p) => (p.id === id ? { ...p, status } : p)),
-        })),
+  createProperty: async (values, owner) => {
+    const property = await api.createProperty({
+      ...values,
+      ownerWallet: owner.wallet,
+    });
+    set((s) => ({ properties: [property, ...s.properties] }));
+    return property;
+  },
 
-      assignAgent: (id, agent) =>
-        set((s) => ({
-          properties: s.properties.map((p) =>
-            p.id === id
-              ? { ...p, agentId: agent?.id, agentWallet: agent?.wallet }
-              : p
-          ),
-        })),
+  updateProperty: async (id, patch) => {
+    const updated = await api.updateProperty(id, {
+      title: patch.title,
+      description: patch.description,
+      price: patch.price,
+      status: patch.status,
+      agentId: patch.agentId,
+      agentWallet: patch.agentWallet,
+      blockchainTokenId: patch.chainId,
+    });
+    set((s) => ({
+      properties: s.properties.map((p) => (p.id === id ? { ...p, ...updated, ...patch } : p)),
+    }));
+  },
 
-      byOwner: (ownerId) => get().properties.filter((p) => p.ownerId === ownerId),
-      byAgent: (agentId) => get().properties.filter((p) => p.agentId === agentId),
+  deleteProperty: (id) =>
+    set((s) => ({ properties: s.properties.filter((p) => p.id !== id) })),
 
-      reset: () => set({ properties: MOCK_PROPERTIES }),
-    }),
-    { name: "chainestate-properties" }
-  )
-);
+  setStatus: async (id, status) => {
+    await api.updateProperty(id, { status });
+    set((s) => ({
+      properties: s.properties.map((p) => (p.id === id ? { ...p, status } : p)),
+    }));
+  },
+
+  assignAgent: async (id, agent) => {
+    await api.updateProperty(id, {
+      agentId: agent?.id,
+      agentWallet: agent?.wallet ?? "",
+    });
+    set((s) => ({
+      properties: s.properties.map((p) =>
+        p.id === id
+          ? { ...p, agentId: agent?.id, agentWallet: agent?.wallet }
+          : p
+      ),
+    }));
+  },
+
+  approveProperty: async (id) => {
+    const updated = await api.approveProperty(id);
+    set((s) => ({
+      properties: s.properties.map((p) => (p.id === id ? updated : p)),
+    }));
+  },
+
+  byOwner: (ownerId) => get().properties.filter((p) => p.ownerId === ownerId),
+  byAgent: (agentId) => get().properties.filter((p) => p.agentId === agentId),
+}));
