@@ -1,4 +1,5 @@
 import type {
+  AuthUser,
   Inquiry,
   OwnershipRecord,
   Property,
@@ -25,7 +26,7 @@ const HOUSE_IMAGES = [
 const galleryFor = (seed: number) =>
   Array.from({ length: 4 }, (_, i) => IMG(HOUSE_IMAGES[(seed + i) % HOUSE_IMAGES.length]));
 
-export const MOCK_USERS: User[] = [
+export const MOCK_USERS: AuthUser[] = [
   {
     id: "u-owner-1",
     name: "Sophia Bennett",
@@ -37,6 +38,7 @@ export const MOCK_USERS: User[] = [
     status: "active",
     joinedAt: "2024-03-12T10:00:00Z",
     verified: true,
+      password: "123456",
   },
   {
     id: "u-agent-1",
@@ -49,6 +51,7 @@ export const MOCK_USERS: User[] = [
     status: "active",
     joinedAt: "2024-04-02T10:00:00Z",
     verified: true,
+      password: "123456",
   },
   {
     id: "u-buyer-1",
@@ -61,6 +64,7 @@ export const MOCK_USERS: User[] = [
     status: "active",
     joinedAt: "2024-05-21T10:00:00Z",
     verified: true,
+      password: "123456",
   },
   {
     id: "u-admin-1",
@@ -72,6 +76,7 @@ export const MOCK_USERS: User[] = [
     status: "active",
     joinedAt: "2024-01-01T10:00:00Z",
     verified: true,
+      password: "123456",
   },
   {
     id: "u-agent-2",
@@ -84,6 +89,7 @@ export const MOCK_USERS: User[] = [
     status: "active",
     joinedAt: "2024-06-08T10:00:00Z",
     verified: true,
+      password: "123456",
   },
   {
     id: "u-owner-2",
@@ -96,6 +102,7 @@ export const MOCK_USERS: User[] = [
     status: "active",
     joinedAt: "2024-02-19T10:00:00Z",
     verified: true,
+      password: "123456",
   },
   {
     id: "u-buyer-2",
@@ -108,6 +115,7 @@ export const MOCK_USERS: User[] = [
     status: "suspended",
     joinedAt: "2024-07-30T10:00:00Z",
     verified: false,
+      password: "123456",
   },
 ];
 

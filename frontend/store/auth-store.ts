@@ -8,19 +8,10 @@ import type { User, UserRole } from "@/types";
 
 interface AuthState {
   user: User | null;
-  token: string | null;
-  isHydrating: boolean;
-  login: (email: string, password: string) => Promise<User>;
-  register: (data: {
-    name: string;
-    email: string;
-    password: string;
-    role: UserRole;
-    phone?: string;
-  }) => Promise<User>;
-  hydrateProfile: () => Promise<void>;
-  updateUser: (patch: Partial<Pick<User, "name" | "email" | "phone" | "avatar">>) => Promise<void>;
-  setSession: (token: string, user: User) => void;
+ login: (email: string, password: string) => User | null;
+  loginAs: (role: UserRole) => void;
+  register: (data: { name: string; email: string; role: UserRole; phone?: string }) => void;
+  updateUser: (patch: Partial<Pick<User, "name" | "email" | "phone" | "avatar">>) => void;
   logout: () => void;
 }
 
@@ -28,18 +19,24 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
-      isHydrating: false,
+     login: (email: string, password: string) => {
+  const found = MOCK_USERS.find(
+    (u) =>
+      u.email.toLowerCase() === email.toLowerCase() &&
+      u.password === password
+  );
 
-      setSession: (token, user) => {
-        setStoredToken(token);
-        set({ token, user });
-      },
+  if (!found) return null;
 
-      login: async (email, password) => {
-        const { accessToken, user } = await api.login(email, password);
-        get().setSession(accessToken, user);
-        return user;
+  const { password: _password, ...safeUser } = found;
+
+  set({ user: safeUser });
+
+  return safeUser;
+},
+      loginAs: (role: UserRole) => {
+        const found = MOCK_USERS.find((u) => u.role === role) ?? MOCK_USERS[0];
+        set({ user: found });
       },
 
       register: async ({ name, email, password, role, phone }) => {

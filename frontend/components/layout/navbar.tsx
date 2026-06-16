@@ -11,6 +11,11 @@ import { useAuthStore } from "@/store/auth-store";
 import { PUBLIC_NAV_LINKS, BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
+const LINKS = [
+  { href: "/marketplace", label: "Marketplace" },
+  { href: "/faq", label: "FAQ" },
+];
+
 export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
