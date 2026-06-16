@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Wallet, ethers } from 'ethers';
+import mongoose from 'mongoose';
 
 const PLACEHOLDER_PATTERN =
   /your_|YOUR_|change-me|placeholder|example|xxx|<.*>/i;
@@ -20,6 +21,38 @@ export class AppConfigService {
     );
   }
 
+  get nodeEnv(): string {
+    return this.config.get<string>('NODE_ENV', 'development');
+  }
+
+  async resolveMongoUri(): Promise<string> {
+    if (this.nodeEnv === 'production') {
+      return this.mongoUri;
+    }
+
+    if (await this.canConnectToMongo(this.mongoUri)) {
+      return this.mongoUri;
+    }
+
+    throw new Error(
+      `Cannot connect to MongoDB at ${this.mongoUri}. Start MongoDB (e.g. docker compose up in backend/) or update MONGODB_URI in .env`,
+    );
+  }
+
+  private async canConnectToMongo(uri: string): Promise<boolean> {
+    try {
+      const connection = await mongoose
+        .createConnection(uri, {
+          serverSelectionTimeoutMS: 1_000,
+        })
+        .asPromise();
+      await connection.close();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   get jwtSecret(): string {
     return this.config.get<string>('JWT_SECRET', 'chainestate-dev-secret');
   }
@@ -32,6 +65,25 @@ export class AppConfigService {
     return this.config.get<string>(
       'FRONTEND_ORIGIN',
       'http://localhost:3000',
+    );
+  }
+
+  get frontendOrigins(): string[] {
+    const configuredOrigins = this.frontendOrigin
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+
+    if (this.nodeEnv === 'production') {
+      return configuredOrigins;
+    }
+
+    return Array.from(
+      new Set([
+        ...configuredOrigins,
+        'http://localhost:3000',
+        'http://localhost:5173',
+      ]),
     );
   }
 

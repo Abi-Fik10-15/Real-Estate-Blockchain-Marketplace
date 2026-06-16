@@ -45,7 +45,7 @@ export const api = {
   async login(email: string, password: string) {
     const { data: res } = await apiClient.post<{ accessToken: string; user: ApiUser }>(
       "/auth/login",
-      { email, password }
+      { email: email.trim().toLowerCase(), password }
     );
     return { accessToken: res.accessToken, user: mapUser(res.user) };
   },
