@@ -1,152 +1,119 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ArrowRight,
-  Rocket,
-  ShoppingBag,
-  Wallet,
-} from "lucide-react";
+import { ArrowRight, ShoppingBag, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FadeIn, FloatingElement } from "@/components/ui/motion";
 
 export function FinalCTA() {
   return (
-    <section id="final-cta" className="relative overflow-hidden py-24 lg:py-32">
-      {/* Animated background */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-violet-950 dark:from-slate-950 dark:via-blue-950/80 dark:to-violet-950/80" />
+    <section id="final-cta" className="relative overflow-hidden py-14 lg:py-20">
 
-        {/* Animated glow orbs */}
-        <div className="glow-orb left-1/4 top-1/4 h-[400px] w-[400px] bg-blue-500 opacity-[0.15] animate-float" />
-        <div className="glow-orb right-1/4 bottom-1/4 h-[350px] w-[350px] bg-violet-500 opacity-[0.12]" style={{ animationDelay: "2s" }} />
-        <div className="glow-orb left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 bg-cyan-500 opacity-[0.08]" style={{ animationDelay: "4s" }} />
+      {/* ── Background — matches Features section exactly ─────────────────── */}
+      <div className="absolute inset-0 -z-10 section-gradient" />
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="glow-orb left-1/4 top-0 h-[320px] w-[320px]
+          bg-[hsl(262,83%,58%)] opacity-[0.08]" />
+        <div className="glow-orb right-1/4 bottom-0 h-[260px] w-[260px]
+          bg-[hsl(199,89%,48%)] opacity-[0.07]" />
+        <div className="glow-orb left-1/2 top-1/2 h-[200px] w-[200px]
+          -translate-x-1/2 -translate-y-1/2
+          bg-[hsl(262,83%,58%)] opacity-[0.05]" />
 
-        {/* Grid pattern */}
+        {/* Subtle dot grid */}
         <div
-          className="absolute inset-0 opacity-[0.06]"
+          className="absolute inset-0 opacity-[0.03]"
           style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-            backgroundSize: "80px 80px",
+            backgroundImage: "radial-gradient(circle, currentColor 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
           }}
         />
       </div>
 
-      {/* Floating elements */}
-      <FloatingElement
-        delay={0}
-        duration={8}
-        y={15}
-        className="pointer-events-none absolute left-[10%] top-[15%] hidden lg:block"
-      >
-        <div className="h-3 w-3 rounded-full bg-blue-400/30" />
+      {/* ── Floating decorative dots ─────────────────────────────────────── */}
+      <FloatingElement delay={0} duration={8} y={12}
+        className="pointer-events-none absolute left-[8%] top-[20%] hidden lg:block">
+        <div className="h-2 w-2 rounded-full bg-primary/20" />
       </FloatingElement>
-      <FloatingElement
-        delay={2}
-        duration={10}
-        y={20}
-        className="pointer-events-none absolute right-[15%] top-[25%] hidden lg:block"
-      >
-        <div className="h-4 w-4 rounded-full bg-violet-400/20" />
+      <FloatingElement delay={2} duration={10} y={16}
+        className="pointer-events-none absolute right-[12%] top-[30%] hidden lg:block">
+        <div className="h-3 w-3 rounded-full bg-primary/15" />
       </FloatingElement>
-      <FloatingElement
-        delay={4}
-        duration={7}
-        y={12}
-        className="pointer-events-none absolute left-[20%] bottom-[20%] hidden lg:block"
-      >
-        <div className="h-2 w-2 rounded-full bg-cyan-400/30" />
-      </FloatingElement>
-      <FloatingElement
-        delay={1}
-        duration={9}
-        y={18}
-        className="pointer-events-none absolute right-[25%] bottom-[30%] hidden lg:block"
-      >
-        <div className="h-5 w-5 rounded-sm rotate-45 border border-blue-400/20" />
-      </FloatingElement>
-      <FloatingElement
-        delay={3}
-        duration={11}
-        y={10}
-        className="pointer-events-none absolute left-[35%] top-[60%] hidden lg:block"
-      >
-        <div className="h-3 w-3 rounded-sm rotate-12 border border-violet-400/15" />
+      <FloatingElement delay={1} duration={9} y={10}
+        className="pointer-events-none absolute right-[22%] bottom-[25%] hidden lg:block">
+        <div className="h-2 w-2 rounded-sm rotate-45 border border-primary/20" />
       </FloatingElement>
 
+      {/* ── Content ──────────────────────────────────────────────────────── */}
       <div className="container relative">
-        <FadeIn className="mx-auto max-w-4xl text-center">
-          {/* Badge */}
-          <div className="mx-auto mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm">
-            <Rocket className="h-8 w-8 text-white" />
+        <FadeIn className="mx-auto max-w-3xl text-center">
+
+          {/* Pill badge — same style as feature cards' icon containers */}
+          <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full
+            border border-border/50 bg-card/80 px-4 py-1.5 backdrop-blur-sm">
+            <div className="grid h-5 w-5 place-items-center rounded-full bg-gradient-brand shadow-glow">
+              <Sparkles className="h-3 w-3 text-primary-foreground" />
+            </div>
+            <span className="text-xs font-medium text-muted-foreground">
+              Blockchain-powered real estate
+            </span>
           </div>
 
-          <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-7xl">
-            Ready to Transform{" "}
-            <span className="text-gradient-animated">
-              Real Estate Ownership
-            </span>
-            ?
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+            Ready to transform{" "}
+            <span className="text-gradient">real estate ownership</span>?
           </h2>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-blue-100/70 sm:text-xl">
-            Join thousands of owners, agents, and investors using
-            blockchain-powered property verification to buy, sell, and manage
-            real estate with complete transparency.
+          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Join owners, agents, and investors using on-chain property
+            verification to buy, sell, and manage real estate with complete
+            transparency.
           </p>
 
           {/* Stats */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-sm text-blue-200/60">
-            {[
-              "12,500+ Properties Verified",
-              "2,500+ Active Agents",
-              "$180M+ Volume Managed",
-            ].map((s) => (
-              <span key={s} className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-6
+            text-xs font-medium text-muted-foreground">
+            {["12,500+ Properties", "2,500+ Agents", "$180M+ Volume"].map((s) => (
+              <span key={s} className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-gradient-brand
+                  [background:linear-gradient(135deg,hsl(262,83%,58%),hsl(199,89%,48%))]" />
                 {s}
               </span>
             ))}
           </div>
 
-          {/* CTA Buttons */}
-          <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+          {/* CTA buttons — mirrors Features card style */}
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Button
               size="lg"
-              className="min-w-[220px] bg-white text-slate-900 shadow-lg transition-all hover:bg-blue-50 hover:shadow-xl"
+              className="group relative min-w-[200px] overflow-hidden
+                bg-gradient-brand text-primary-foreground shadow-glow
+                transition-all duration-300 hover:shadow-glow-lg hover:-translate-y-0.5"
               asChild
             >
-              <Link href="/marketplace">
-                Start Verifying Properties
-                <ArrowRight className="h-4 w-4" />
+              <Link href="/login">
+                Join now
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
+
             <Button
               size="lg"
               variant="outline"
-              className="min-w-[220px] border-white/20 bg-white/5 text-white backdrop-blur-sm hover:bg-white/10"
+              className="min-w-[200px] border-border/50 bg-card/80 backdrop-blur-sm
+                transition-all duration-300 hover:border-border hover:shadow-card-hover hover:-translate-y-0.5"
               asChild
             >
               <Link href="/marketplace">
                 <ShoppingBag className="h-4 w-4" />
-                Explore Marketplace
+                Explore marketplace
               </Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="min-w-[220px] border-violet-400/30 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20"
-            >
-              <Wallet className="h-4 w-4" />
-              Connect Wallet
             </Button>
           </div>
 
-          {/* Trust text */}
-          <p className="mt-8 text-xs text-blue-200/40">
-            No credit card required · Free property verification · Cancel
-            anytime
+          {/* Trust line */}
+          <p className="mt-6 text-xs text-muted-foreground/50">
+            No credit card required · Free property verification · Cancel anytime
           </p>
         </FadeIn>
       </div>

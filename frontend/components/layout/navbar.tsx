@@ -11,10 +11,7 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/marketplace", label: "Marketplace" },
-  { href: "/dashboard/owner", label: "Owner" },
-  { href: "/dashboard/agent", label: "Agent" },
-  { href: "/dashboard/buyer", label: "Buyer" },
-  { href: "/dashboard/admin", label: "Admin" },
+  { href: "/faq", label: "FAQ" },
 ];
 
 export function Navbar() {

@@ -33,7 +33,9 @@ export interface User {
   joinedAt: string;
   verified: boolean;
 }
-
+export type AuthUser = User & {
+  password: string;
+};
 export interface GeoLocation {
   lat: number;
   lng: number;

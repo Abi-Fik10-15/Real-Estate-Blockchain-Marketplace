@@ -252,10 +252,10 @@ export function FeaturedProperties() {
             <StaggerItem key={property.id}>
               <Link
                 href={`/property/${property.id}`}
-                className="group block h-full overflow-hidden rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:border-border hover:shadow-card-hover"
+                className="group block min-h-[420px] overflow-hidden rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:border-border hover:shadow-card-hover"
               >
                 {/* Image */}
-                <div className="relative aspect-[4/3] overflow-hidden">
+                <div className="relative aspect-[4/5] overflow-hidden">
                   <Image
                     src={property.image}
                     alt={property.title}

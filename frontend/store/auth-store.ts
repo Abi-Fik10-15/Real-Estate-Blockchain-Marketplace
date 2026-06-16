@@ -5,7 +5,7 @@ import type { User, UserRole } from "@/types";
 
 interface AuthState {
   user: User | null;
-  login: (email: string) => User | null;
+ login: (email: string, password: string) => User | null;
   loginAs: (role: UserRole) => void;
   register: (data: { name: string; email: string; role: UserRole; phone?: string }) => void;
   updateUser: (patch: Partial<Pick<User, "name" | "email" | "phone" | "avatar">>) => void;
@@ -16,12 +16,21 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      login: (email: string) => {
-        const found =
-          MOCK_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase()) ?? MOCK_USERS[0];
-        set({ user: found });
-        return found;
-      },
+     login: (email: string, password: string) => {
+  const found = MOCK_USERS.find(
+    (u) =>
+      u.email.toLowerCase() === email.toLowerCase() &&
+      u.password === password
+  );
+
+  if (!found) return null;
+
+  const { password: _password, ...safeUser } = found;
+
+  set({ user: safeUser });
+
+  return safeUser;
+},
       loginAs: (role: UserRole) => {
         const found = MOCK_USERS.find((u) => u.role === role) ?? MOCK_USERS[0];
         set({ user: found });
