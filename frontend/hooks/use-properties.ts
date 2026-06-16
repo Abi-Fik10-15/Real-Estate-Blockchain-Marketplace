@@ -16,6 +16,8 @@ export function useProperty(id: string) {
     queryKey: ["property", id],
     queryFn: () => api.getProperty(id),
     enabled: !!id,
+    placeholderData: undefined,
+    select: (data) => data || null,
   });
 }
 

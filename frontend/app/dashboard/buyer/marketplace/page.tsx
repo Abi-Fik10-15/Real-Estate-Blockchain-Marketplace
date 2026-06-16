@@ -8,10 +8,10 @@ import { MarketplaceView } from "@/components/marketplace/marketplace-view";
 export default function BuyerMarketplacePage() {
   return (
     <DashboardShell title="Browse Properties" roleLabel="Buyer" nav={BUYER_NAV}>
-      <PageHeader
+      {/* <PageHeader
         title="Property Marketplace"
         description="Search verified listings, compare options, and submit purchase or rental requests."
-      />
+      /> */}
       <MarketplaceView />
     </DashboardShell>
   );

@@ -39,9 +39,9 @@ export function PropertyFiltersPanel({
 }) {
   return (
     <Card className="lg:sticky lg:top-20">
-      <CardContent className="space-y-6 p-5">
+      <CardContent className="space-y-5 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-semibold">
+          <h3 className="flex items-center gap-1.5 font-medium">
             <SlidersHorizontal className="h-4 w-4" /> Filters
           </h3>
           <Button variant="ghost" size="sm" onClick={onReset}>
@@ -49,7 +49,7 @@ export function PropertyFiltersPanel({
           </Button>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label>Location</Label>
           <Input
             placeholder="City or country"
@@ -58,7 +58,7 @@ export function PropertyFiltersPanel({
           />
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <Label>Price range</Label>
             <span className="text-xs text-muted-foreground">
@@ -74,7 +74,7 @@ export function PropertyFiltersPanel({
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label>Listing type</Label>
           <Select
             value={filters.listingType}
@@ -91,7 +91,7 @@ export function PropertyFiltersPanel({
           </Select>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label>Property type</Label>
           <Select value={filters.type} onValueChange={(v) => onChange({ type: v as PropertyType | "all" })}>
             <SelectTrigger>
@@ -107,8 +107,8 @@ export function PropertyFiltersPanel({
           </Select>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1.5">
             <Label>Bedrooms</Label>
             <Select
               value={String(filters.bedrooms)}
@@ -127,7 +127,7 @@ export function PropertyFiltersPanel({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label>Bathrooms</Label>
             <Select
               value={String(filters.bathrooms)}
@@ -148,7 +148,7 @@ export function PropertyFiltersPanel({
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label>Listing status</Label>
           <Select
             value={filters.status}

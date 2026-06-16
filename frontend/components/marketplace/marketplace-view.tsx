@@ -28,13 +28,13 @@ export function MarketplaceView() {
   const patch = (p: Partial<PropertyFilters>) => setFilters((f) => ({ ...f, ...p }));
 
   return (
-    <div className="space-y-8">
-      <div className="rounded-xl border border-border/60 bg-muted/30 p-6">
-        <h2 className="text-2xl font-bold tracking-tight">Browse Properties</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+    <div className="space-y-4">
+      <div className="rounded-xl border border-border bg-primary-50/20 p-4  hover:shadow-sm">
+        {/* <h2 className="text-2xl font-semibold tracking-tight">Browse Properties</h2> */}
+        <p className="text-sm text-primary-600">
           Discover blockchain-verified listings and save your favorites.
         </p>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -61,7 +61,7 @@ export function MarketplaceView() {
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <aside className="hidden lg:block">
           <PropertyFiltersPanel
             filters={filters}
@@ -71,15 +71,15 @@ export function MarketplaceView() {
         </aside>
 
         <div>
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               {isLoading ? "Loading..." : `${data?.length ?? 0} properties found`}
             </p>
-            <div className="flex items-center gap-1 rounded-lg border border-border p-1">
+            <div className="flex items-center gap-1 rounded-md border border-border p-0.5 bg-muted/50">
               <Button
                 variant={view === "grid" ? "secondary" : "ghost"}
                 size="icon"
-                className="h-8 w-8"
+                className="h-7 w-7"
                 onClick={() => setView("grid")}
               >
                 <LayoutGrid className="h-4 w-4" />
@@ -87,7 +87,7 @@ export function MarketplaceView() {
               <Button
                 variant={view === "list" ? "secondary" : "ghost"}
                 size="icon"
-                className="h-8 w-8"
+                className="h-7 w-7"
                 onClick={() => setView("list")}
               >
                 <List className="h-4 w-4" />
@@ -116,13 +116,13 @@ export function MarketplaceView() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 py-16 text-center">
               <SearchX className="h-10 w-10 text-muted-foreground" />
-              <h3 className="mt-4 font-semibold">No properties match your filters</h3>
+              <h3 className="mt-4 text-lg font-semibold">No properties match your filters</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Try adjusting your search or resetting the filters.
               </p>
-              <Button variant="outline" className="mt-4" onClick={() => setFilters(DEFAULT_FILTERS)}>
+              <Button variant="outline" className="mt-3" onClick={() => setFilters(DEFAULT_FILTERS)}>
                 Reset filters
               </Button>
             </div>
