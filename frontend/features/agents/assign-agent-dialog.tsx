@@ -14,27 +14,40 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { mockBlockchain } from "@/services/mock-blockchain";
-import { MOCK_USERS } from "@/services/mock-data";
+import { useAgents } from "@/hooks/use-properties";
+import { usePropertyStore } from "@/store/property-store";
 import { shortenAddress } from "@/lib/utils";
 
-export function AssignAgentDialog({ trigger }: { trigger?: React.ReactNode }) {
+export function AssignAgentDialog({
+  propertyId,
+  currentAgentId,
+  trigger,
+}: {
+  propertyId: string;
+  currentAgentId?: string;
+  trigger?: React.ReactNode;
+}) {
   const [open, setOpen] = React.useState(false);
   const [pendingId, setPendingId] = React.useState<string | null>(null);
-  const [assigned, setAssigned] = React.useState<string | null>("u-agent-1");
-  const agents = MOCK_USERS.filter((u) => u.role === "agent");
+  const [assigned, setAssigned] = React.useState<string | null>(currentAgentId ?? null);
+  const assignAgent = usePropertyStore((s) => s.assignAgent);
+  const { data: agents = [] } = useAgents();
+
+  React.useEffect(() => {
+    setAssigned(currentAgentId ?? null);
+  }, [currentAgentId]);
 
   const toggle = async (agentId: string, wallet: string) => {
     setPendingId(agentId);
     try {
       if (assigned === agentId) {
-        await mockBlockchain.revokeAgent(wallet);
+        await assignAgent(propertyId, null);
         setAssigned(null);
-        toast.success("Agent authorization revoked");
+        toast.success("Agent removed from listing");
       } else {
-        await mockBlockchain.authorizeAgent(wallet);
+        await assignAgent(propertyId, { id: agentId, wallet });
         setAssigned(agentId);
-        toast.success("Agent authorized on-chain");
+        toast.success("Agent assigned to listing");
       }
     } finally {
       setPendingId(null);

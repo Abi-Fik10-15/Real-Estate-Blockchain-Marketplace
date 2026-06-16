@@ -1,0 +1,24 @@
+# Git & env (never bake secrets into images)
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+# Dependencies & build output
+**/node_modules
+**/dist
+**/.next
+**/coverage
+
+# Logs & OS
+**/*.log
+.DS_Store
+.idea
+.vscode
+
+# Legacy / unused roots
+src
+cache
+artifacts
+typechain-types

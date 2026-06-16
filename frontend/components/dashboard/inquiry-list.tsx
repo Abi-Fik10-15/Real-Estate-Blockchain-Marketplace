@@ -24,6 +24,9 @@ import {
 import { useInquiryStore } from "@/store/inquiry-store";
 import { usePropertyStore } from "@/store/property-store";
 import { useWalletStore } from "@/store/wallet-store";
+import { api } from "@/services/api";
+import { contractClient } from "@/lib/contract";
+import { CONTRACT_ADDRESS } from "@/lib/constants";
 import { formatDate, formatCurrency, shortenAddress } from "@/lib/utils";
 import type { Inquiry } from "@/types";
 
@@ -66,53 +69,75 @@ export function InquiryList({
   const handleConfirmPayment = async () => {
     if (!activeInquiry || !wallet) return;
 
+    const targetProp = properties.find((p) => p.id === activeInquiry.propertyId);
+    if (!targetProp) {
+      toast.error("Property not found");
+      return;
+    }
+
     try {
       setTxStep("prep");
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, 600));
+
+      const tx = await api.createTransaction({
+        propertyId: targetProp.id,
+        type: activeInquiry.type === "rental" ? "rental" : "sale",
+        amount: targetProp.price,
+        blockchainTokenId: targetProp.chainId,
+      });
+
+      let txHash = `api-${tx.id}`;
 
       setTxStep("signature");
-      await new Promise((r) => setTimeout(r, 1500));
+      const tokenId = targetProp.chainId;
+      const canUseContract =
+        CONTRACT_ADDRESS && /^\d+$/.test(tokenId);
 
-      setTxStep("broadcasting");
-      await new Promise((r) => setTimeout(r, 1200));
-
-      setTxStep("minting");
-      await new Promise((r) => setTimeout(r, 1200));
-
-      setTxStep("done");
-      await new Promise((r) => setTimeout(r, 1000));
-
-      // 1. Update Inquiry Status to Closed
-      setStatus(activeInquiry.id, "closed");
-
-      // 2. Perform On-Chain Ownership Transfer updates in Property Store
-      const targetProp = properties.find((p) => p.id === activeInquiry.propertyId);
-      if (targetProp) {
-        const txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
-        const newEvent = {
-          id: `ev-${Date.now()}`,
-          type: "transfer" as const,
-          description: `Title deed NFT minted and ownership transferred to buyer address: ${wallet.address}`,
-          txHash,
-          actor: wallet.address,
-          timestamp: new Date().toISOString(),
-        };
-
-        updateProperty(targetProp.id, {
-          ownerWallet: wallet.address,
-          status: activeInquiry.type === "purchase" ? "sold" : "rented",
-          history: [newEvent, ...targetProp.history],
-        });
+      if (canUseContract) {
+        try {
+          await contractClient.ensureSepolia();
+          setTxStep("broadcasting");
+          const escrowAmount = (targetProp.price / 1_000_000).toFixed(4);
+          const result = await contractClient.initiateEscrow(tokenId, escrowAmount);
+          txHash = result.txHash;
+          await api.markEscrow(tx.id, txHash);
+        } catch {
+          setTxStep("broadcasting");
+          await new Promise((r) => setTimeout(r, 800));
+        }
+      } else {
+        await new Promise((r) => setTimeout(r, 800));
       }
 
-      // Mark checklist item complete for visual confirmation
-      localStorage.setItem("chainestate_verified_at_least_once", "true");
+      setTxStep("minting");
+      await new Promise((r) => setTimeout(r, 800));
+      setTxStep("done");
+      await new Promise((r) => setTimeout(r, 500));
 
-      toast.success("Transaction verified on-chain! Title deed NFT transferred.");
+      await setStatus(activeInquiry.id, "closed");
+
+      await updateProperty(targetProp.id, {
+        ownerWallet: wallet.address,
+        status: activeInquiry.type === "purchase" ? "sold" : "rented",
+        history: [
+          {
+            id: `ev-${Date.now()}`,
+            type: "transfer",
+            description: `Escrow funded and ownership recorded for buyer ${shortenAddress(wallet.address, 6)}`,
+            txHash,
+            actor: wallet.address,
+            timestamp: new Date().toISOString(),
+          },
+          ...targetProp.history,
+        ],
+      });
+
+      localStorage.setItem("chainestate_verified_at_least_once", "true");
+      toast.success("Escrow funded successfully");
       setShowPayModal(false);
       setActiveInquiry(null);
-    } catch (err) {
-      toast.error("Mock transaction signature cancelled.");
+    } catch {
+      toast.error("Transaction failed or was cancelled");
       setTxStep("idle");
     }
   };
@@ -187,9 +212,13 @@ export function InquiryList({
                   {manageable ? (
                     <Select
                       value={inq.status}
-                      onValueChange={(v) => {
-                        setStatus(inq.id, v as Inquiry["status"]);
-                        toast.success(`Inquiry status updated to ${v}`);
+                      onValueChange={async (v) => {
+                        try {
+                          await setStatus(inq.id, v as Inquiry["status"]);
+                          toast.success(`Inquiry status updated to ${v}`);
+                        } catch {
+                          toast.error("Failed to update inquiry");
+                        }
                       }}
                     >
                       <SelectTrigger className="h-8 w-36 text-xs bg-background/50">

@@ -15,6 +15,7 @@ import { useInquiryStore } from "@/store/inquiry-store";
 import { useAuthStore } from "@/store/auth-store";
 import { useWalletStore } from "@/store/wallet-store";
 import { formatCurrency, shortenAddress } from "@/lib/utils";
+import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 
 export default function BuyerDashboard() {
   const properties = usePropertyStore((s) => s.properties);
@@ -67,7 +68,7 @@ export default function BuyerDashboard() {
       description: "Bookmark listings you're interested in buying or renting.",
       completed: hasSavedListings,
       actionLabel: "Browse Properties",
-      actionHref: "/",
+      actionHref: BUYER_MARKETPLACE_PATH,
     },
     {
       id: "verify",

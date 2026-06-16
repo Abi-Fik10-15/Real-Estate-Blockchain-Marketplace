@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { WalletConnect } from "@/components/wallet/wallet-connect";
 import { useAuthStore } from "@/store/auth-store";
 import { loginSchema, type LoginValues } from "@/lib/validations";
+import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,13 +25,27 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "sophia@chainestate.io", password: "demo123" },
+    defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = (values: LoginValues) => {
-    const user = login(values.email);
-    toast.success(`Welcome back, ${user?.name ?? "user"}`);
-    router.push(`/dashboard/${user?.role ?? "owner"}`);
+  const onSubmit = async (values: LoginValues) => {
+    try {
+      const user = await login(values.email, values.password);
+      toast.success(`Welcome back, ${user.name}`);
+      const redirectTo =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("redirect")
+          : null;
+      if (redirectTo && redirectTo.startsWith("/")) {
+        router.push(redirectTo);
+      } else if (user.role === "buyer") {
+        router.push(BUYER_MARKETPLACE_PATH);
+      } else {
+        router.push(`/dashboard/${user.role}`);
+      }
+    } catch {
+      toast.error("Invalid email or password");
+    }
   };
 
   return (

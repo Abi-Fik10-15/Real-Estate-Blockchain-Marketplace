@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 import { FadeIn } from "@/components/ui/motion";
 
 export function FinalCTA() {
@@ -53,7 +54,7 @@ export function FinalCTA() {
                     className="w-full sm:w-auto gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-semibold"
                     asChild
                   >
-                    <Link href="/marketplace">
+                    <Link href="/register">
                       Start Verifying <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -63,7 +64,7 @@ export function FinalCTA() {
                     className="w-full sm:w-auto gap-2 border-primary-foreground/20 bg-white/5 text-primary-foreground hover:bg-white/10 font-semibold"
                     asChild
                   >
-                    <Link href="/marketplace">
+                    <Link href={`/login?redirect=${encodeURIComponent(BUYER_MARKETPLACE_PATH)}`}>
                       <ShoppingBag className="h-4 w-4" />
                       Explore Marketplace
                     </Link>

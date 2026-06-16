@@ -45,8 +45,9 @@ export const ADMIN_NAV: NavItem[] = [
 
 export const BUYER_NAV: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard/buyer" },
+  { label: "Browse Properties", icon: ShoppingBag, href: "/dashboard/buyer/marketplace" },
   { label: "Saved Properties", icon: Heart, href: "/dashboard/buyer/saved" },
-  { label: "Purchase Requests", icon: ShoppingBag, href: "/dashboard/buyer/requests" },
+  { label: "My Requests", icon: MessageSquare, href: "/dashboard/buyer/requests" },
   { label: "Verification", icon: ShieldCheck, href: "/dashboard/buyer/verification" },
   { label: "Profile", icon: UserCircle, href: "/dashboard/buyer/profile" },
   { label: "Web3 Sandbox", icon: Activity, href: "/dashboard/sandbox" },

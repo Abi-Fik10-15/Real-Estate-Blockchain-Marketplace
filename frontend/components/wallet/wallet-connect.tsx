@@ -26,6 +26,15 @@ export function WalletConnect({
   const { wallet, isConnecting, connect, disconnect } = useWalletStore();
   const [copied, setCopied] = React.useState(false);
 
+  const handleConnect = async () => {
+    try {
+      await connect();
+      toast.success("Wallet connected on Sepolia");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to connect wallet");
+    }
+  };
+
   const handleCopy = async () => {
     if (!wallet) return;
     await navigator.clipboard.writeText(wallet.address);
@@ -39,10 +48,7 @@ export function WalletConnect({
       <Button
         variant={variant}
         size={size}
-        onClick={() => {
-          connect();
-          toast.promise(Promise.resolve(), { loading: "Connecting wallet..." });
-        }}
+        onClick={handleConnect}
         disabled={isConnecting}
       >
         <WalletIcon className="h-4 w-4" />
@@ -50,6 +56,9 @@ export function WalletConnect({
       </Button>
     );
   }
+
+  const currency =
+    wallet.chainId === 11155111 || wallet.chainId === 1 ? "ETH" : "MATIC";
 
   return (
     <DropdownMenu>
@@ -89,7 +98,9 @@ export function WalletConnect({
             </div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Balance</p>
-              <p className="font-medium">{wallet.balance} MATIC</p>
+              <p className="font-medium">
+                {wallet.balance} {currency}
+              </p>
             </div>
           </div>
         </div>

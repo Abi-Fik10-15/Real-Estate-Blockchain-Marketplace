@@ -1,53 +1,92 @@
+"use client";
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { MOCK_USERS } from "@/services/mock-data";
+import { api } from "@/services/api";
+import { setStoredToken } from "@/lib/api";
 import type { User, UserRole } from "@/types";
 
 interface AuthState {
   user: User | null;
-  login: (email: string) => User | null;
-  loginAs: (role: UserRole) => void;
-  register: (data: { name: string; email: string; role: UserRole; phone?: string }) => void;
-  updateUser: (patch: Partial<Pick<User, "name" | "email" | "phone" | "avatar">>) => void;
+  token: string | null;
+  isHydrating: boolean;
+  login: (email: string, password: string) => Promise<User>;
+  register: (data: {
+    name: string;
+    email: string;
+    password: string;
+    role: UserRole;
+    phone?: string;
+  }) => Promise<User>;
+  hydrateProfile: () => Promise<void>;
+  updateUser: (patch: Partial<Pick<User, "name" | "email" | "phone" | "avatar">>) => Promise<void>;
+  setSession: (token: string, user: User) => void;
   logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
-      login: (email: string) => {
-        const found =
-          MOCK_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase()) ?? MOCK_USERS[0];
-        set({ user: found });
-        return found;
+      token: null,
+      isHydrating: false,
+
+      setSession: (token, user) => {
+        setStoredToken(token);
+        set({ token, user });
       },
-      loginAs: (role: UserRole) => {
-        const found = MOCK_USERS.find((u) => u.role === role) ?? MOCK_USERS[0];
-        set({ user: found });
+
+      login: async (email, password) => {
+        const { accessToken, user } = await api.login(email, password);
+        get().setSession(accessToken, user);
+        return user;
       },
-      register: ({ name, email, role, phone }) => {
-        const user: User = {
-          id: `u-${Date.now()}`,
+
+      register: async ({ name, email, password, role, phone }) => {
+        const { accessToken, user } = await api.register({
           name,
           email,
-          phone,
+          password,
           role,
-          walletAddress: "0x0000000000000000000000000000000000000000",
-          avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(email)}`,
-          status: "active",
-          joinedAt: new Date().toISOString(),
-          verified: false,
-        };
+          phone,
+        });
+        get().setSession(accessToken, user);
+        return user;
+      },
+
+      hydrateProfile: async () => {
+        const { token } = get();
+        if (!token) return;
+        set({ isHydrating: true });
+        try {
+          setStoredToken(token);
+          const user = await api.getProfile();
+          set({ user, isHydrating: false });
+        } catch {
+          get().logout();
+          set({ isHydrating: false });
+        }
+      },
+
+      updateUser: async (patch) => {
+        const user = await api.updateProfile(patch);
         set({ user });
       },
-      updateUser: (patch) => {
-        set((state) => ({
-          user: state.user ? { ...state.user, ...patch } : null,
-        }));
+
+      logout: () => {
+        setStoredToken(null);
+        set({ user: null, token: null });
       },
-      logout: () => set({ user: null }),
     }),
-    { name: "chainestate-auth" }
+    {
+      name: "chainestate-auth",
+      partialize: (state) => ({ user: state.user, token: state.token }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.token) {
+          setStoredToken(state.token);
+          void state.hydrateProfile();
+        }
+      },
+    }
   )
 );

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -27,6 +27,7 @@ import { useProperty } from "@/hooks/use-properties";
 import { useSavedStore } from "@/store/saved-store";
 import { useInquiryStore } from "@/store/inquiry-store";
 import { useAuthStore } from "@/store/auth-store";
+import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const PropertyMap = dynamic(() => import("@/components/property/property-map"), {
@@ -36,10 +37,33 @@ const PropertyMap = dynamic(() => import("@/components/property/property-map"), 
 
 export default function PropertyDetailsPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const { data: property, isLoading } = useProperty(params.id);
   const { isSaved, toggleSaved } = useSavedStore();
   const addInquiry = useInquiryStore((s) => s.add);
   const user = useAuthStore((s) => s.user);
+
+  const marketplaceBackHref =
+    user?.role === "buyer" ? BUYER_MARKETPLACE_PATH : "/#featured-properties";
+
+  const submitInquiry = async (
+    type: "purchase" | "rental" | "question",
+    message: string,
+    successLabel: string
+  ) => {
+    if (!user) {
+      toast.error("Please log in to send an inquiry");
+      router.push("/login");
+      return;
+    }
+    if (!property) return;
+    try {
+      await addInquiry({ propertyId: property.id, type, message });
+      toast.success(successLabel);
+    } catch {
+      toast.error("Failed to send inquiry");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -67,7 +91,7 @@ export default function PropertyDetailsPage() {
           <h1 className="mt-4 text-2xl font-bold">Property not found</h1>
           <p className="mt-2 text-muted-foreground">This listing may have been removed.</p>
           <Button className="mt-6" asChild>
-            <Link href="/marketplace">Back to marketplace</Link>
+            <Link href={marketplaceBackHref}>Back to marketplace</Link>
           </Button>
         </div>
       </Shell>
@@ -91,7 +115,7 @@ export default function PropertyDetailsPage() {
     <Shell>
       <div className="container py-8">
         <Button variant="ghost" size="sm" className="mb-4" asChild>
-          <Link href="/marketplace">
+          <Link href={marketplaceBackHref}>
             <ArrowLeft className="h-4 w-4" /> Back to marketplace
           </Link>
         </Button>
@@ -177,34 +201,26 @@ export default function PropertyDetailsPage() {
                 <Button
                   variant="hero"
                   className="w-full"
-                  onClick={() => {
-                    addInquiry({
-                      propertyId: property.id,
-                      propertyTitle: property.title,
-                      buyerId: user?.id ?? "u-buyer-1",
-                      buyerName: user?.name ?? "Elena Cruz",
-                      type: "question",
-                      message: "Hi, I am interested in this listing and would like to get more information from the agent.",
-                    });
-                    toast.success("Inquiry sent to the agent");
-                  }}
+                  onClick={() =>
+                    submitInquiry(
+                      "question",
+                      "Hi, I am interested in this listing and would like to get more information from the agent.",
+                      "Inquiry sent to the agent"
+                    )
+                  }
                 >
                   <MessageSquare className="h-4 w-4" /> Contact Agent
                 </Button>
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => {
-                    addInquiry({
-                      propertyId: property.id,
-                      propertyTitle: property.title,
-                      buyerId: user?.id ?? "u-buyer-1",
-                      buyerName: user?.name ?? "Elena Cruz",
-                      type: "question",
-                      message: "Hi, I am interested in this listing and would like to directly contact the owner.",
-                    });
-                    toast.success("Inquiry sent to the owner");
-                  }}
+                  onClick={() =>
+                    submitInquiry(
+                      "question",
+                      "Hi, I am interested in this listing and would like to directly contact the owner.",
+                      "Inquiry sent to the owner"
+                    )
+                  }
                 >
                   Contact Owner
                 </Button>
@@ -213,17 +229,13 @@ export default function PropertyDetailsPage() {
                   className="w-full"
                   onClick={() => {
                     const isRent = property.listingType === "rent";
-                    addInquiry({
-                      propertyId: property.id,
-                      propertyTitle: property.title,
-                      buyerId: user?.id ?? "u-buyer-1",
-                      buyerName: user?.name ?? "Elena Cruz",
-                      type: isRent ? "rental" : "purchase",
-                      message: isRent
+                    submitInquiry(
+                      isRent ? "rental" : "purchase",
+                      isRent
                         ? `I would like to submit a rental application for ${formatCurrency(property.price)}/mo.`
                         : `I would like to submit a purchase offer of ${formatCurrency(property.price)}.`,
-                    });
-                    toast.success(isRent ? "Rental request submitted" : "Purchase request submitted");
+                      isRent ? "Rental request submitted" : "Purchase request submitted"
+                    );
                   }}
                 >
                   {property.listingType === "rent" ? "Submit Rental Request" : "Submit Purchase Request"}

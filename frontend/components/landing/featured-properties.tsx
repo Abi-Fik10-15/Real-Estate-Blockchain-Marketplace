@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 import {
   ArrowRight,
   BadgeCheck,
@@ -336,7 +337,7 @@ export function FeaturedProperties() {
             className="gap-2 rounded-lg border-border px-5 text-sm font-semibold"
             asChild
           >
-            <Link href="/marketplace">
+            <Link href={`/login?redirect=${encodeURIComponent(BUYER_MARKETPLACE_PATH)}`}>
               View all properties <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>

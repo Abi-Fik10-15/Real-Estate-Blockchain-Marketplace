@@ -47,7 +47,7 @@ const FEATURES = [
 
 export function Features() {
   return (
-    <section className="border-b border-border/50 py-16 lg:py-20 bg-primary-50/20">
+    <section id="features" className="border-b border-border/50 py-16 lg:py-20 bg-primary-50/20">
       <div className="container mx-auto px-6 lg:px-8">
 
         {/* Header */}

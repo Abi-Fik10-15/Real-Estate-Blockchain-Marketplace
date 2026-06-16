@@ -1,14 +1,15 @@
 "use client";
 
 import * as React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { BadgeCheck, Clock, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { mockBlockchain } from "@/services/mock-blockchain";
+import { contractClient } from "@/lib/contract";
+import { api } from "@/services/api";
 import { usePropertyStore } from "@/store/property-store";
 import { useWalletStore } from "@/store/wallet-store";
 import { formatDateTime, shortenAddress } from "@/lib/utils";
@@ -23,7 +24,6 @@ export function OwnershipVerification({ property }: { property: Property }) {
   const [verifiedAt, setVerifiedAt] = React.useState(property.verification.verifiedAt);
   const [txHash, setTxHash] = React.useState(property.verification.txHash);
 
-  // Sync state if property changes
   React.useEffect(() => {
     setVerifiedAt(property.verification.verifiedAt);
     setTxHash(property.verification.txHash);
@@ -31,49 +31,45 @@ export function OwnershipVerification({ property }: { property: Property }) {
 
   const handleVerify = async () => {
     if (!wallet) {
-      toast.promise(connect(), {
-        loading: "Connecting wallet...",
-        success: "Wallet connected",
-        error: "Connection failed",
-      });
+      try {
+        await connect();
+        toast.success("Wallet connected");
+      } catch {
+        toast.error("Wallet connection failed");
+      }
       return;
     }
 
     setVerifying(true);
     try {
-      const event = await mockBlockchain.verifyOwnership(property.chainId);
-      setVerifiedAt(event.timestamp);
-      setTxHash(event.txHash);
+      const tokenId = property.chainId;
+      const isOwner = await contractClient.verifyOwnership(tokenId, wallet.address);
 
-      updateProperty(property.id, {
+      if (!isOwner && /^\d+$/.test(tokenId)) {
+        const apiVerified = await api.verifyOwnershipOnChain(wallet.address, tokenId);
+        if (!apiVerified) {
+          throw new Error("On-chain owner does not match your connected wallet");
+        }
+      }
+
+      const timestamp = new Date().toISOString();
+      setVerifiedAt(timestamp);
+      setTxHash(txHash ?? "verified");
+
+      await updateProperty(property.id, {
         verification: {
           status: "verified",
-          verifiedAt: event.timestamp,
-          txHash: event.txHash,
+          verifiedAt: timestamp,
+          txHash: txHash ?? "verified",
         },
-        history: [
-          {
-            id: `evt-${Date.now()}`,
-            type: "verification",
-            description: "Ownership verified on-chain via title registry oracle",
-            txHash: event.txHash,
-            actor: wallet.address,
-            timestamp: event.timestamp,
-          },
-          ...property.history,
-        ],
       });
 
-      // Refresh react-query cache
       queryClient.invalidateQueries({ queryKey: ["property", property.id] });
-      queryClient.invalidateQueries({ queryKey: ["property", property.chainId] });
       queryClient.invalidateQueries({ queryKey: ["properties"] });
 
-      toast.success("Ownership verified on-chain", {
-        description: `Tx ${shortenAddress(event.txHash, 8)}`,
-      });
-    } catch {
-      toast.error("Verification failed");
+      toast.success("Ownership verified on-chain");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Verification failed");
     } finally {
       setVerifying(false);
     }

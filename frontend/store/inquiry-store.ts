@@ -1,37 +1,64 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { MOCK_INQUIRIES } from "@/services/mock-data";
+import { api } from "@/services/api";
 import type { Inquiry } from "@/types";
 
 interface InquiryState {
   inquiries: Inquiry[];
-  setStatus: (id: string, status: Inquiry["status"]) => void;
-  add: (inquiry: Omit<Inquiry, "id" | "createdAt" | "status">) => void;
+  isLoading: boolean;
+  fetchInquiries: () => Promise<void>;
+  fetchMine: () => Promise<void>;
+  setStatus: (id: string, status: Inquiry["status"]) => Promise<void>;
+  add: (inquiry: {
+    propertyId: string;
+    type: Inquiry["type"];
+    message: string;
+  }) => Promise<Inquiry>;
+  setInquiries: (inquiries: Inquiry[]) => void;
 }
 
-export const useInquiryStore = create<InquiryState>()(
-  persist(
-    (set) => ({
-      inquiries: MOCK_INQUIRIES,
-      setStatus: (id, status) =>
-        set((s) => ({
-          inquiries: s.inquiries.map((i) => (i.id === id ? { ...i, status } : i)),
-        })),
-      add: (inquiry) =>
-        set((s) => ({
-          inquiries: [
-            {
-              ...inquiry,
-              id: `inq-${Date.now()}`,
-              status: "new",
-              createdAt: new Date().toISOString(),
-            },
-            ...s.inquiries,
-          ],
-        })),
-    }),
-    { name: "chainestate-inquiries" }
-  )
-);
+export const useInquiryStore = create<InquiryState>()((set, get) => ({
+  inquiries: [],
+  isLoading: false,
+
+  setInquiries: (inquiries) => set({ inquiries }),
+
+  fetchInquiries: async () => {
+    set({ isLoading: true });
+    try {
+      const inquiries = await api.getInquiries();
+      set({ inquiries, isLoading: false });
+    } catch {
+      set({ isLoading: false });
+    }
+  },
+
+  fetchMine: async () => {
+    set({ isLoading: true });
+    try {
+      const inquiries = await api.getMyInquiries();
+      set((s) => {
+        const others = s.inquiries.filter(
+          (i) => !inquiries.some((n) => n.id === i.id)
+        );
+        return { inquiries: [...inquiries, ...others], isLoading: false };
+      });
+    } catch {
+      set({ isLoading: false });
+    }
+  },
+
+  setStatus: async (id, status) => {
+    const updated = await api.updateInquiry(id, status);
+    set((s) => ({
+      inquiries: s.inquiries.map((i) => (i.id === id ? updated : i)),
+    }));
+  },
+
+  add: async (inquiry) => {
+    const created = await api.createInquiry(inquiry);
+    set((s) => ({ inquiries: [created, ...s.inquiries] }));
+    return created;
+  },
+}));

@@ -17,12 +17,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { toast } from "sonner";
 import { usePropertyStore } from "@/store/property-store";
 import { formatCurrency, shortenAddress } from "@/lib/utils";
 
 export default function AdminPropertiesPage() {
   const properties = usePropertyStore((s) => s.properties);
+  const approveProperty = usePropertyStore((s) => s.approveProperty);
   const [query, setQuery] = React.useState("");
+  const [pendingId, setPendingId] = React.useState<string | null>(null);
+
+  const handleApprove = async (id: string) => {
+    setPendingId(id);
+    try {
+      await approveProperty(id);
+      toast.success("Listing verified and published");
+    } catch {
+      toast.error("Failed to approve listing");
+    } finally {
+      setPendingId(null);
+    }
+  };
 
   const filtered = properties.filter(
     (p) =>
@@ -56,7 +71,7 @@ export default function AdminPropertiesPage() {
                 <TableHead>Price</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Verification</TableHead>
-                <TableHead className="text-right">View</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -84,9 +99,21 @@ export default function AdminPropertiesPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="ghost" asChild>
-                      <Link href={`/property/${p.id}`}>Open</Link>
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      {p.status === "pending" && (
+                        <Button
+                          size="sm"
+                          variant="hero"
+                          disabled={pendingId === p.id}
+                          onClick={() => handleApprove(p.id)}
+                        >
+                          Approve
+                        </Button>
+                      )}
+                      <Button size="sm" variant="ghost" asChild>
+                        <Link href={`/property/${p.id}`}>Open</Link>
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

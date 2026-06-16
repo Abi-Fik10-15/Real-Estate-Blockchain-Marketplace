@@ -34,15 +34,20 @@ export default function RegisterPage() {
     defaultValues: { role: "owner" },
   });
 
-  const onSubmit = (values: RegisterValues) => {
-    registerUser({
-      name: values.name,
-      email: values.email,
-      role: values.role,
-      phone: values.phone,
-    });
-    toast.success("Account created");
-    router.push(`/dashboard/${values.role}`);
+  const onSubmit = async (values: RegisterValues) => {
+    try {
+      const user = await registerUser({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        role: values.role,
+        phone: values.phone,
+      });
+      toast.success("Account created");
+      router.push(`/dashboard/${user.role}`);
+    } catch {
+      toast.error("Registration failed — email may already be in use");
+    }
   };
 
   return (

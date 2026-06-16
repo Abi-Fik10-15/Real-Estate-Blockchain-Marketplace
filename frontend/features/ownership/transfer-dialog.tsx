@@ -28,9 +28,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { mockBlockchain } from "@/services/mock-blockchain";
+import { contractClient } from "@/lib/contract";
+import { api } from "@/services/api";
 import { usePropertyStore } from "@/store/property-store";
-import { MOCK_USERS } from "@/services/mock-data";
+import { useAgents } from "@/hooks/use-properties";
 import { shortenAddress, cn } from "@/lib/utils";
 import { transferSchema, type TransferValues } from "@/lib/validations";
 
@@ -118,12 +119,14 @@ export function TransferOwnershipDialog({
 
   const watchedAddress = watch("newOwner", "");
 
+  const { data: agents = [] } = useAgents();
+
   const matchedUser = React.useMemo(
     () =>
-      MOCK_USERS.find(
+      agents.find(
         (u) => u.walletAddress.toLowerCase() === watchedAddress?.toLowerCase()
       ),
-    [watchedAddress]
+    [agents, watchedAddress]
   );
 
   const targetProperty = properties.find((p) => p.chainId === propertyChainId);
@@ -145,12 +148,22 @@ export function TransferOwnershipDialog({
   const onConfirm = async () => {
     setPending(true);
     try {
-      const ev = await mockBlockchain.transferOwnership(currentOwner, newOwnerPreview, propertyChainId);
+      let txHash: string;
+      let timestamp: string;
+
+      if (/^\d+$/.test(propertyChainId)) {
+        const result = await contractClient.transferOwnership(propertyChainId, newOwnerPreview);
+        txHash = result.txHash;
+        timestamp = result.timestamp;
+      } else {
+        timestamp = new Date().toISOString();
+        txHash = `local-${Date.now()}`;
+      }
 
       if (targetProperty) {
-        updateProperty(targetProperty.id, {
+        await updateProperty(targetProperty.id, {
           ownerWallet: newOwnerPreview,
-          ownerId: matchedUser ? matchedUser.id : `u-external-${Date.now()}`,
+          ownerId: matchedUser ? matchedUser.id : targetProperty.ownerId,
           agentId: undefined,
           agentWallet: undefined,
           history: [
@@ -158,23 +171,22 @@ export function TransferOwnershipDialog({
               id: `evt-${Date.now()}`,
               type: "transfer",
               description: `Ownership transferred from ${shortenAddress(currentOwner, 6)} to ${shortenAddress(newOwnerPreview, 6)}`,
-              txHash: ev.txHash,
+              txHash,
               actor: newOwnerPreview,
-              timestamp: ev.timestamp,
+              timestamp,
             },
             ...targetProperty.history,
           ],
         });
 
         queryClient.invalidateQueries({ queryKey: ["property", targetProperty.id] });
-        queryClient.invalidateQueries({ queryKey: ["property", targetProperty.chainId] });
         queryClient.invalidateQueries({ queryKey: ["properties"] });
       }
 
-      setTxResult({ txHash: ev.txHash, timestamp: ev.timestamp });
+      setTxResult({ txHash, timestamp });
       setStep("success");
       toast.success("Ownership transferred successfully", {
-        description: `Tx ${shortenAddress(ev.txHash, 8)}`,
+        description: `Tx ${shortenAddress(txHash, 8)}`,
       });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Transfer failed");

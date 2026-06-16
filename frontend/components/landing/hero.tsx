@@ -5,6 +5,7 @@ import { ArrowRight, ShieldCheck, Wallet, BedDouble, Bath, Ruler, Heart, CheckCi
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WalletConnect } from "@/components/wallet/wallet-connect";
+import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 import {
   FadeIn,
   FloatingElement,
@@ -56,7 +57,7 @@ export function Hero() {
                   className="gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-600"
                   asChild
                 >
-                  <Link href="/marketplace">
+                  <Link href={`/login?redirect=${encodeURIComponent(BUYER_MARKETPLACE_PATH)}`}>
                     Explore listings
                     <ArrowRight className="h-4 w-4" />
                   </Link>

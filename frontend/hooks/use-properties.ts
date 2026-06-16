@@ -1,43 +1,49 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { mockApi } from "@/services/mock-api";
+import { api } from "@/services/api";
 import type { PropertyFilters } from "@/types";
 
 export function useProperties(filters?: Partial<PropertyFilters>) {
   return useQuery({
     queryKey: ["properties", filters],
-    queryFn: () => mockApi.getProperties(filters),
+    queryFn: () => api.getProperties(filters),
   });
 }
 
 export function useProperty(id: string) {
   return useQuery({
     queryKey: ["property", id],
-    queryFn: () => mockApi.getProperty(id),
+    queryFn: () => api.getProperty(id),
     enabled: !!id,
   });
 }
 
 export function useStats() {
-  return useQuery({ queryKey: ["stats"], queryFn: () => mockApi.getStats() });
+  return useQuery({ queryKey: ["stats"], queryFn: () => api.getStats() });
 }
 
 export function useAgents() {
-  return useQuery({ queryKey: ["agents"], queryFn: () => mockApi.getAgents() });
+  return useQuery({ queryKey: ["agents"], queryFn: () => api.getAgents() });
 }
 
 export function useUsers() {
-  return useQuery({ queryKey: ["users"], queryFn: () => mockApi.getUsers() });
+  return useQuery({
+    queryKey: ["users"],
+    queryFn: () => api.getUsers(),
+  });
 }
 
 export function useInquiries() {
-  return useQuery({ queryKey: ["inquiries"], queryFn: () => mockApi.getInquiries() });
+  return useQuery({
+    queryKey: ["inquiries"],
+    queryFn: () => api.getInquiries(),
+  });
 }
 
 export function useOwnershipRecords() {
   return useQuery({
     queryKey: ["ownership-records"],
-    queryFn: () => mockApi.getOwnershipRecords(),
+    queryFn: () => api.getOwnershipRecords(),
   });
 }
