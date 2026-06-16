@@ -33,7 +33,7 @@ export default function LoginPage() {
 
   const onSubmit = (values: LoginValues) => {
     const user = login(values.email, values.password);
-
+console.log("LOGGED USER:", user);
     if (!user) {
       toast.error("Invalid email or password");
       return;
