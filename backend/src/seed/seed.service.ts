@@ -16,14 +16,11 @@ export class SeedService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    const count = await this.propertyModel.countDocuments();
-    if (count > 0) return;
-
-    this.logger.log('Seeding demo users and properties…');
+    this.logger.log('Ensuring demo users exist…');
 
     const passwordHash = await bcrypt.hash('DemoPassword123!', 10);
 
-    const [owner, agent, buyer, admin] = await this.userModel.create([
+    const demoUsers: Partial<User>[] = [
       {
         name: 'Sophia Bennett',
         email: 'sophia@chainestate.io',
@@ -67,7 +64,27 @@ export class SeedService implements OnModuleInit {
         kycStatus: 'verified',
         status: 'active',
       },
-    ]);
+    ];
+
+    const [owner, agent] = await Promise.all(
+      demoUsers.map((user) =>
+        this.userModel.findOneAndUpdate(
+          { email: user.email },
+          { $set: user },
+          { new: true, upsert: true },
+        ).orFail().exec(),
+      ),
+    );
+
+    const count = await this.propertyModel.countDocuments();
+    if (count > 0) {
+      this.logger.log(
+        'Demo users ready — login with sophia@chainestate.io / DemoPassword123! (owner), elena@chainestate.io (buyer), admin@chainestate.io (admin)',
+      );
+      return;
+    }
+
+    this.logger.log('Seeding demo properties…');
 
     const images = [
       'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',

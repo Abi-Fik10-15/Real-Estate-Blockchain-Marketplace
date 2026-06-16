@@ -8,10 +8,19 @@ import type { User, UserRole } from "@/types";
 
 interface AuthState {
   user: User | null;
- login: (email: string, password: string) => User | null;
-  loginAs: (role: UserRole) => void;
-  register: (data: { name: string; email: string; role: UserRole; phone?: string }) => void;
-  updateUser: (patch: Partial<Pick<User, "name" | "email" | "phone" | "avatar">>) => void;
+  token: string | null;
+  isHydrating: boolean;
+  login: (email: string, password: string) => Promise<User | null>;
+  loginAs: (role: UserRole) => Promise<User | null>;
+  register: (data: {
+    name: string;
+    email: string;
+    password: string;
+    role: UserRole;
+    phone?: string;
+  }) => Promise<User>;
+  updateUser: (patch: Partial<Pick<User, "name" | "email" | "phone" | "avatar">>) => Promise<void>;
+  hydrateProfile: () => Promise<void>;
   logout: () => void;
 }
 
@@ -19,24 +28,22 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-     login: (email: string, password: string) => {
-  const found = MOCK_USERS.find(
-    (u) =>
-      u.email.toLowerCase() === email.toLowerCase() &&
-      u.password === password
-  );
+      token: null,
+      isHydrating: false,
 
-  if (!found) return null;
+      login: async (email: string, password: string) => {
+        try {
+          const { accessToken, user } = await api.login(email, password);
+          setStoredToken(accessToken);
+          set({ user, token: accessToken });
+          return user;
+        } catch {
+          return null;
+        }
+      },
 
-  const { password: _password, ...safeUser } = found;
-
-  set({ user: safeUser });
-
-  return safeUser;
-},
-      loginAs: (role: UserRole) => {
-        const found = MOCK_USERS.find((u) => u.role === role) ?? MOCK_USERS[0];
-        set({ user: found });
+      loginAs: async (_role: UserRole) => {
+        return null;
       },
 
       register: async ({ name, email, password, role, phone }) => {
@@ -47,7 +54,8 @@ export const useAuthStore = create<AuthState>()(
           role,
           phone,
         });
-        get().setSession(accessToken, user);
+        setStoredToken(accessToken);
+        set({ user, token: accessToken });
         return user;
       },
 
@@ -60,8 +68,8 @@ export const useAuthStore = create<AuthState>()(
           const user = await api.getProfile();
           set({ user, isHydrating: false });
         } catch {
-          get().logout();
-          set({ isHydrating: false });
+          setStoredToken(null);
+          set({ user: null, token: null, isHydrating: false });
         }
       },
 

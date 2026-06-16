@@ -17,8 +17,8 @@ import { SeedModule } from './seed/seed.module';
     AppConfigModule,
     MongooseModule.forRootAsync({
       inject: [AppConfigService],
-      useFactory: (config: AppConfigService) => ({
-        uri: config.mongoUri,
+      useFactory: async (config: AppConfigService) => ({
+        uri: await config.resolveMongoUri(),
       }),
     }),
     SeedModule,

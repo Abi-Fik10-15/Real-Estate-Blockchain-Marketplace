@@ -25,12 +25,12 @@ export class UsersService {
   }
 
   findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email: email.toLowerCase() }).exec();
+    return this.userModel.findOne({ email: email.trim().toLowerCase() }).exec();
   }
 
   findByEmailWithPassword(email: string): Promise<UserDocument | null> {
     return this.userModel
-      .findOne({ email: email.toLowerCase() })
+      .findOne({ email: email.trim().toLowerCase() })
       .select('+passwordHash')
       .exec();
   }

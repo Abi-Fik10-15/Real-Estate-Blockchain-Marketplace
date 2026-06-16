@@ -51,6 +51,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (user.status !== 'active') {
+      throw new UnauthorizedException('Account is suspended');
+    }
+
     return this.buildAuthResponse(user);
   }
 

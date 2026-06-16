@@ -5,6 +5,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import type { UserRole } from '../../users/schemas/user.schema';
 
 export class RegisterDto {
@@ -12,6 +13,9 @@ export class RegisterDto {
   name!: string;
 
   @IsEmail()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   email!: string;
 
   @IsString()
@@ -32,6 +36,9 @@ export class RegisterDto {
 
 export class LoginDto {
   @IsEmail()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   email!: string;
 
   @IsString()

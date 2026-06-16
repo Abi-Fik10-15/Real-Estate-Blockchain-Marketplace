@@ -4,22 +4,50 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, ShieldCheck, UserCheck } from "lucide-react";
+import { ArrowRight, Building2, Home, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/store/auth-store";
 import { registerSchema, type RegisterValues } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
 const ROLES = [
-  { value: "owner", label: "Property Owner", icon: Building2 },
-  { value: "agent", label: "Property Agent", icon: UserCheck },
-  { value: "buyer", label: "Buyer / Renter", icon: ShieldCheck },
+  {
+    value: "owner",
+    label: "Owner",
+    description: "List and manage properties",
+    icon: Building2,
+  },
+  {
+    value: "agent",
+    label: "Agent",
+    description: "Represent listings",
+    icon: UserCheck,
+  },
+  {
+    value: "buyer",
+    label: "Buyer",
+    description: "Browse and purchase",
+    icon: Home,
+  },
 ] as const;
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="text-xs text-destructive">{message}</p>;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -36,27 +64,31 @@ export default function RegisterPage() {
 
   const onSubmit = async (values: RegisterValues) => {
     try {
-      const user = await registerUser({
-        name: values.name,
-        email: values.email,
-        password: values.password,
-        role: values.role,
-        phone: values.phone,
-      });
-      toast.success("Account created");
-      router.push(`/dashboard/${user.role}`);
+      await registerUser(values);
+      toast.success("Account created. Please sign in to continue.");
+      router.push("/login");
     } catch {
-      toast.error("Registration failed — email may already be in use");
+      toast.error("Registration failed — email may already be in use.");
     }
   };
 
   return (
-    <AuthShell title="Create your account" subtitle="Choose your role to get started on ChainEstate.">
+   <div className="flex items-center justify-center min-h-screen">
       <Card>
-        <CardContent className="p-6">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-2xl font-bold text-primary-500">Join ChainEstate</CardTitle>
+          <CardDescription>
+            Choose the role that best describes how you'll use the marketplace.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="pt-4">
+          <Separator className="mb-4" />
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Role selector */}
             <div className="space-y-2">
-              <Label>I am a</Label>
+              <Label>Account type</Label>
               <Controller
                 control={control}
                 name="role"
@@ -68,72 +100,114 @@ export default function RegisterPage() {
                         key={r.value}
                         onClick={() => field.onChange(r.value)}
                         className={cn(
-                          "flex flex-col items-center gap-2 rounded-lg border p-3 text-center text-xs font-medium transition-all",
+                          "flex flex-col items-start gap-1 rounded-md border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                           field.value === r.value
-                            ? "border-primary bg-primary/5 text-foreground"
-                            : "border-border text-muted-foreground hover:border-primary/50"
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/10"
+                            : "border-border bg-background hover:border-primary/40 hover:bg-primary/5"
                         )}
                       >
-                        <r.icon className="h-5 w-5" />
-                        {r.label}
+                        <span
+                          className={cn(
+                            "mb-1 flex h-7 w-7 items-center justify-center rounded-md border transition-colors",
+                            field.value === r.value
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-muted text-muted-foreground group-hover:border-primary/40 group-hover:text-primary"
+                          )}
+                        >
+                          <r.icon className="h-4 w-4" />
+                        </span>
+                        <span className="text-sm font-medium text-foreground">{r.label}</span>
+                        <span className="text-xs leading-snug text-muted-foreground">
+                          {r.description}
+                        </span>
                       </button>
                     ))}
                   </div>
                 )}
               />
-              {errors.role && <p className="text-xs text-destructive">{errors.role.message}</p>}
+              <FieldError message={errors.role?.message} />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" placeholder="Jane Doe" {...register("name")} />
-              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" {...register("email")} />
-              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" placeholder="+1 555 000 0000" {...register("phone")} />
-              {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" {...register("password")} />
-                {errors.password && (
-                  <p className="text-xs text-destructive">{errors.password.message}</p>
-                )}
+            {/* Name + Phone */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="name">Full name</Label>
+                <Input id="name" autoComplete="name" placeholder="Jane Doe" {...register("name")} />
+                <FieldError message={errors.name?.message} />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="phone">Phone</Label>
+                <Input id="phone" autoComplete="tel" placeholder="+1 555 000 0000" {...register("phone")} />
+                <FieldError message={errors.phone?.message} />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                {...register("email")}
+              />
+              <FieldError message={errors.email?.message} />
+            </div>
+
+            {/* Password + Confirm */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Min. 8 characters"
+                  {...register("password")}
+                />
+                <FieldError message={errors.password?.message} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword">Confirm password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
-                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  placeholder="Repeat password"
                   {...register("confirmPassword")}
                 />
-                {errors.confirmPassword && (
-                  <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
-                )}
+                <FieldError message={errors.confirmPassword?.message} />
               </div>
             </div>
 
-            <Button type="submit" variant="hero" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Creating account..." : "Create Account"}
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                "Creating account…"
+              ) : (
+                <>
+                  Create account
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </Button>
-          </form>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="text-center text-xs text-muted-foreground">
+              By creating an account you agree to use ChainEstate for verified property
+              discovery and blockchain-backed transaction workflows.
+            </p>
+          </form>
+        </CardContent>
+
+        <CardFooter className="justify-center border-t bg-muted/30 py-4">
+          <p className="text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/login" className="font-medium text-primary hover:underline">
               Sign in
             </Link>
           </p>
-        </CardContent>
+        </CardFooter>
       </Card>
-    </AuthShell>
+      </div>
   );
 }
