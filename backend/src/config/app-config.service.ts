@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Wallet, ethers } from 'ethers';
 import mongoose from 'mongoose';
@@ -7,17 +7,8 @@ const PLACEHOLDER_PATTERN =
   /your_|YOUR_|change-me|placeholder|example|xxx|<.*>/i;
 
 @Injectable()
-export class AppConfigService implements OnModuleDestroy {
-  private readonly logger = new Logger(AppConfigService.name);
-  private memoryMongoServer?: { getUri(): string; stop(): Promise<boolean> };
-
+export class AppConfigService {
   constructor(private readonly config: ConfigService) {}
-
-  async onModuleDestroy() {
-    if (this.memoryMongoServer) {
-      await this.memoryMongoServer.stop();
-    }
-  }
 
   get port(): number {
     return this.config.get<number>('PORT', 3001);
@@ -34,15 +25,7 @@ export class AppConfigService implements OnModuleDestroy {
     return this.config.get<string>('NODE_ENV', 'development');
   }
 
-  get useMemoryMongo(): boolean {
-    return this.config.get<string>('MONGODB_USE_MEMORY', 'false') === 'true';
-  }
-
   async resolveMongoUri(): Promise<string> {
-    if (this.useMemoryMongo) {
-      return this.startMemoryMongo('MONGODB_USE_MEMORY=true');
-    }
-
     if (this.nodeEnv === 'production') {
       return this.mongoUri;
     }
@@ -51,27 +34,23 @@ export class AppConfigService implements OnModuleDestroy {
       return this.mongoUri;
     }
 
-    return this.startMemoryMongo(`Could not connect to ${this.mongoUri}`);
+    throw new Error(
+      `Cannot connect to MongoDB at ${this.mongoUri}. Start MongoDB (e.g. docker compose up in backend/) or update MONGODB_URI in .env`,
+    );
   }
 
   private async canConnectToMongo(uri: string): Promise<boolean> {
     try {
-      const connection = await mongoose.createConnection(uri, {
-        serverSelectionTimeoutMS: 1_000,
-      }).asPromise();
+      const connection = await mongoose
+        .createConnection(uri, {
+          serverSelectionTimeoutMS: 1_000,
+        })
+        .asPromise();
       await connection.close();
       return true;
     } catch {
       return false;
     }
-  }
-
-  private async startMemoryMongo(reason: string): Promise<string> {
-    const { MongoMemoryServer } = await import('mongodb-memory-server');
-    this.memoryMongoServer = await MongoMemoryServer.create();
-    const uri = this.memoryMongoServer.getUri();
-    this.logger.warn(`${reason}; using in-memory MongoDB at ${uri}`);
-    return uri;
   }
 
   get jwtSecret(): string {
