@@ -40,7 +40,7 @@ export default function BuyerSavedPage() {
                   Explore available properties in the catalog and save favorites to track their contract status here.
                 </p>
                 <Button variant="default" className="mt-2 text-md py-2 px-8" asChild>
-                  <Link href="/">Browse Listings</Link>
+                  <Link href="/dashboard/buyer/marketplace">Browse Listings</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -125,7 +125,7 @@ export default function BuyerSavedPage() {
                         </div>
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline" className="h-7 px-2.5 text-[10px] font-semibold" asChild>
-                            <Link href={`/property/${p.id}`}>
+                            <Link href={`/dashboard/buyer/marketplace/property/${p.id}`}>
                               View
                             </Link>
                           </Button>

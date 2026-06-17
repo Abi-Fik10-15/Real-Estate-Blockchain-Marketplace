@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Wallet, ethers } from 'ethers';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 
 const PLACEHOLDER_PATTERN =
@@ -8,6 +9,9 @@ const PLACEHOLDER_PATTERN =
 
 @Injectable()
 export class AppConfigService {
+  private readonly logger = new Logger(AppConfigService.name);
+  private memoryMongoServer?: MongoMemoryServer;
+
   constructor(private readonly config: ConfigService) {}
 
   get port(): number {
@@ -25,17 +29,27 @@ export class AppConfigService {
     return this.config.get<string>('NODE_ENV', 'development');
   }
 
+  get useMemoryMongo(): boolean {
+    return this.getBooleanEnv('MONGODB_USE_MEMORY', false);
+  }
+
   async resolveMongoUri(): Promise<string> {
     if (this.nodeEnv === 'production') {
       return this.mongoUri;
+    }
+
+    if (this.useMemoryMongo) {
+      return this.getMemoryMongoUri(
+        'MONGODB_USE_MEMORY=true is enabled for local development',
+      );
     }
 
     if (await this.canConnectToMongo(this.mongoUri)) {
       return this.mongoUri;
     }
 
-    throw new Error(
-      `Cannot connect to MongoDB at ${this.mongoUri}. Start MongoDB (e.g. docker compose up in backend/) or update MONGODB_URI in .env`,
+    return this.getMemoryMongoUri(
+      `Cannot connect to MongoDB at ${this.mongoUri}; falling back to in-memory MongoDB`,
     );
   }
 
@@ -51,6 +65,34 @@ export class AppConfigService {
     } catch {
       return false;
     }
+  }
+
+  private async getMemoryMongoUri(reason: string): Promise<string> {
+    if (!this.memoryMongoServer) {
+      this.logger.warn(reason);
+      this.memoryMongoServer = await MongoMemoryServer.create({
+        instance: {
+          dbName: this.getMongoDbName(),
+        },
+      });
+      this.logger.log(
+        `Using in-memory MongoDB for development: ${this.memoryMongoServer.getUri()}`,
+      );
+    }
+    return this.memoryMongoServer.getUri();
+  }
+
+  private getMongoDbName(): string {
+    const match = this.mongoUri.match(/\/([^/?]+)(\?|$)/);
+    return match?.[1] || 'chainestate';
+  }
+
+  private getBooleanEnv(key: string, defaultValue: boolean): boolean {
+    const rawValue = this.config.get<string>(key);
+    if (!rawValue) {
+      return defaultValue;
+    }
+    return ['1', 'true', 'yes', 'on'].includes(rawValue.toLowerCase());
   }
 
   get jwtSecret(): string {

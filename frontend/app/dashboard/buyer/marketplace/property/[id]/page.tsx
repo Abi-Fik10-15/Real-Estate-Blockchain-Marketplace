@@ -12,18 +12,19 @@ import {
   Bath,
   BedDouble,
   Building2,
+  Clock3,
   Heart,
   MapPin,
   Maximize,
   MessageSquare,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { PropertyGallery } from "@/components/property/property-gallery";
 import { OwnershipVerification } from "@/components/property/ownership-verification";
 import { useProperty } from "@/hooks/use-properties";
@@ -91,7 +92,7 @@ export default function PropertyDetailsPage() {
       <DashboardShell title="Property Detail" roleLabel="Buyer" nav={BUYER_NAV}>
         <div className="container flex flex-col items-center py-24 text-center">
           <Building2 className="h-12 w-12 text-muted-foreground" />
-          <h1 className="mt-4 text-2xl font-bold">Property not found</h1>
+          <h1 className="mt-4 text-2xl font-bold text-primary-600">Property not found</h1>
           <p className="mt-2 text-muted-foreground">This listing may have been removed.</p>
           <Button className="mt-6" asChild>
             <Link href={marketplaceBackHref}>Back to marketplace</Link>
@@ -116,80 +117,89 @@ export default function PropertyDetailsPage() {
 
   return (
     <DashboardShell title="Property Detail" roleLabel="Buyer" nav={BUYER_NAV}>
-      <div>
-        <Button variant="ghost" size="sm" className="mb-4" asChild>
-          <Link href={marketplaceBackHref}>
-            <ArrowLeft className="h-4 w-4" /> Back to marketplace
-          </Link>
-        </Button>
-
+      <div className="mx-auto w-full max-w-7xl space-y-6">
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main column */}
           <div className="space-y-4 lg:col-span-2">
-
-             <Card className="border shadow-none p-4" >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={property.listingType === "rent" ? "secondary" : "default"}>
-                      For {property.listingType === "rent" ? "Rent" : "Sale"}
-                    </Badge>
-                    <Badge variant="outline" className="capitalize">
-                      {property.status}
-                    </Badge>
-                  </div>
-                  <h1 className="mt-2 text-2xl font-bold tracking-tight">{property.title}</h1>
-                  <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" /> {property.location.address}
-                  </p>
-                </div>
-                <div className="text-left sm:text-right w-full sm:w-auto">
-                  <p className="text-3xl font-bold text-primary">{priceLabel}</p>
+            <Card className="border-border/80 shadow-none">
+              <CardContent className="p-4 sm:p-5">
+                {/* Top bar: back link + badges + save */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Button variant="ghost" size="sm" className="-ml-2 h-8 text-muted-foreground hover:text-foreground" asChild>
+                    <Link href={marketplaceBackHref}>
+                      <ArrowLeft className="h-3.5 w-3.5" /> Back to marketplace
+                    </Link>
+                  </Button>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    className="mt-2 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
+                    className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
                     onClick={() => toggleSaved(property.id)}
                   >
-                    <Heart className={cn("h-4 w-4", saved && "fill-destructive text-destructive")} />
+                    <Heart className={cn("h-3.5 w-3.5", saved && "fill-destructive text-destructive")} />
                     {saved ? "Saved" : "Save"}
                   </Button>
                 </div>
-              </div>
-                          </Card>
-            <PropertyGallery images={property.images} title={property.title} />
 
-           
+                <Separator className="my-3" />
 
+                {/* Title row */}
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 space-y-1">
+                    <h1 className="text-xl font-semibold tracking-tight text-primary-600 sm:text-2xl">{property.title}</h1>
+                    <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
+                      {property.location.address}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      <Badge variant="outline" className="rounded border-primary/40 bg-primary/5 px-2 py-0.5 text-xs text-primary">
+                        For {property.listingType === "rent" ? "Rent" : "Sale"}
+                      </Badge>
+                      <Badge variant="outline" className="rounded px-2 py-0.5 text-xs capitalize">
+                        {property.status}
+                      </Badge>
+                      <Badge variant="outline" className="rounded px-2 py-0.5 text-xs capitalize">
+                        {property.type}
+                      </Badge>
+                    </div>
+                    <p className="text-2xl font-bold text-primary sm:text-3xl">{priceLabel}</p>
+                  </div>
+                </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {stats.map((s) => (
-                  <Card
-                    key={s.label}
-                    className="border border-border shadow-none transition-all hover:scale-[1.02] duration-300"
-                  >
-                    <CardContent className="flex flex-col items-center gap-1 p-3 text-center">
-                      <s.icon className="h-5 w-5 text-primary" />
-                      <span className="text-sm font-semibold">{s.value}</span>
-                      <span className="text-xs text-muted-foreground">{s.label}</span>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                <Separator className="my-3" />
 
-            <Card className="border shadow-none">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Description</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="leading-relaxed text-muted-foreground">{property.description}</p>
+                {/* Stats row */}
+                <div className="grid grid-cols-4 divide-x divide-border">
+                  {stats.map((s) => (
+                    <div key={s.label} className="flex flex-col items-center gap-1 px-3 py-2 first:pl-0 last:pr-0">
+                      <span className="text-sm font-semibold capitalize text-primary-500 leading-tight">{s.value}</span>
+                      <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator className="my-3" />
+
+                {/* Description */}
+                <p className="text-sm leading-relaxed text-muted-foreground">{property.description}</p>
               </CardContent>
             </Card>
 
-            <Card className="border shadow-none">
+            <Card className="border-border/80 shadow-none">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <MapPin className="h-5 w-5 text-primary" /> Location
+                <CardTitle className="text-base text-primary-600">Photo Gallery</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PropertyGallery images={property.images} title={property.title} />
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/80 shadow-none">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base text-primary-600">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Location
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -200,18 +210,17 @@ export default function PropertyDetailsPage() {
             </Card>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:sticky lg:top-20 lg:h-fit">
             <OwnershipVerification property={property} />
 
-            <Card className="border shadow-none">
+            <Card className="border-border/80 shadow-none">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Interested?</CardTitle>
+                <CardTitle className="text-base text-primary-600">Interested in this property?</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button
                   variant="outline"
-                  className="w-full border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
+                  className="w-full justify-start gap-2"
                   onClick={() =>
                     submitInquiry(
                       "question",
@@ -220,11 +229,12 @@ export default function PropertyDetailsPage() {
                     )
                   }
                 >
-                  <MessageSquare className="h-4 w-4" /> Contact Agent
+                  <MessageSquare className="h-4 w-4" />
+                  Contact Agent
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full hover:border-primary/50 hover:text-primary"
+                  className="w-full justify-start gap-2"
                   onClick={() =>
                     submitInquiry(
                       "question",
@@ -233,11 +243,12 @@ export default function PropertyDetailsPage() {
                     )
                   }
                 >
+                  <Building2 className="h-4 w-4" />
                   Contact Owner
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full hover:border-primary/50 hover:text-primary"
+                  className="w-full justify-start gap-2"
                   onClick={() => {
                     const isRent = property.listingType === "rent";
                     submitInquiry(
@@ -249,27 +260,35 @@ export default function PropertyDetailsPage() {
                     );
                   }}
                 >
+                  <ShieldCheck className="h-4 w-4" />
                   {property.listingType === "rent" ? "Submit Rental Request" : "Submit Purchase Request"}
                 </Button>
               </CardContent>
             </Card>
 
-            <Card className="border shadow-none">
+            <Card className="border-border/80 shadow-none">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Verification History</CardTitle>
+                <CardTitle className="text-base text-primary-600">Verification History</CardTitle>
               </CardHeader>
               <CardContent>
-                <ol className="relative space-y-4 border-l border-border pl-5">
-                  {property.history.map((ev) => (
-                    <li key={ev.id} className="relative">
-                      <span className="absolute -left-[1.45rem] top-1 h-2.5 w-2.5 rounded-full bg-primary" />
-                      <p className="text-sm font-medium">{ev.description}</p>
-                      <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                        {ev.txHash.slice(0, 18)}…
-                      </p>
-                    </li>
-                  ))}
-                </ol>
+                {property.history.length === 0 ? (
+                  <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                    No verification events recorded yet.
+                  </div>
+                ) : (
+                  <ol className="relative space-y-4 border-l border-border pl-5">
+                    {property.history.map((ev) => (
+                      <li key={ev.id} className="relative">
+                        <span className="absolute -left-[1.45rem] top-1 h-2.5 w-2.5 rounded-full bg-primary" />
+                        <p className="text-sm font-medium">{ev.description}</p>
+                        <p className="mt-1 flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                          <Clock3 className="h-3.5 w-3.5" />
+                          {ev.txHash.slice(0, 18)}…
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                )}
               </CardContent>
             </Card>
           </div>
