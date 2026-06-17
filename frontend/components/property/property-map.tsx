@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import type { GeoLocation } from "@/types";
@@ -22,9 +23,36 @@ export default function PropertyMap({
   location: GeoLocation;
   title: string;
 }) {
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+
+  const hasValidCoordinates =
+    Number.isFinite(location.lat) &&
+    Number.isFinite(location.lng) &&
+    !(location.lat === 0 && location.lng === 0);
+
+  if (!isMounted) {
+    return <div className="h-full w-full bg-muted/30" />;
+  }
+
+  if (!hasValidCoordinates) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-muted/30 text-sm text-muted-foreground">
+        Map preview unavailable for this listing.
+      </div>
+    );
+  }
+
+  const center: [number, number] = [location.lat, location.lng];
+
   return (
     <MapContainer
-      center={[location.lat, location.lng]}
+      key={`${location.lat}-${location.lng}-${title}`}
+      center={center}
       zoom={12}
       scrollWheelZoom={false}
       style={{ height: "100%", width: "100%" }}
@@ -33,7 +61,7 @@ export default function PropertyMap({
         attribution='&copy; OpenStreetMap contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <Marker position={[location.lat, location.lng]} icon={icon}>
+      <Marker position={center} icon={icon}>
         <Popup>
           <strong>{title}</strong>
           <br />

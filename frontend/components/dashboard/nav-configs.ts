@@ -40,9 +40,10 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard/admin" },
   { label: "Users", icon: Users, href: "/dashboard/admin/users" },
   { label: "Properties", icon: Building2, href: "/dashboard/admin/properties" },
-  { label: "Ownership Records", icon: ShieldCheck, href: "/dashboard/admin/records" },
-  { label: "Reports", icon: BarChart3, href: "/dashboard/admin/reports" },
-  { label: "Web3 Sandbox", icon: Activity, href: "/dashboard/sandbox" },
+  { label: "Transactions", icon: ArrowLeftRight, href: "/dashboard/sandbox" },
+  { label: "Reports & Analytics", icon: BarChart3, href: "/dashboard/admin/reports" },
+  { label: "KYC & Verification", icon: ShieldCheck, href: "/dashboard/admin/records" },
+  { label: "System Logs", icon: Activity, href: "/dashboard/sandbox" },
 ];
 
 export const BUYER_NAV: NavItem[] = [

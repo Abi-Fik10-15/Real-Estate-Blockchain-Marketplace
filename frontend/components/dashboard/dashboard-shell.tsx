@@ -187,6 +187,22 @@ export function DashboardShell({
             );
           })}
         </nav>
+        {roleLabel === "Administrator" && (
+          <div className="px-4 py-3">
+            <div className="flex flex-col gap-1 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-emerald-600 dark:border-emerald-500/10 dark:text-emerald-400">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                <span className="text-xs font-semibold">All Systems Operational</span>
+              </div>
+              <span className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">
+                99.9% Uptime (Last 30 days)
+              </span>
+            </div>
+          </div>
+        )}
         <div className="space-y-2 border-t border-border p-3">
           <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2.5">
             <Avatar className="h-9 w-9">

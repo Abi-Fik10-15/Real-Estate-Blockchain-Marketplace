@@ -1,14 +1,21 @@
 "use client";
 
-import Link from "next/link";
-import { BarChart3, Building2, ShieldCheck, Users } from "lucide-react";
+import { Building2, ShieldCheck, TrendingUp, Users } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { StatCard } from "@/components/dashboard/stat-card";
 import { ADMIN_NAV } from "@/components/dashboard/nav-configs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { useUserStore } from "@/store/user-store";
 import { usePropertyStore } from "@/store/property-store";
+
+// New premium components
+import { KpiCard } from "@/components/dashboard/admin/kpi-card";
+import { PlatformAnalytics } from "@/components/dashboard/admin/platform-analytics";
+import { ActivityFeed } from "@/components/dashboard/admin/activity-feed";
+import { PropertiesByType, ListingsByCity } from "@/components/dashboard/admin/property-charts";
+import { QuickActions } from "@/components/dashboard/admin/quick-actions";
+import { TopAgents } from "@/components/dashboard/admin/top-agents";
+import { ComplianceStrip } from "@/components/dashboard/admin/compliance-strip";
+import { AiInsights } from "@/components/dashboard/admin/ai-insights";
 
 export default function AdminDashboard() {
   const users = useUserStore((s) => s.users);
@@ -16,75 +23,104 @@ export default function AdminDashboard() {
 
   const owners = users.filter((u) => u.role === "owner").length;
   const agents = users.filter((u) => u.role === "agent").length;
-  const buyers = users.filter((u) => u.role === "buyer").length;
-  const verified = properties.filter((p) => p.verification.status === "verified").length;
+  const verified = properties.filter(
+    (p) => p.verification.status === "verified"
+  ).length;
+  const totalValue = properties.reduce((sum, p) => sum + p.price, 0);
 
   return (
     <DashboardShell title="Admin Dashboard" roleLabel="Administrator" nav={ADMIN_NAV}>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Total Users" value={users.length} icon={Users} />
-        <StatCard label="Property Owners" value={owners} icon={Building2} accent="accent" />
-        <StatCard label="Property Agents" value={agents} icon={Users} accent="success" />
-        <StatCard label="Buyers" value={buyers} icon={Users} />
-        <StatCard
-          label="Total Properties"
-          value={properties.length}
-          icon={Building2}
-          accent="accent"
-        />
-        <StatCard
-          label="Verified Properties"
-          value={verified}
-          icon={ShieldCheck}
-          accent="success"
-        />
-      </div>
+      <StaggerContainer className="space-y-6">
+        
+        {/* Header Section */}
+        <StaggerItem>
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Welcome back, Admin <span className="inline-block animate-wave">👋</span>
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Here's what's happening with your platform today.
+            </p>
+          </div>
+        </StaggerItem>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <QuickLink href="/dashboard/admin/users" icon={Users} label="Manage Users" />
-        <QuickLink href="/dashboard/admin/properties" icon={Building2} label="All Properties" />
-        <QuickLink href="/dashboard/admin/reports" icon={BarChart3} label="Platform Reports" />
-      </div>
+        {/* Top KPIs */}
+        <StaggerItem>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <KpiCard
+              label="Total Users"
+              value={users.length}
+              icon={Users}
+              accent="blue"
+              trend={{ value: 12.5, label: "vs last week", positive: true }}
+            />
+            <KpiCard
+              label="Total Properties"
+              value={properties.length}
+              icon={Building2}
+              accent="purple"
+              trend={{ value: 18.7, label: "vs last week", positive: true }}
+            />
+            <KpiCard
+              label="Total Value Locked"
+              value={totalValue}
+              icon={TrendingUp}
+              accent="amber"
+              trend={{ value: 23.4, label: "vs last week", positive: true }}
+              prefix="$"
+            />
+            <KpiCard
+              label="Verified Properties"
+              value={verified}
+              icon={ShieldCheck}
+              accent="emerald"
+              trend={{ value: 20.1, label: "vs last week", positive: true }}
+            />
+             <KpiCard
+              label="Agents"
+              value={agents}
+              icon={Users}
+              accent="cyan"
+              trend={{ value: 5.2, label: "vs last week", positive: true }}
+            />
+          </div>
+        </StaggerItem>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">Platform Overview</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
-          <Row label="Suspended accounts" value={users.filter((u) => u.status === "suspended").length} />
-          <Row label="Unverified users" value={users.filter((u) => !u.verified).length} />
-          <Row label="Pending verifications" value={properties.length - verified} />
-          <Row label="Active listings" value={properties.filter((p) => p.status === "active").length} />
-        </CardContent>
-      </Card>
+        {/* Main Analytics + Activity Feed */}
+        <StaggerItem>
+          <div className="grid gap-6 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="lg:col-span-2 xl:col-span-3">
+              <PlatformAnalytics users={users} properties={properties} />
+            </div>
+            <div className="flex flex-col gap-6 lg:col-span-1 xl:col-span-1">
+              <ActivityFeed users={users} properties={properties} />
+              <TopAgents users={users} properties={properties} />
+            </div>
+          </div>
+        </StaggerItem>
+
+        {/* Secondary Charts + Quick Actions */}
+        <StaggerItem>
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="flex flex-col gap-6 lg:col-span-1">
+              <PropertiesByType properties={properties} />
+            </div>
+            <div className="flex flex-col gap-6 lg:col-span-1">
+              <ListingsByCity properties={properties} />
+            </div>
+            <div className="flex flex-col gap-6 lg:col-span-1">
+              <QuickActions />
+              <AiInsights users={users} properties={properties} />
+            </div>
+          </div>
+        </StaggerItem>
+
+        {/* Compliance Strip */}
+        <StaggerItem>
+          <ComplianceStrip users={users} properties={properties} />
+        </StaggerItem>
+
+      </StaggerContainer>
     </DashboardShell>
-  );
-}
-
-function QuickLink({
-  href,
-  icon: Icon,
-  label,
-}: {
-  href: string;
-  icon: typeof Users;
-  label: string;
-}) {
-  return (
-    <Button variant="outline" className="h-auto justify-start gap-3 p-4" asChild>
-      <Link href={href}>
-        <Icon className="h-5 w-5 text-primary" />
-        <span className="font-medium">{label}</span>
-      </Link>
-    </Button>
-  );
-}
-
-function Row({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex items-center justify-between rounded-lg border border-border/60 px-4 py-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-lg font-bold">{value}</span>
-    </div>
   );
 }

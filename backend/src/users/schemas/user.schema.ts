@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type UserRole = 'buyer' | 'owner' | 'agent' | 'admin';
 export type KycStatus = 'pending' | 'verified' | 'rejected';
@@ -39,6 +39,9 @@ export class User {
 
   @Prop({ enum: ['active', 'suspended'], default: 'active' })
   status!: 'active' | 'suspended';
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Property' }], default: [] })
+  savedPropertyIds!: Types.ObjectId[];
 }
 
 export type UserDocument = HydratedDocument<User>;
