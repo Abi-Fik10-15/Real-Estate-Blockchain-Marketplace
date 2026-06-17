@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, LogOut, ShieldCheck } from "lucide-react";
+import { Bell, LogOut, ShieldCheck, Search, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WalletConnect } from "@/components/wallet/wallet-connect";
@@ -98,6 +98,22 @@ export function DashboardShell({
             );
           })}
         </nav>
+        {roleLabel === "Administrator" && (
+          <div className="px-4 py-3">
+            <div className="flex flex-col gap-1 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-emerald-600 dark:border-emerald-500/10 dark:text-emerald-400">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                <span className="text-xs font-semibold">All Systems Operational</span>
+              </div>
+              <span className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">
+                99.9% Uptime (Last 30 days)
+              </span>
+            </div>
+          </div>
+        )}
         <div className="space-y-2 border-t border-border p-3">
           <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2.5">
             <Avatar className="h-9 w-9">
@@ -134,7 +150,25 @@ export function DashboardShell({
               </div>
             </div>
           </div>
+          <div className="hidden flex-1 items-center justify-center px-6 lg:flex">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search transactions, users, or properties... (Press '/' to focus)"
+                className="h-9 w-full rounded-md border border-border/60 bg-muted/50 pl-9 pr-4 text-sm outline-none transition-all focus:border-primary focus:bg-background focus:ring-1 focus:ring-primary/20"
+                disabled
+              />
+              <div className="absolute right-2 top-2 hidden h-5 items-center gap-1 rounded border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex">
+                <span className="text-xs">⌘</span>K
+              </div>
+            </div>
+          </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div className="hidden h-9 items-center gap-2 rounded-md border border-border/60 bg-card px-3 text-sm font-medium text-muted-foreground sm:flex">
+              <Calendar className="h-4 w-4" />
+              <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            </div>
             <Button
               variant="ghost"
               size="icon"
