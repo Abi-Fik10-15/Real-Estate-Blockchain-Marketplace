@@ -19,7 +19,7 @@ import type { NavItem } from "@/components/dashboard/dashboard-shell";
 export const OWNER_NAV: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard/owner" },
   { label: "My Properties", icon: Building2, href: "/dashboard/owner/properties" },
-  { label: "Create Property", icon: PlusCircle, href: "/dashboard/owner/properties/new" },
+  // { label: "Create Property", icon: PlusCircle, href: "/dashboard/owner/properties/new" },
   { label: "Assign Agents", icon: UserCog, href: "/dashboard/owner/agents" },
   { label: "Verification", icon: ShieldCheck, href: "/dashboard/owner/verification" },
   { label: "Ownership Transfer", icon: ArrowLeftRight, href: "/dashboard/owner/transfers" },
@@ -47,8 +47,8 @@ export const ADMIN_NAV: NavItem[] = [
 
 export const BUYER_NAV: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard/buyer" },
-  { label: "Browse Properties", icon: ShoppingBag, href: "/dashboard/buyer/marketplace" },
-  { label: "Property Detail", icon: Building2, href: "/dashboard/buyer/marketplace/property/:id" },
+  { label: "Market Place", icon: ShoppingBag, href: "/dashboard/buyer/marketplace" },
+  // { label: "Property Detail", icon: Building2, href: "/dashboard/buyer/marketplace/property/:id" },
   { label: "Saved Properties", icon: Heart, href: "/dashboard/buyer/saved" },
   { label: "My Requests", icon: MessageSquare, href: "/dashboard/buyer/requests" },
   { label: "Verification", icon: ShieldCheck, href: "/dashboard/buyer/verification" },
