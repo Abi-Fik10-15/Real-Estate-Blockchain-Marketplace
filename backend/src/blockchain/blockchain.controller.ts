@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   UseGuards,
@@ -20,6 +21,9 @@ export class BlockchainController {
     return {
       enabled: this.blockchainService.isEnabled(),
       contractAddress: this.blockchainService.getContractAddress(),
+      network: 'sepolia',
+      chainId: 11155111,
+      explorerUrl: 'https://sepolia.etherscan.io',
     };
   }
 
@@ -40,5 +44,19 @@ export class BlockchainController {
     @Query('tokenId') tokenId: string,
   ) {
     return this.blockchainService.verifyOwnership(walletAddress, tokenId);
+  }
+
+  @Get('token/:tokenId')
+  @UseGuards(AuthGuard('jwt'))
+  getToken(@Param('tokenId') tokenId: string) {
+    return this.blockchainService.getTokenProperty(tokenId);
+  }
+
+  @Get('records')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'owner', 'agent')
+  getRecords(@Query('tokenIds') tokenIds?: string) {
+    const ids = tokenIds ? tokenIds.split(',').map((s) => s.trim()) : [];
+    return this.blockchainService.getRecordsForTokenIds(ids);
   }
 }

@@ -67,6 +67,8 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
       agentId: patch.agentId,
       agentWallet: patch.agentWallet,
       blockchainTokenId: patch.chainId,
+      ownerWallet: patch.ownerWallet,
+      priceEth: patch.priceEth,
     });
     set((s) => ({
       properties: s.properties.map((p) => (p.id === id ? { ...p, ...updated, ...patch } : p)),

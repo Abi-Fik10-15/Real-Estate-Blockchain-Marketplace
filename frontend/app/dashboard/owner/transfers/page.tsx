@@ -11,12 +11,10 @@ import { TransferOwnershipDialog } from "@/features/ownership/transfer-dialog";
 import { usePropertyStore } from "@/store/property-store";
 import { formatCurrency, shortenAddress } from "@/lib/utils";
 
-const OWNER_ID = "u-owner-1";
+import { useOwnerProperties } from "@/hooks/use-owner-properties";
 
 export default function OwnerTransfersPage() {
-  const properties = usePropertyStore((s) => s.properties).filter(
-    (p) => p.ownerId === OWNER_ID
-  );
+  const properties = useOwnerProperties();
 
   return (
     <DashboardShell title="Ownership Transfer" roleLabel="Property Owner" nav={OWNER_NAV}>

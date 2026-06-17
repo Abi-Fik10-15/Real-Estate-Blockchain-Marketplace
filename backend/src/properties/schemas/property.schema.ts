@@ -74,6 +74,9 @@ export class Property {
   @Prop({ default: 0 })
   area!: number;
 
+  @Prop({ default: 0.01, min: 0 })
+  priceEth!: number;
+
   @Prop({ default: '' })
   blockchainTokenId!: string;
 

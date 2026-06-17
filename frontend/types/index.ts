@@ -66,6 +66,7 @@ export interface Property {
   bedrooms: number;
   bathrooms: number;
   area: number; // sq ft
+  priceEth?: number;
   location: GeoLocation;
   images: string[];
   ownerId: string;

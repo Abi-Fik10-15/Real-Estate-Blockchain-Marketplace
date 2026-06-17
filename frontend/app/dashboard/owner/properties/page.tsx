@@ -26,11 +26,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { usePropertyStore } from "@/store/property-store";
+import { useOwnerProperties } from "@/hooks/use-owner-properties";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { ListingStatus } from "@/types";
 
-const OWNER_ID = "u-owner-1";
 const STATUSES: ListingStatus[] = ["active", "pending", "sold", "rented", "draft"];
 
 const STATUS_COLOR: Record<ListingStatus, string> = {
@@ -42,9 +42,7 @@ const STATUS_COLOR: Record<ListingStatus, string> = {
 };
 
 export default function OwnerPropertiesPage() {
-  const properties = usePropertyStore((s) => s.properties).filter(
-    (p) => p.ownerId === OWNER_ID
-  );
+  const properties = useOwnerProperties();
   const setStatus = usePropertyStore((s) => s.setStatus);
   const deleteProperty = usePropertyStore((s) => s.deleteProperty);
   const [toDelete, setToDelete] = React.useState<string | null>(null);

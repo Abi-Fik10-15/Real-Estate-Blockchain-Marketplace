@@ -55,7 +55,7 @@ export default function CreatePropertyPage() {
     formState: { errors },
   } = useForm<CreatePropertyValues>({
     resolver: zodResolver(createPropertySchema),
-    defaultValues: { type: "House", bedrooms: 3, bathrooms: 2 },
+    defaultValues: { type: "House", bedrooms: 3, bathrooms: 2, priceEth: 0.01 },
   });
 
   const onSubmit = async (values: CreatePropertyValues) => {
@@ -131,6 +131,25 @@ export default function CreatePropertyPage() {
                   <p className="text-xs text-destructive">{errors.price.message}</p>
                 )}
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="priceEth">Escrow price (Sepolia ETH)</Label>
+                <Input
+                  id="priceEth"
+                  type="number"
+                  step="0.001"
+                  placeholder="0.01"
+                  {...register("priceEth")}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Amount buyers send on-chain when funding escrow.
+                </p>
+                {errors.priceEth && (
+                  <p className="text-xs text-destructive">{errors.priceEth.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Property Type</Label>
                 <Select

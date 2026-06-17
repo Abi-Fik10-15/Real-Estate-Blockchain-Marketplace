@@ -34,6 +34,7 @@ export interface ApiProperty {
   bedrooms: number;
   bathrooms: number;
   area: number;
+  priceEth?: number;
   blockchainTokenId?: string;
   ownerWallet?: string;
   agentWallet?: string;
@@ -93,6 +94,7 @@ export function mapProperty(api: ApiProperty): Property {
     bedrooms: api.bedrooms,
     bathrooms: api.bathrooms,
     area: api.area,
+    priceEth: api.priceEth ?? 0.01,
     location: api.location,
     images: api.images?.length
       ? api.images

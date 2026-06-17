@@ -18,7 +18,7 @@ import { Wallet, LogOut, RefreshCw, Globe, Coins, Copy, Check, UserCheck, Shield
 
 export default function BuyerProfilePage() {
   const { user, updateUser } = useAuthStore();
-  const { wallet, connect, disconnect, switchNetwork, isConnecting } = useWalletStore();
+  const { wallet, connect, disconnect, isConnecting } = useWalletStore();
 
   const [name, setName] = React.useState(user?.name ?? "");
   const [email, setEmail] = React.useState(user?.email ?? "");
@@ -52,36 +52,21 @@ export default function BuyerProfilePage() {
     toast.success("Profile saved successfully");
   };
 
-  const handleNetworkChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const chainId = parseInt(e.target.value, 10);
-    const promise = switchNetwork(chainId);
-    toast.promise(promise, {
-      loading: "Switching network...",
-      success: (data) => `Switched to ${(data as any)?.network ?? "target chain"}`,
-      error: "Failed to switch network",
-    });
-  };
-
-  const handleWalletConnect = () => {
-    const promise = connect();
-    toast.promise(promise, {
-      loading: "Opening simulated Web3 wallet...",
-      success: "Wallet connected successfully",
-      error: "Wallet connection cancelled",
-    });
+  const handleWalletConnect = async () => {
+    try {
+      await connect();
+      toast.success("Wallet connected on Sepolia");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Wallet connection cancelled");
+    }
   };
 
   const handleWalletDisconnect = () => {
-    const promise = disconnect();
-    toast.promise(promise, {
-      loading: "Disconnecting wallet...",
-      success: "Wallet disconnected",
-      error: "Failed to disconnect",
-    });
+    disconnect();
+    toast.info("Wallet disconnected");
   };
 
-  const isEth = wallet?.chainId === 1 || wallet?.chainId === 11155111;
-  const currencySymbol = isEth ? "ETH" : "MATIC";
+  const currencySymbol = "ETH";
 
   return (
     <DashboardShell title="Profile Settings" roleLabel="Buyer / Renter" nav={BUYER_NAV}>
@@ -144,15 +129,15 @@ export default function BuyerProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Simulated Web3 Hub Card */}
+          {/* MetaMask wallet */}
           <Card className="border border-border/80 bg-card/40 backdrop-blur-sm shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 <Wallet className="h-4.5 w-4.5 text-primary" />
-                Web3 Sandbox Console
+                MetaMask Wallet
               </CardTitle>
               <CardDescription className="text-xs">
-                Simulate blockchain wallet interactions in a sandbox environment
+                Connect on Sepolia testnet for escrow and property NFTs
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 pt-2">
@@ -175,22 +160,14 @@ export default function BuyerProfilePage() {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="network-select" className="text-xs">Switch Network Environment</Label>
-                    <select
-                      id="network-select"
-                      className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                      value={wallet.chainId}
-                      onChange={handleNetworkChange}
-                    >
-                      <option value={80002}>Polygon Amoy (Testnet)</option>
-                      <option value={11155111}>Ethereum Sepolia (Testnet)</option>
-                      <option value={137}>Polygon PoS (Mainnet)</option>
-                      <option value={1}>Ethereum Mainnet (Mainnet)</option>
-                    </select>
-                  </div>
+                  {wallet.chainId !== 11155111 && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Switch MetaMask to <strong>Sepolia</strong> for on-chain actions.
+                    </p>
+                  )}
 
                   <Button
+                    type="button"
                     size="sm"
                     variant="outline"
                     className="w-full text-xs text-red-500 hover:text-red-600 border-red-500/20 hover:border-red-500/40 bg-red-500/5 hover:bg-red-500/10"
@@ -203,9 +180,10 @@ export default function BuyerProfilePage() {
               ) : (
                 <div className="space-y-3 py-2">
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Connect a mock wallet to test escrow lockups, smart contract parameters, gas estimations, and deed ownership minting.
+                    Connect MetaMask on Sepolia to sign escrows and receive property NFTs.
                   </p>
                   <Button
+                    type="button"
                     size="sm"
                     variant="hero"
                     className="w-full text-xs"
@@ -220,7 +198,7 @@ export default function BuyerProfilePage() {
                     ) : (
                       <>
                         <Wallet className="mr-1.5 h-3.5 w-3.5" />
-                        Connect Simulated Wallet
+                        Connect MetaMask
                       </>
                     )}
                   </Button>

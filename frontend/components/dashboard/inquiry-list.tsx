@@ -26,6 +26,7 @@ import { usePropertyStore } from "@/store/property-store";
 import { useWalletStore } from "@/store/wallet-store";
 import { api } from "@/services/api";
 import { contractClient } from "@/lib/contract";
+import { escrowEthAmount, isOnChainTokenId } from "@/lib/blockchain-utils";
 import { CONTRACT_ADDRESS } from "@/lib/constants";
 import { formatDate, formatCurrency, shortenAddress } from "@/lib/utils";
 import type { Inquiry } from "@/types";
@@ -91,39 +92,41 @@ export function InquiryList({
       setTxStep("signature");
       const tokenId = targetProp.chainId;
       const canUseContract =
-        CONTRACT_ADDRESS && /^\d+$/.test(tokenId);
+        CONTRACT_ADDRESS && isOnChainTokenId(tokenId);
 
       if (canUseContract) {
         try {
           await contractClient.ensureSepolia();
           setTxStep("broadcasting");
-          const escrowAmount = (targetProp.price / 1_000_000).toFixed(4);
+          const escrowAmount = escrowEthAmount(targetProp);
           const result = await contractClient.initiateEscrow(tokenId, escrowAmount);
           txHash = result.txHash;
           await api.markEscrow(tx.id, txHash);
-        } catch {
-          setTxStep("broadcasting");
-          await new Promise((r) => setTimeout(r, 800));
+        } catch (err) {
+          toast.error(
+            err instanceof Error ? err.message : "On-chain escrow failed — check wallet balance on Sepolia"
+          );
+          setTxStep("idle");
+          return;
         }
       } else {
+        setTxStep("broadcasting");
         await new Promise((r) => setTimeout(r, 800));
       }
 
       setTxStep("minting");
-      await new Promise((r) => setTimeout(r, 800));
+      await new Promise((r) => setTimeout(r, 400));
       setTxStep("done");
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 400));
 
       await setStatus(activeInquiry.id, "closed");
 
       await updateProperty(targetProp.id, {
-        ownerWallet: wallet.address,
-        status: activeInquiry.type === "purchase" ? "sold" : "rented",
         history: [
           {
             id: `ev-${Date.now()}`,
             type: "transfer",
-            description: `Escrow funded and ownership recorded for buyer ${shortenAddress(wallet.address, 6)}`,
+            description: `Escrow funded by buyer ${shortenAddress(wallet.address, 6)} — awaiting owner confirmation`,
             txHash,
             actor: wallet.address,
             timestamp: new Date().toISOString(),
@@ -133,7 +136,11 @@ export function InquiryList({
       });
 
       localStorage.setItem("chainestate_verified_at_least_once", "true");
-      toast.success("Escrow funded successfully");
+      toast.success("Escrow funded successfully", {
+        description: canUseContract
+          ? "Owner must confirm the sale to complete the NFT transfer."
+          : undefined,
+      });
       setShowPayModal(false);
       setActiveInquiry(null);
     } catch {
@@ -339,10 +346,10 @@ export function InquiryList({
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary animate-pulse" />
-              On-Chain Escrow Sandbox
+              On-Chain Escrow
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Review and sign the decentralized smart contract details below.
+              Sign with MetaMask to lock Sepolia ETH in the smart contract escrow.
             </DialogDescription>
           </DialogHeader>
 
@@ -350,8 +357,8 @@ export function InquiryList({
             <div className="space-y-4 py-3">
               <div className="rounded-lg bg-background/50 border border-border/60 p-4 space-y-3 text-xs">
                 <div className="flex justify-between border-b border-border/30 pb-2">
-                  <span className="text-muted-foreground font-medium">Smart Contract Target</span>
-                  <span className="font-mono text-foreground">{shortenAddress("0x7e3498b8A4B7C2D9E1F3A5B7C9D1E3F5A7B9C1D3", 8)}</span>
+                  <span className="text-muted-foreground font-medium">Smart Contract</span>
+                  <span className="font-mono text-foreground">{CONTRACT_ADDRESS ? shortenAddress(CONTRACT_ADDRESS, 8) : "Not configured"}</span>
                 </div>
                 <div className="flex justify-between border-b border-border/30 pb-2">
                   <span className="text-muted-foreground font-medium">Deed Asset ID</span>
@@ -360,11 +367,11 @@ export function InquiryList({
                   </span>
                 </div>
                 <div className="flex justify-between border-b border-border/30 pb-2">
-                  <span className="text-muted-foreground font-medium">Escrow Lock Amount</span>
+                  <span className="text-muted-foreground font-medium">Escrow (Sepolia ETH)</span>
                   <span className="font-bold text-foreground">
                     {activeInquiry && properties.find((p) => p.id === activeInquiry.propertyId)
-                      ? formatCurrency(properties.find((p) => p.id === activeInquiry.propertyId)!.price)
-                      : "$350,000"}
+                      ? `${escrowEthAmount(properties.find((p) => p.id === activeInquiry.propertyId)!)} ETH`
+                      : "—"}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -376,7 +383,7 @@ export function InquiryList({
               </div>
 
               <div className="text-xs text-muted-foreground leading-relaxed bg-primary/5 rounded-lg p-3 border border-primary/20">
-                ⚡ **Deed NFT Minting:** Funding this escrow locks the assets into the multi-signature contract. Once verified, the deed token will be automatically minted directly to your connected address.
+                Funding escrow locks ETH in the contract. The owner must confirm the sale to transfer the property NFT to your wallet.
               </div>
 
               <DialogFooter className="gap-2">

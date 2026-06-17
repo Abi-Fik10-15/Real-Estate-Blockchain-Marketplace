@@ -12,6 +12,7 @@ import {
   UserCircle,
   UserCog,
   Users,
+  Wallet,
 } from "lucide-react";
 import type { NavItem } from "@/components/dashboard/dashboard-shell";
 
@@ -23,6 +24,7 @@ export const OWNER_NAV: NavItem[] = [
   { label: "Verification", icon: ShieldCheck, href: "/dashboard/owner/verification" },
   { label: "Ownership Transfer", icon: ArrowLeftRight, href: "/dashboard/owner/transfers" },
   { label: "Buyer Inquiries", icon: MessageSquare, href: "/dashboard/owner/inquiries" },
+  { label: "Escrow & Sales", icon: Wallet, href: "/dashboard/owner/escrow" },
   { label: "Web3 Sandbox", icon: Activity, href: "/dashboard/sandbox" },
 ];
 

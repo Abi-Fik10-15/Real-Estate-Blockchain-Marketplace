@@ -23,7 +23,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { formatCurrency } from "@/lib/utils";
 import { ScaleOnHover } from "@/components/ui/motion";
 
-const OWNER_ID = "u-owner-1";
+import { useOwnerProperties } from "@/hooks/use-owner-properties";
 
 const STATUS_VARIANT: Record<string, "success" | "warning" | "secondary" | "outline"> = {
   active: "success",
@@ -35,9 +35,7 @@ const STATUS_VARIANT: Record<string, "success" | "warning" | "secondary" | "outl
 
 export default function OwnerDashboard() {
   const user = useAuthStore((s) => s.user);
-  const properties = usePropertyStore((s) => s.properties).filter(
-    (p) => p.ownerId === OWNER_ID
-  );
+  const properties = useOwnerProperties();
   const inquiries = useInquiryStore((s) => s.inquiries).filter((i) =>
     properties.some((p) => p.id === i.propertyId)
   );

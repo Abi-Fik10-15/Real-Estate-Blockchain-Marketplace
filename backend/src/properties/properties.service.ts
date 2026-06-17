@@ -12,12 +12,14 @@ import {
   UpdatePropertyDto,
 } from './dto/property.dto';
 import type { UserDocument } from '../users/schemas/user.schema';
+import { BlockchainService } from '../blockchain/blockchain.service';
 
 @Injectable()
 export class PropertiesService {
   constructor(
     @InjectModel(Property.name)
     private readonly propertyModel: Model<PropertyDocument>,
+    private readonly blockchainService: BlockchainService,
   ) {}
 
   async findAll(query: PropertyQueryDto): Promise<PropertyDocument[]> {
@@ -124,15 +126,54 @@ export class PropertiesService {
     return property.save();
   }
 
+  async completeSale(
+    id: string,
+    buyerWallet: string,
+    buyerId: string,
+  ): Promise<PropertyDocument> {
+    const property = await this.findById(id);
+    property.status = 'sold';
+    property.ownerWallet = buyerWallet;
+    property.ownerId = new Types.ObjectId(buyerId);
+    property.agentId = undefined;
+    property.agentWallet = '';
+    return property.save();
+  }
+
   async getOwnershipRecords() {
     const properties = await this.propertyModel.find().exec();
-    return properties.map((p) => ({
-      propertyId: p.blockchainTokenId || p.id,
-      propertyTitle: p.title,
-      ownerWallet: p.ownerWallet,
-      agentWallet: p.agentWallet,
-      verificationStatus: p.status === 'active' ? 'verified' : 'pending',
-    }));
+    const tokenIds = properties
+      .map((p) => p.blockchainTokenId)
+      .filter((id) => id && /^\d+$/.test(id));
+
+    const onChainMap = new Map(
+      (
+        await this.blockchainService.getRecordsForTokenIds(tokenIds)
+      ).map((r) => [r.tokenId, r]),
+    );
+
+    return properties.map((p) => {
+      const onChain = p.blockchainTokenId
+        ? onChainMap.get(p.blockchainTokenId)
+        : undefined;
+
+      return {
+        id: p.id,
+        propertyId: p.blockchainTokenId || p.id,
+        propertyTitle: p.title,
+        ownerWallet: onChain?.owner ?? p.ownerWallet,
+        agentWallet: p.agentWallet,
+        priceEth: p.priceEth,
+        status: p.status,
+        inEscrow: onChain?.inEscrow ?? false,
+        escrowBuyer: onChain?.escrowBuyer ?? '',
+        escrowAmount: onChain?.escrowAmount ?? '',
+        tokenURI: onChain?.tokenURI ?? '',
+        verificationStatus:
+          p.status === 'active' || p.status === 'sold' ? 'verified' : 'pending',
+        onChain: Boolean(onChain),
+      };
+    });
   }
 
   async getStats() {

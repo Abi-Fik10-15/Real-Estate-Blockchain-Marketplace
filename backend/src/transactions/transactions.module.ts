@@ -6,6 +6,7 @@ import { TransactionsController } from './transactions.controller';
 import { PropertiesModule } from '../properties/properties.module';
 import { BlockchainModule } from '../blockchain/blockchain.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ]),
     PropertiesModule,
     BlockchainModule,
+    UsersModule,
     forwardRef(() => NotificationsModule),
   ],
   controllers: [TransactionsController],

@@ -4,14 +4,14 @@ import {
   SEPOLIA_CHAIN_HEX,
   SEPOLIA_CHAIN_ID,
 } from "@/lib/constants";
+import {
+  getBrowserProvider,
+  getEthereumProvider,
+  getEthereumProviderOptional,
+  parseWalletError,
+} from "@/lib/ethereum-provider";
 import RealEstateMarketplaceAbi from "@/lib/abi/real-estate-marketplace.abi.json";
 import type { Wallet } from "@/types";
-
-declare global {
-  interface Window {
-    ethereum?: ethers.Eip1193Provider;
-  }
-}
 
 const NETWORKS: Record<number, string> = {
   1: "Ethereum Mainnet",
@@ -20,15 +20,8 @@ const NETWORKS: Record<number, string> = {
   80002: "Polygon Amoy",
 };
 
-function requireEthereum() {
-  if (typeof window === "undefined" || !window.ethereum) {
-    throw new Error("MetaMask is not installed. Please install MetaMask to connect your wallet.");
-  }
-  return window.ethereum;
-}
-
 async function getProvider() {
-  return new BrowserProvider(requireEthereum());
+  return getBrowserProvider();
 }
 
 async function getSigner() {
@@ -36,11 +29,14 @@ async function getSigner() {
   return provider.getSigner();
 }
 
-async function getConnectedWallet(provider: BrowserProvider): Promise<Wallet> {
-  const network = await provider.getNetwork();
-  const signer = await provider.getSigner();
+export async function getConnectedWallet(
+  provider?: BrowserProvider,
+): Promise<Wallet> {
+  const p = provider ?? (await getProvider());
+  const network = await p.getNetwork();
+  const signer = await p.getSigner();
   const address = await signer.getAddress();
-  const balance = await provider.getBalance(address);
+  const balance = await p.getBalance(address);
   const chainId = Number(network.chainId);
 
   return {
@@ -50,6 +46,52 @@ async function getConnectedWallet(provider: BrowserProvider): Promise<Wallet> {
     balance: ethers.formatEther(balance),
     status: "connected",
   };
+}
+
+export async function ensureSepolia(provider?: BrowserProvider): Promise<BrowserProvider> {
+  const ethereum = getEthereumProvider();
+  let p = provider ?? (await getProvider());
+  const chainId = Number((await p.getNetwork()).chainId);
+
+  if (chainId === SEPOLIA_CHAIN_ID) {
+    return p;
+  }
+
+  try {
+    await ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: SEPOLIA_CHAIN_HEX }],
+    });
+  } catch (err: unknown) {
+    const error = err as { code?: number };
+    if (error.code === 4001) {
+      throw new Error("Please approve switching to Sepolia testnet in MetaMask.");
+    }
+    if (error.code === 4902) {
+      await ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: SEPOLIA_CHAIN_HEX,
+            chainName: "Sepolia",
+            nativeCurrency: { name: "Sepolia ETH", symbol: "ETH", decimals: 18 },
+            rpcUrls: ["https://rpc.sepolia.org"],
+            blockExplorerUrls: ["https://sepolia.etherscan.io"],
+          },
+        ],
+      });
+    } else {
+      throw new Error(parseWalletError(err));
+    }
+  }
+
+  p = await getProvider();
+  const afterSwitch = Number((await p.getNetwork()).chainId);
+  if (afterSwitch !== SEPOLIA_CHAIN_ID) {
+    throw new Error("Please switch to Sepolia testnet in MetaMask to use ChainEstate.");
+  }
+
+  return p;
 }
 
 export const contractClient = {
@@ -62,11 +104,34 @@ export const contractClient = {
   },
 
   async connectWallet(): Promise<Wallet> {
-    const ethereum = requireEthereum();
-    await ethereum.request({ method: "eth_requestAccounts" });
-    const provider = await getProvider();
-    await this.ensureSepolia(provider);
-    return getConnectedWallet(provider);
+    try {
+      const ethereum = getEthereumProvider();
+      await ethereum.request({ method: "eth_requestAccounts" });
+      let provider = await getProvider();
+      provider = await ensureSepolia(provider);
+      return getConnectedWallet(provider);
+    } catch (error) {
+      throw new Error(parseWalletError(error));
+    }
+  },
+
+  async refreshWallet(): Promise<Wallet | null> {
+    try {
+      const ethereum = getEthereumProviderOptional();
+      if (!ethereum) return null;
+
+      const accounts = (await ethereum.request({
+        method: "eth_accounts",
+      })) as string[];
+
+      if (!accounts?.length) return null;
+
+      let provider = await getProvider();
+      provider = await ensureSepolia(provider);
+      return getConnectedWallet(provider);
+    } catch {
+      return null;
+    }
   },
 
   async disconnectWallet(): Promise<void> {
@@ -74,43 +139,19 @@ export const contractClient = {
   },
 
   async switchNetwork(chainId: number): Promise<Pick<Wallet, "chainId" | "network">> {
-    const ethereum = requireEthereum();
+    if (chainId !== SEPOLIA_CHAIN_ID) {
+      throw new Error("ChainEstate only supports Sepolia testnet for on-chain actions.");
+    }
+    const ethereum = getEthereumProvider();
     await ethereum.request({
       method: "wallet_switchEthereumChain",
-      params: [{ chainId: `0x${chainId.toString(16)}` }],
+      params: [{ chainId: SEPOLIA_CHAIN_HEX }],
     });
     return { chainId, network: NETWORKS[chainId] ?? "Unknown Network" };
   },
 
   async ensureSepolia(provider?: BrowserProvider) {
-    const p = provider ?? (await getProvider());
-    const network = await p.getNetwork();
-    if (Number(network.chainId) !== SEPOLIA_CHAIN_ID) {
-      try {
-        await requireEthereum().request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: SEPOLIA_CHAIN_HEX }],
-        });
-      } catch (err: unknown) {
-        const error = err as { code?: number };
-        if (error.code === 4902) {
-          await requireEthereum().request({
-            method: "wallet_addEthereumChain",
-            params: [
-              {
-                chainId: SEPOLIA_CHAIN_HEX,
-                chainName: "Sepolia",
-                nativeCurrency: { name: "Sepolia ETH", symbol: "ETH", decimals: 18 },
-                rpcUrls: ["https://rpc.sepolia.org"],
-                blockExplorerUrls: ["https://sepolia.etherscan.io"],
-              },
-            ],
-          });
-        } else {
-          throw new Error("Please switch to Sepolia testnet in MetaMask.");
-        }
-      }
-    }
+    return ensureSepolia(provider);
   },
 
   async getContract(signer?: ethers.Signer) {
@@ -135,7 +176,7 @@ export const contractClient = {
   },
 
   async initiateEscrow(tokenId: string, priceEth: string) {
-    await this.ensureSepolia();
+    await ensureSepolia();
     const contract = await this.getContract();
     const tx = await contract.initiateEscrow(tokenId, {
       value: ethers.parseEther(priceEth),
@@ -145,18 +186,57 @@ export const contractClient = {
   },
 
   async confirmSale(tokenId: string) {
-    await this.ensureSepolia();
+    await ensureSepolia();
     const contract = await this.getContract();
     const tx = await contract.confirmSale(tokenId);
     const receipt = await tx.wait();
     return { txHash: receipt.hash as string };
   },
 
+  async cancelEscrow(tokenId: string) {
+    await ensureSepolia();
+    const contract = await this.getContract();
+    const tx = await contract.cancelEscrow(tokenId);
+    const receipt = await tx.wait();
+    return { txHash: receipt.hash as string };
+  },
+
+  async createRental(
+    tokenId: string,
+    startDate: number,
+    endDate: number,
+    monthlyRentWei: bigint,
+  ) {
+    await ensureSepolia();
+    const contract = await this.getContract();
+    const tx = await contract.createRental(tokenId, startDate, endDate, monthlyRentWei);
+    const receipt = await tx.wait();
+    return { txHash: receipt.hash as string };
+  },
+
+  async getOnChainProperty(tokenId: string) {
+    if (!CONTRACT_ADDRESS || !/^\d+$/.test(tokenId)) return null;
+    try {
+      const contract = await this.getContract();
+      const [owner, tokenURI, inEscrow, escrowBuyer, escrowAmount] =
+        await contract.getProperty(tokenId);
+      return {
+        owner: owner as string,
+        tokenURI: tokenURI as string,
+        inEscrow: inEscrow as boolean,
+        escrowBuyer: escrowBuyer as string,
+        escrowAmount: ethers.formatEther(escrowAmount),
+      };
+    } catch {
+      return null;
+    }
+  },
+
   async transferOwnership(tokenId: string, newOwner: string) {
     if (!ethers.isAddress(newOwner)) {
       throw new Error("Invalid destination wallet address");
     }
-    await this.ensureSepolia();
+    await ensureSepolia();
     const contract = await this.getContract();
     const tx = await contract.transferOwnership(tokenId, newOwner);
     const receipt = await tx.wait();

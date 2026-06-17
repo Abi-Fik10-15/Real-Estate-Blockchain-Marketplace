@@ -3,6 +3,7 @@
 import Link from "next/link";
 import * as React from "react";
 import { Heart, Home, Key, ShieldCheck, ShoppingBag, ArrowRight, CheckCircle2, Circle, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { ScaleOnHover } from "@/components/ui/motion";
 import { BUYER_NAV } from "@/components/dashboard/nav-configs";
@@ -23,6 +24,15 @@ export default function BuyerDashboard() {
   const inquiries = useInquiryStore((s) => s.inquiries);
   const user = useAuthStore((s) => s.user);
   const { wallet, connect } = useWalletStore();
+
+  const handleConnectWallet = async () => {
+    try {
+      await connect();
+      toast.success("Wallet connected on Sepolia");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to connect wallet");
+    }
+  };
 
   const [hasVerifiedOnce, setHasVerifiedOnce] = React.useState(false);
 
@@ -52,7 +62,7 @@ export default function BuyerDashboard() {
       completed: isWalletConnected,
       actionLabel: "Connect Wallet",
       actionHref: "/dashboard/buyer/profile",
-      actionFn: isWalletConnected ? undefined : connect,
+      actionFn: isWalletConnected ? undefined : handleConnectWallet,
     },
     {
       id: "profile",

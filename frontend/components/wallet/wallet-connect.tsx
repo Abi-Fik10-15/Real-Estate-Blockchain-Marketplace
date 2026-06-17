@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useWalletStore } from "@/store/wallet-store";
+import { SEPOLIA_CHAIN_ID } from "@/lib/constants";
 import { shortenAddress } from "@/lib/utils";
 
 export function WalletConnect({
@@ -23,8 +24,13 @@ export function WalletConnect({
   size?: "default" | "sm" | "lg";
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "hero";
 }) {
-  const { wallet, isConnecting, connect, disconnect } = useWalletStore();
+  const { wallet, isConnecting, hasHydrated, connect, disconnect, bindListeners } =
+    useWalletStore();
   const [copied, setCopied] = React.useState(false);
+
+  React.useEffect(() => {
+    bindListeners();
+  }, [bindListeners]);
 
   const handleConnect = async () => {
     try {
@@ -43,9 +49,19 @@ export function WalletConnect({
     setTimeout(() => setCopied(false), 1500);
   };
 
+  if (!hasHydrated) {
+    return (
+      <Button variant={variant} size={size} type="button" disabled>
+        <WalletIcon className="h-4 w-4" />
+        Connect Wallet
+      </Button>
+    );
+  }
+
   if (!wallet) {
     return (
       <Button
+        type="button"
         variant={variant}
         size={size}
         onClick={handleConnect}
@@ -57,29 +73,36 @@ export function WalletConnect({
     );
   }
 
-  const currency =
-    wallet.chainId === 11155111 || wallet.chainId === 1 ? "ETH" : "MATIC";
+  const onSepolia = wallet.chainId === SEPOLIA_CHAIN_ID;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size={size} className="gap-2">
-          <span className="h-2 w-2 rounded-full bg-success" />
+        <Button type="button" variant="outline" size={size} className="gap-2">
+          <span
+            className={`h-2 w-2 rounded-full ${onSepolia ? "bg-success" : "bg-amber-500"}`}
+          />
           {shortenAddress(wallet.address)}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Wallet</span>
-          <Badge variant="success">
-            <Check className="h-3 w-3" /> Connected
+          <Badge variant={onSepolia ? "success" : "warning"}>
+            <Check className="h-3 w-3" /> {onSepolia ? "Sepolia" : "Wrong network"}
           </Badge>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div className="space-y-3 px-2 py-2 text-sm">
+          {!onSepolia && (
+            <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-400">
+              Switch MetaMask to <strong>Sepolia</strong> for on-chain actions.
+            </p>
+          )}
           <div>
             <p className="text-xs text-muted-foreground">Address</p>
             <button
+              type="button"
               onClick={handleCopy}
               className="mt-0.5 flex w-full items-center justify-between rounded-md bg-muted px-2 py-1.5 font-mono text-xs hover:bg-muted/70"
             >
@@ -98,9 +121,7 @@ export function WalletConnect({
             </div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Balance</p>
-              <p className="font-medium">
-                {wallet.balance} {currency}
-              </p>
+              <p className="font-medium">{wallet.balance} ETH</p>
             </div>
           </div>
         </div>

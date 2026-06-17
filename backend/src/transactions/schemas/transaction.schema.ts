@@ -35,6 +35,9 @@ export class Transaction {
   txHash!: string;
 
   @Prop({ default: '' })
+  confirmTxHash!: string;
+
+  @Prop({ default: '' })
   blockchainTokenId!: string;
 }
 

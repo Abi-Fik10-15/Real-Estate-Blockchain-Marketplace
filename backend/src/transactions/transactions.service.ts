@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { Transaction, TransactionDocument } from './schemas/transaction.schema';
 import { CreateTransactionDto, UpdateTransactionDto } from './dto/transaction.dto';
 import { PropertiesService } from '../properties/properties.service';
 import { BlockchainService } from '../blockchain/blockchain.service';
+import { UsersService } from '../users/users.service';
 import type { UserDocument } from '../users/schemas/user.schema';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -19,6 +21,7 @@ export class TransactionsService {
     private readonly transactionModel: Model<TransactionDocument>,
     private readonly propertiesService: PropertiesService,
     private readonly blockchainService: BlockchainService,
+    private readonly usersService: UsersService,
     private readonly notifications: NotificationsService,
   ) {}
 
@@ -73,23 +76,62 @@ export class TransactionsService {
     return tx;
   }
 
-  async confirmSale(id: string): Promise<TransactionDocument> {
+  async confirmSale(
+    id: string,
+    seller: UserDocument,
+    confirmTxHash: string,
+  ): Promise<TransactionDocument> {
     const tx = await this.transactionModel.findById(id).exec();
     if (!tx) {
       throw new NotFoundException('Transaction not found');
+    }
+
+    if (tx.sellerId.toString() !== seller.id) {
+      throw new ForbiddenException('Only the seller can confirm this sale');
+    }
+
+    if (tx.status !== 'escrow') {
+      throw new BadRequestException('Transaction is not awaiting sale confirmation');
     }
 
     if (!tx.blockchainTokenId) {
       throw new BadRequestException('Property has no blockchain token ID');
     }
 
-    const result = await this.blockchainService.confirmSale(tx.blockchainTokenId);
+    if (!confirmTxHash) {
+      throw new BadRequestException(
+        'confirmTxHash required — sign confirmSale in MetaMask first',
+      );
+    }
+
+    const buyer = await this.usersService.findById(tx.buyerId.toString());
+    const buyerWallet = buyer?.walletAddress ?? '';
+
+    if (this.blockchainService.isEnabled()) {
+      const verified = await this.blockchainService.verifySaleCompleted(
+        tx.blockchainTokenId,
+        buyerWallet,
+      );
+      if (!verified && buyerWallet) {
+        throw new BadRequestException(
+          'On-chain sale not detected — ensure confirmSale succeeded and buyer wallet matches',
+        );
+      }
+    }
 
     tx.status = 'completed';
-    tx.txHash = result.txHash;
+    tx.confirmTxHash = confirmTxHash;
     await tx.save();
 
-    await this.propertiesService.updateStatus(tx.propertyId.toString(), 'sold');
+    if (buyerWallet) {
+      await this.propertiesService.completeSale(
+        tx.propertyId.toString(),
+        buyerWallet,
+        tx.buyerId.toString(),
+      );
+    } else {
+      await this.propertiesService.updateStatus(tx.propertyId.toString(), 'sold');
+    }
 
     this.notifications.emitTransactionCompleted(
       tx.buyerId.toString(),

@@ -10,5 +10,9 @@ export const CONTRACT_ADDRESS =
 
 export const SEPOLIA_CHAIN_ID = 11155111;
 export const SEPOLIA_CHAIN_HEX = "0xaa36a7";
+export const SEPOLIA_EXPLORER_URL = "https://sepolia.etherscan.io";
+
+/** Default Sepolia test escrow when priceEth is not set on a listing. */
+export const DEFAULT_ESCROW_ETH = 0.01;
 
 export const TOKEN_STORAGE_KEY = "chainestate-token";

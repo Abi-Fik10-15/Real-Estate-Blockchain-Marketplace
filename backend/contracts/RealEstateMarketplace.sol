@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -37,12 +37,12 @@ contract RealEstateMarketplace is ERC721, ERC721URIStorage, Ownable, ReentrancyG
 
     constructor(address initialOwner) ERC721("ChainEstate Property", "CEP") Ownable(initialOwner) {}
 
-    function listProperty(string memory tokenURI) external onlyOwner returns (uint256 tokenId) {
+    function listProperty(string memory uri) external onlyOwner returns (uint256 tokenId) {
         tokenId = ++_nextTokenId;
         _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, tokenURI);
+        _setTokenURI(tokenId, uri);
         _properties[tokenId] = PropertyData(msg.sender, false, address(0), 0);
-        emit PropertyListed(tokenId, msg.sender, tokenURI);
+        emit PropertyListed(tokenId, msg.sender, uri);
     }
 
     function initiateEscrow(uint256 tokenId) external payable nonReentrant {
@@ -119,10 +119,10 @@ contract RealEstateMarketplace is ERC721, ERC721URIStorage, Ownable, ReentrancyG
     function getProperty(uint256 tokenId)
         external
         view
-        returns (address owner, string memory tokenURI, bool inEscrow, address escrowBuyer, uint256 escrowAmount)
+        returns (address owner, string memory uri, bool inEscrow, address escrowBuyer, uint256 escrowAmount)
     {
         PropertyData memory prop = _properties[tokenId];
-        return (ownerOf(tokenId), tokenURI(tokenId), prop.inEscrow, prop.escrowBuyer, prop.escrowAmount);
+        return (ownerOf(tokenId), super.tokenURI(tokenId), prop.inEscrow, prop.escrowBuyer, prop.escrowAmount);
     }
 
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {

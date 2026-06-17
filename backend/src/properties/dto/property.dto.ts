@@ -71,6 +71,11 @@ export class CreatePropertyDto {
   area?: number;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  priceEth?: number;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   images?: string[];
@@ -133,6 +138,11 @@ export class UpdatePropertyDto {
   area?: number;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  priceEth?: number;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   images?: string[];
@@ -144,6 +154,10 @@ export class UpdatePropertyDto {
   @IsOptional()
   @IsString()
   agentWallet?: string;
+
+  @IsOptional()
+  @IsString()
+  ownerWallet?: string;
 
   @IsOptional()
   @IsString()

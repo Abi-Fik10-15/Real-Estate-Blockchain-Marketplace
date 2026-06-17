@@ -52,7 +52,11 @@ export class TransactionsController {
   @Post(':id/confirm')
   @UseGuards(RolesGuard)
   @Roles('owner', 'admin')
-  confirmSale(@Param('id') id: string) {
-    return this.transactionsService.confirmSale(id);
+  confirmSale(
+    @Param('id') id: string,
+    @CurrentUser() user: UserDocument,
+    @Body('confirmTxHash') confirmTxHash: string,
+  ) {
+    return this.transactionsService.confirmSale(id, user, confirmTxHash);
   }
 }

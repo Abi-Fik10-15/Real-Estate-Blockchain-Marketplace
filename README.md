@@ -18,6 +18,12 @@ docker compose up --build
 
 See [DOCKER.md](./DOCKER.md) for demo credentials, logs, and troubleshooting.
 
+## Blockchain (Phase 3)
+
+Deploy the Sepolia smart contract and enable on-chain property deeds, escrow, and ownership verification:
+
+See [BLOCKCHAIN.md](./BLOCKCHAIN.md).
+
 ## Local development (without Docker)
 
 ```bash

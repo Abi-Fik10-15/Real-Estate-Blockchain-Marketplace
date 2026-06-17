@@ -19,7 +19,7 @@ interface AuthState {
     role: UserRole;
     phone?: string;
   }) => Promise<User>;
-  updateUser: (patch: Partial<Pick<User, "name" | "email" | "phone" | "avatar">>) => Promise<void>;
+  updateUser: (patch: Partial<Pick<User, "name" | "email" | "phone" | "avatar" | "walletAddress">>) => Promise<void>;
   hydrateProfile: () => Promise<void>;
   logout: () => void;
 }

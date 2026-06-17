@@ -86,6 +86,7 @@ export const api = {
       ownerWallet?: string;
       images?: string[];
       listingType?: "sale" | "rent";
+      priceEth?: number;
     }
   ): Promise<Property> {
     const { data } = await apiClient.post<ApiProperty>("/properties", {
@@ -99,6 +100,7 @@ export const api = {
       bathrooms: payload.bathrooms,
       area: payload.area,
       ownerWallet: payload.ownerWallet,
+      priceEth: payload.priceEth ?? 0.01,
       location: {
         address: payload.location,
         city: payload.location,
@@ -196,8 +198,41 @@ export const api = {
     return data;
   },
 
-  async confirmSaleTransaction(transactionId: string) {
-    const { data } = await apiClient.post(`/transactions/${transactionId}/confirm`);
+  async confirmSaleTransaction(transactionId: string, confirmTxHash: string) {
+    const { data } = await apiClient.post(`/transactions/${transactionId}/confirm`, {
+      confirmTxHash,
+    });
+    return data;
+  },
+
+  async getMyTransactions() {
+    const { data } = await apiClient.get<
+      Array<{
+        id: string;
+        propertyId: string;
+        buyerId: string;
+        sellerId: string;
+        type: string;
+        amount: number;
+        status: string;
+        txHash: string;
+        confirmTxHash: string;
+        blockchainTokenId: string;
+        contractAddress: string;
+      }>
+    >("/transactions/mine");
+    return data;
+  },
+
+  async getOnChainToken(tokenId: string) {
+    const { data } = await apiClient.get(`/blockchain/token/${tokenId}`);
+    return data;
+  },
+
+  async getBlockchainRecords(tokenIds: string[]) {
+    const { data } = await apiClient.get("/blockchain/records", {
+      params: { tokenIds: tokenIds.join(",") },
+    });
     return data;
   },
 

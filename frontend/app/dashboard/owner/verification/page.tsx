@@ -9,12 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { OwnershipVerification } from "@/components/property/ownership-verification";
 import { usePropertyStore } from "@/store/property-store";
 
-const OWNER_ID = "u-owner-1";
+import { useOwnerProperties } from "@/hooks/use-owner-properties";
 
 export default function OwnerVerificationPage() {
-  const properties = usePropertyStore((s) => s.properties).filter(
-    (p) => p.ownerId === OWNER_ID
-  );
+  const properties = useOwnerProperties();
 
   const verified = properties.filter((p) => p.verification.status === "verified").length;
   const pending = properties.length - verified;

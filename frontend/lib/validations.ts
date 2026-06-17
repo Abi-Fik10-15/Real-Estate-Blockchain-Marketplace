@@ -32,6 +32,7 @@ export const createPropertySchema = z.object({
   bathrooms: z.coerce.number().min(0).max(20),
   area: z.coerce.number().positive("Enter a valid area"),
   location: z.string().min(3, "Enter a location"),
+  priceEth: z.coerce.number().positive("Enter a valid ETH price").default(0.01),
 });
 export type CreatePropertyValues = z.infer<typeof createPropertySchema>;
 

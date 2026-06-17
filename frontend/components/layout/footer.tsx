@@ -83,7 +83,7 @@ export function Footer() {
       <div className="border-t border-border/60">
         <div className="container flex flex-col items-center justify-between gap-2 py-6 text-sm text-muted-foreground sm:flex-row">
           <p>© {new Date().getFullYear()} ChainEstate. All rights reserved.</p>
-          <p>Built for demonstration — mock blockchain data.</p>
+          <p>Sepolia testnet integration — see BLOCKCHAIN.md for deploy steps.</p>
         </div>
       </div>
     </footer>

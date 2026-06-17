@@ -1,11 +1,13 @@
 "use client";
 
 import { Check, Wallet as WalletIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useWalletStore } from "@/store/wallet-store";
+import { SEPOLIA_CHAIN_ID } from "@/lib/constants";
 import { shortenAddress } from "@/lib/utils";
 
 /** Detailed wallet status card used on auth pages and dashboards. */
@@ -33,7 +35,10 @@ export function WalletCard() {
             <Separator />
             <Row label="Network" value={wallet.network} />
             <Separator />
-            <Row label="Balance" value={`${wallet.balance} MATIC`} />
+            <Row
+              label="Balance"
+              value={`${wallet.balance} ${wallet.chainId === SEPOLIA_CHAIN_ID || wallet.chainId === 1 ? "ETH" : "ETH"}`}
+            />
             <Separator />
             <Row
               label="Status"
@@ -55,7 +60,22 @@ export function WalletCard() {
             <p className="text-sm text-muted-foreground">
               Connect your wallet to verify ownership and sign transactions.
             </p>
-            <Button variant="hero" className="w-full" disabled={isConnecting} onClick={() => connect()}>
+            <Button
+              type="button"
+              variant="hero"
+              className="w-full"
+              disabled={isConnecting}
+              onClick={async () => {
+                try {
+                  await connect();
+                  toast.success("Wallet connected on Sepolia");
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error ? error.message : "Failed to connect wallet",
+                  );
+                }
+              }}
+            >
               {isConnecting ? "Connecting..." : "Connect Wallet"}
             </Button>
           </div>
