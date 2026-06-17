@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Property, PropertySchema } from './schemas/property.schema';
 import { PropertiesService } from './properties.service';
+import { CloudinaryService } from './cloudinary.service';
 import { PropertiesController } from './properties.controller';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { BlockchainModule } from '../blockchain/blockchain.module';
@@ -13,7 +14,7 @@ import { BlockchainModule } from '../blockchain/blockchain.module';
     forwardRef(() => NotificationsModule),
   ],
   controllers: [PropertiesController],
-  providers: [PropertiesService],
+  providers: [PropertiesService, CloudinaryService],
   exports: [PropertiesService, MongooseModule],
 })
 export class PropertiesModule {}

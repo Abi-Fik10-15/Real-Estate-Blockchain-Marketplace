@@ -164,4 +164,16 @@ export class AppConfigService {
         this.contractAddress,
     );
   }
+
+  get cloudinaryCloudName(): string | undefined {
+    return this.config.get<string>('CLOUDINARY_CLOUD_NAME')?.trim();
+  }
+
+  get cloudinaryApiKey(): string | undefined {
+    return this.config.get<string>('CLOUDINARY_API_KEY')?.trim();
+  }
+
+  get cloudinaryApiSecret(): string | undefined {
+    return this.config.get<string>('CLOUDINARY_API_SECRET')?.trim();
+  }
 }

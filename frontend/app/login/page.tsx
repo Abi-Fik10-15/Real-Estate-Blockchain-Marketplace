@@ -26,6 +26,7 @@ function FieldError({ message }: { message?: string }) {
 export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
+  const loginAs = useAuthStore((s) => s.loginAs);
 
   const {
     register,
@@ -119,6 +120,66 @@ export default function LoginPage() {
 
             <div className="[&>button]:w-full">
               <WalletConnect />
+            </div>
+
+            <div className="my-5 flex items-center gap-3">
+              <Separator className="flex-1" />
+              <span className="text-xs text-muted-foreground">demo logins</span>
+              <Separator className="flex-1" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={async () => {
+                  const u = await loginAs("owner");
+                  if (u) {
+                    toast.success(`Welcome back, ${u.name}`);
+                    router.replace(`/dashboard/${u.role}`);
+                  } else {
+                    toast.error("Demo login failed");
+                  }
+                }}
+              >
+                Owner
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={async () => {
+                  const u = await loginAs("buyer");
+                  if (u) {
+                    toast.success(`Welcome back, ${u.name}`);
+                    router.replace(`/dashboard/${u.role}`);
+                  } else {
+                    toast.error("Demo login failed");
+                  }
+                }}
+              >
+                Buyer
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={async () => {
+                  const u = await loginAs("admin");
+                  if (u) {
+                    toast.success(`Welcome back, ${u.name}`);
+                    router.replace(`/dashboard/${u.role}`);
+                  } else {
+                    toast.error("Demo login failed");
+                  }
+                }}
+              >
+                Admin
+              </Button>
             </div>
           </CardContent>
 

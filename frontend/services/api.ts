@@ -84,9 +84,6 @@ export const api = {
   async createProperty(
     payload: CreatePropertyValues & {
       ownerWallet?: string;
-      images?: string[];
-      listingType?: "sale" | "rent";
-      priceEth?: number;
     }
   ): Promise<Property> {
     const { data } = await apiClient.post<ApiProperty>("/properties", {
@@ -95,7 +92,7 @@ export const api = {
       price: payload.price,
       currency: "USD",
       type: payload.type,
-      listingType: payload.listingType ?? "sale",
+      listingType: payload.listingType,
       bedrooms: payload.bedrooms,
       bathrooms: payload.bathrooms,
       area: payload.area,
@@ -103,15 +100,41 @@ export const api = {
       priceEth: payload.priceEth ?? 0.01,
       location: {
         address: payload.location,
-        city: payload.location,
-        country: "",
+        city: payload.location.split(',')[0]?.trim() || payload.location,
+        country: payload.location.includes(',') ? payload.location.split(',').pop()?.trim() || "USA" : "USA",
         lat: 0,
         lng: 0,
       },
       images: payload.images,
+      imagePublicIds: payload.imagePublicIds,
       status: "pending",
     });
     return mapProperty(data);
+  },
+
+  async uploadPropertyImage(
+    file: File,
+    onProgress?: (progress: number) => void
+  ): Promise<{ url: string; publicId: string }> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const { data } = await apiClient.post<{ url: string; publicId: string }>(
+      "/properties/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total && onProgress) {
+            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(percent);
+          }
+        },
+      }
+    );
+    return data;
   },
 
   async updateProperty(id: string, patch: Partial<ApiProperty>): Promise<Property> {

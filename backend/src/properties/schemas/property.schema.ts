@@ -90,6 +90,9 @@ export class Property {
   images!: string[];
 
   @Prop({ type: [String], default: [] })
+  imagePublicIds?: string[];
+
+  @Prop({ type: [String], default: [] })
   documents!: string[];
 
   @Prop({ default: false })

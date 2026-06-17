@@ -27,12 +27,19 @@ export const createPropertySchema = z.object({
   title: z.string().min(3, "Title is required"),
   description: z.string().min(20, "Add a longer description"),
   price: z.coerce.number().positive("Enter a valid price"),
-  type: z.enum(["Apartment", "House", "Villa", "Condo", "Townhouse", "Land", "Commercial"]),
-  bedrooms: z.coerce.number().min(0).max(20),
-  bathrooms: z.coerce.number().min(0).max(20),
+  type: z.enum(["Apartment", "House", "Villa", "Condo", "Townhouse", "Land", "Commercial"], {
+    required_error: "Select a property type",
+  }),
+  listingType: z.enum(["sale", "rent"], {
+    required_error: "Select a listing type",
+  }),
+  bedrooms: z.coerce.number().min(0, "Minimum 0 bedrooms").max(20, "Maximum 20 bedrooms"),
+  bathrooms: z.coerce.number().min(0, "Minimum 0 bathrooms").max(20, "Maximum 20 bathrooms"),
   area: z.coerce.number().positive("Enter a valid area"),
   location: z.string().min(3, "Enter a location"),
   priceEth: z.coerce.number().positive("Enter a valid ETH price").default(0.01),
+  images: z.array(z.string()).min(1, "At least one image is required").max(10, "Maximum 10 images"),
+  imagePublicIds: z.array(z.string()).optional(),
 });
 export type CreatePropertyValues = z.infer<typeof createPropertySchema>;
 

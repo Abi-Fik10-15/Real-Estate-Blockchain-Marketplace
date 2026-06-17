@@ -41,20 +41,25 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
+    console.log(`[AuthService] Login attempt for email: "${dto.email}"`);
     const user = await this.usersService.findByEmailWithPassword(dto.email);
     if (!user) {
+      console.warn(`[AuthService] Login failed: User with email "${dto.email}" not found.`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) {
+      console.warn(`[AuthService] Login failed: Incorrect password for email "${dto.email}".`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     if (user.status !== 'active') {
+      console.warn(`[AuthService] Login failed: Account for email "${dto.email}" is suspended (status: "${user.status}").`);
       throw new UnauthorizedException('Account is suspended');
     }
 
+    console.log(`[AuthService] Login successful for email: "${dto.email}". Role: "${user.role}"`);
     return this.buildAuthResponse(user);
   }
 

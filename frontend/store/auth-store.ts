@@ -5,7 +5,6 @@ import { persist } from "zustand/middleware";
 import { api } from "@/services/api";
 import { setStoredToken } from "@/lib/api";
 import type { User, UserRole } from "@/types";
-import { MOCK_USERS } from "@/services/mock-data";
 
 interface AuthState {
   user: User | null;
@@ -43,7 +42,16 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      loginAs: async (_role: UserRole) => {
+      loginAs: async (role: UserRole) => {
+        let email = "";
+        if (role === "admin") email = "admin@chainestate.io";
+        else if (role === "owner") email = "sophia@chainestate.io";
+        else if (role === "buyer") email = "elena@chainestate.io";
+        else if (role === "agent") email = "marcus@chainestate.io";
+
+        if (email) {
+          return get().login(email, "DemoPassword123!");
+        }
         return null;
       },
 

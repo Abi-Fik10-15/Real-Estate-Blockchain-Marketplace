@@ -85,8 +85,19 @@ export class PropertiesService {
   }
 
   async create(user: UserDocument, dto: CreatePropertyDto): Promise<PropertyDocument> {
+    const addressCountry = dto.location.address.includes(',')
+      ? dto.location.address.split(',').pop()?.trim()
+      : 'USA';
+    const country = dto.location.country && dto.location.country.trim() !== ''
+      ? dto.location.country
+      : addressCountry;
+
     return this.propertyModel.create({
       ...dto,
+      location: {
+        ...dto.location,
+        country: country || 'USA',
+      },
       ownerId: user._id,
       ownerWallet: dto.ownerWallet ?? user.walletAddress,
       status: dto.status ?? 'pending',
@@ -109,6 +120,15 @@ export class PropertiesService {
       throw new NotFoundException('Property not found');
     }
     return updated;
+  }
+
+  async delete(id: string, user: UserDocument): Promise<void> {
+    const property = await this.findById(id);
+    this.assertCanManage(property, user);
+    const result = await this.propertyModel.findByIdAndDelete(property._id).exec();
+    if (!result) {
+      throw new NotFoundException('Property not found');
+    }
   }
 
   async approve(id: string): Promise<PropertyDocument> {
