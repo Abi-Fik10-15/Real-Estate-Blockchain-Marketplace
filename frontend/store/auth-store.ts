@@ -5,6 +5,7 @@ import { persist } from "zustand/middleware";
 import { api } from "@/services/api";
 import { setStoredToken } from "@/lib/api";
 import type { User, UserRole } from "@/types";
+import { MOCK_USERS } from "@/services/mock-data";
 
 interface AuthState {
   user: User | null;
