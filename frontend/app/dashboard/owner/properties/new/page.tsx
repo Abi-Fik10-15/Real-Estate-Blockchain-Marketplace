@@ -152,6 +152,7 @@ export default function CreatePropertyPage() {
 
       try {
         const mint = await api.mintPropertyToken(wallet, `ipfs://chainestate/${property.id}`);
+        console.log("Mint API response:", mint);
         await usePropertyStore.getState().updateProperty(property.id, {
           chainId: mint.tokenId,
         });
