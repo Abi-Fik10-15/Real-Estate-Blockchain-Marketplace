@@ -92,11 +92,26 @@ export function OwnershipVerification({ property }: { property: Property }) {
       : "";
 
   return (
-    <Card className={isVerified ? "border-success/30 glass-card" : "border-amber-500/20 glass-card"}>
+    <Card
+      className={
+        isVerified
+          ? "border-border/80 bg-success/5 shadow-none"
+          : "border-border/80 bg-amber-500/5 shadow-none"
+      }
+    >
       <CardHeader>
-        <CardTitle className="flex items-center justify-between gap-2 text-base">
+        <CardTitle className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-2">
-            <ShieldCheck className={isVerified ? "h-5 w-5 text-success" : "h-5 w-5 text-amber-500"} /> Ownership Verification
+            <span
+              className={
+                isVerified
+                  ? "rounded-md bg-success/10 p-1.5 text-success"
+                  : "rounded-md bg-amber-500/10 p-1.5 text-amber-600"
+              }
+            >
+              <ShieldCheck className="h-4 w-4" />
+            </span>
+            <span className="text-primary-600 font-semibold">Ownership Verification</span>
           </span>
           <Badge variant={isVerified ? "verified" : "warning"}>
             {isVerified ? (

@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
@@ -47,5 +47,40 @@ export class UsersService {
       .findByIdAndUpdate(id, patch, { new: true })
       .select('-passwordHash')
       .exec();
+  }
+
+  async getSavedPropertyIds(userId: string): Promise<string[]> {
+    const user = await this.userModel
+      .findById(userId)
+      .select('savedPropertyIds')
+      .exec();
+    if (!user) throw new NotFoundException('User not found');
+    return user.savedPropertyIds.map((id) => String(id));
+  }
+
+  async saveProperty(userId: string, propertyId: string): Promise<string[]> {
+    const user = await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $addToSet: { savedPropertyIds: new Types.ObjectId(propertyId) } },
+        { new: true },
+      )
+      .select('savedPropertyIds')
+      .exec();
+    if (!user) throw new NotFoundException('User not found');
+    return user.savedPropertyIds.map((id) => String(id));
+  }
+
+  async unsaveProperty(userId: string, propertyId: string): Promise<string[]> {
+    const user = await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $pull: { savedPropertyIds: new Types.ObjectId(propertyId) } },
+        { new: true },
+      )
+      .select('savedPropertyIds')
+      .exec();
+    if (!user) throw new NotFoundException('User not found');
+    return user.savedPropertyIds.map((id) => String(id));
   }
 }

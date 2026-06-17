@@ -242,6 +242,21 @@ export const api = {
     );
     return data;
   },
+
+  async getSavedPropertyIds(): Promise<string[]> {
+    const { data } = await apiClient.get<string[]>("/users/saved");
+    return data;
+  },
+
+  async saveProperty(propertyId: string): Promise<string[]> {
+    const { data } = await apiClient.post<string[]>(`/users/saved/${propertyId}`);
+    return data;
+  },
+
+  async unsaveProperty(propertyId: string): Promise<string[]> {
+    const { data } = await apiClient.delete<string[]>(`/users/saved/${propertyId}`);
+    return data;
+  },
 };
 
 /** Backward-compatible alias used by hooks during migration. */
