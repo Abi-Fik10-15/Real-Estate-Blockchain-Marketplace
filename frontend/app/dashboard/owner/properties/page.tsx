@@ -166,8 +166,10 @@ export default function OwnerPropertiesPage() {
 
                     {/* Actions */}
                     <Button size="sm" variant="ghost" className="h-8 px-3 text-xs" asChild>
-                      <Link href={`/property/${p.id}`}>
-                        View <ExternalLink className="ml-1 h-3 w-3" />
+                      <Link href={`/dashboard/owner/properties/${p.id}`}>
+                    
+                        View 
+                        
                       </Link>
                     </Button>
                     <Button
