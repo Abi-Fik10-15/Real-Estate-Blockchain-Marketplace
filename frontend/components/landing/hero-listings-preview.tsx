@@ -114,8 +114,9 @@ export function HeroListingsPreview() {
           <Link
             href={`/login?redirect=${encodeURIComponent(BUYER_MARKETPLACE_PATH)}`}
             className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 text-xs")}
+            aria-label="Explore all verified property listings"
           >
-            View all <ArrowRight className="h-3 w-3" />
+            Explore listings <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
       </div>

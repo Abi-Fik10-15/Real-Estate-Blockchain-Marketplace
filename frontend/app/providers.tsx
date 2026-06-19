@@ -1,13 +1,20 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { ChatWidget } from "@/components/chatbot";
 import { AppBootstrap } from "@/components/app-bootstrap";
 import { CookieBanner } from "@/components/cookies/cookie-banner";
 import { NotificationsProvider } from "@/contexts/notifications-context";
+
+// Lazy-load ChatWidget — pulls in socket.io-client which must NOT be in the
+// critical homepage bundle. Deferred until after the page is interactive.
+const ChatWidget = dynamic(
+  () => import("@/components/chatbot/chat-widget").then((m) => m.ChatWidget),
+  { ssr: false }
+);
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(

@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,7 +46,7 @@ export function FinalCTA() {
               className="border-white/35 bg-transparent text-white shadow-none hover:bg-white/10 hover:text-white dark:border-white/35 dark:bg-transparent dark:text-white dark:hover:bg-white/10 dark:hover:text-white"
               asChild
             >
-              <Link href="/marketplace">Browse listings</Link>
+              <Link href="/marketplace">Browse verified property listings</Link>
             </Button>
           </div>
         </div>

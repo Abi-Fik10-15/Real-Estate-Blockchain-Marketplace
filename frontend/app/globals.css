@@ -115,6 +115,18 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  /* Ensure all focusable elements have a visible focus ring for keyboard nav */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  /* Skip-to-content link for screen readers and keyboard users */
+  .skip-link {
+    @apply sr-only;
+  }
+  .skip-link:focus {
+    @apply not-sr-only fixed left-4 top-4 z-[9999] rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-lg outline outline-2 outline-ring;
+  }
 }
 
 @layer components {
