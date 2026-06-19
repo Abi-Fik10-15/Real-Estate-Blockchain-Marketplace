@@ -104,6 +104,7 @@ export function MarketplaceView() {
             >
               {Array.from({ length: 6 }).map((_, i) => (
                 <PropertyCardSkeleton key={i} view={view} />
+               
               ))}
             </div>
           ) : data && data.length > 0 ? (

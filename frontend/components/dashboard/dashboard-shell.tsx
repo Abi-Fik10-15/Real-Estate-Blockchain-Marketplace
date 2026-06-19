@@ -28,7 +28,7 @@ export function DashboardShell({
   nav,
   children,
 }: {
-  title: string;
+  title?: string;
   roleLabel: string;
   nav: NavItem[];
   children: React.ReactNode;
@@ -247,10 +247,10 @@ export function DashboardShell({
             <div className="flex items-center gap-1 sm:gap-3">
              
               <div className="min-w-0 flex gap-2 items-center">
-           <h1 className="hidden sm:block truncate text-primary-500 font-semibold sm:text-lg">
+           {/* <h1 className="hidden sm:block truncate text-primary-500 font-semibold sm:text-lg">
   {title}
-</h1>
-                {/* <div className=" flex items-center gap-2">
+</h1> */}
+                <div className=" flex items-center gap-2">
                   <Badge variant="secondary" className="truncate text-xs font-medium">
                     {roleLabel}
                   </Badge>
@@ -258,7 +258,7 @@ export function DashboardShell({
                   <Badge variant="outline" className="truncate text-xs font-medium text-muted-foreground">
                     Workspace
                   </Badge>
-                </div> */}
+                </div>
               </div>
             </div>
           </div>
