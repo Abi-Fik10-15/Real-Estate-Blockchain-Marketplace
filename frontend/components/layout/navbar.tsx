@@ -90,11 +90,11 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/95 supports-[backdrop-filter]:bg-background/80 supports-[backdrop-filter]:backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between gap-4 px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="ChainEstate home">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary">
-            <ShieldCheck className="h-5 w-5" />
+            <ShieldCheck className="h-5 w-5" aria-hidden />
           </span>
-          <span className="text-lg font-semibold tracking-tight text-foreground">
+          <span className="text-lg font-semibold tracking-tight text-foreground" aria-hidden>
             Chain<span className="text-primary">Estate</span>
           </span>
         </Link>

@@ -1,18 +1,33 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Hero } from "@/components/landing/hero";
 import { Stats } from "@/components/landing/stats";
 import { Features } from "@/components/landing/features";
 import { FeaturedProperties } from "@/components/landing/featured-properties";
-import { HowItWorks } from "@/components/landing/how-it-works";
-import { Testimonials } from "@/components/landing/testimonials";
-import { FinalCTA } from "@/components/landing/final-cta";
+
+// Below-fold sections: dynamically imported to split their JS chunk.
+// They are still server-rendered (ssr: true) so they appear in HTML for SEO.
+const HowItWorks = dynamic(
+  () => import("@/components/landing/how-it-works").then((m) => m.HowItWorks)
+);
+const Testimonials = dynamic(
+  () => import("@/components/landing/testimonials").then((m) => m.Testimonials)
+);
+const FinalCTA = dynamic(
+  () => import("@/components/landing/final-cta").then((m) => m.FinalCTA)
+);
 
 export const metadata: Metadata = {
   title: "ChainEstate | Blockchain Real Estate Marketplace",
   description:
     "Buy, rent, verify, and transfer property ownership securely through blockchain technology and transparent smart contract verification.",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
   alternates: {
     canonical: "/",
   },
@@ -75,7 +90,7 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebsite) }}
       />
       <Navbar />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <Hero />
         <Stats />
         <Features />
@@ -88,5 +103,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-

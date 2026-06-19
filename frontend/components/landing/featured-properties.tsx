@@ -110,26 +110,29 @@ export function FeaturedProperties() {
           </div>
           <Button variant="ghost" size="sm" className="hidden gap-1.5 text-xs sm:flex" asChild>
             <Link href={`/login?redirect=${encodeURIComponent(BUYER_MARKETPLACE_PATH)}`}>
-              View all <ArrowRight className="h-3.5 w-3.5" />
+              View all verified properties <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
         </div>
 
         {/* Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURED_PROPERTIES.map((property) => (
+          {FEATURED_PROPERTIES.map((property, index) => (
             <Link
               key={property.id}
               href={`/login?redirect=${encodeURIComponent(BUYER_MARKETPLACE_PATH)}`}
+              aria-label={`View details for ${property.title} in ${property.location} — ${property.price}`}
               className="group overflow-hidden rounded-xl border border-border/80 bg-background transition-colors hover:border-border"
             >
               {/* Image */}
               <div className="relative aspect-video overflow-hidden">
                 <Image
                   src={property.image}
-                  alt={property.title}
+                  alt={`${property.title} — ${property.type} in ${property.location}`}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  priority={index === 0}
+                  loading={index === 0 ? undefined : "lazy"}
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 {/* Status badge only — top-left */}
@@ -186,7 +189,7 @@ export function FeaturedProperties() {
         <div className="mt-8 text-center sm:hidden">
           <Button variant="outline" size="sm" asChild>
             <Link href={`/login?redirect=${encodeURIComponent(BUYER_MARKETPLACE_PATH)}`}>
-              View all properties <ArrowRight className="h-4 w-4" />
+              Browse all verified properties <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </div>

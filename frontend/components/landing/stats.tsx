@@ -1,5 +1,3 @@
-"use client";
-
 const STATS = [
   { value: "12,500+", label: "Properties Verified", description: "Title deeds confirmed on-chain" },
   { value: "8,000+", label: "Ownership Transfers", description: "Immutable deed transfers settled" },
