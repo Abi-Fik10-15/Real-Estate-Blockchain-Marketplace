@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ChatWidget } from "@/components/chatbot";
 import { AppBootstrap } from "@/components/app-bootstrap";
+import { CookieBanner } from "@/components/cookies/cookie-banner";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -27,6 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         {children}
         <Toaster position="top-right" richColors />
         <ChatWidget />
+        <CookieBanner />
       </QueryClientProvider>
     </ThemeProvider>
   );
