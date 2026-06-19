@@ -25,7 +25,7 @@ const COLUMNS = [
     links: [
       { label: "Privacy Policy", href: "#" },
       { label: "Terms of Service", href: "#" },
-      { label: "Cookie Policy", href: "#" },
+      { label: "Cookie Policy", href: "/cookie-policy" },
       { label: "Compliance", href: "#" },
     ],
   },
