@@ -1,27 +1,20 @@
 "use client";
 
-import { motion } from "framer-motion";
-
 export function TypingIndicator() {
   return (
-    <div className="flex items-end gap-3 px-4 py-2">
-      {/* AI avatar */}
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[hsl(var(--brand-1))] to-[hsl(var(--brand-3))]">
-        <span className="text-xs font-bold text-white">AI</span>
+    <div className="flex items-end gap-3 px-2 py-2">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/5">
+        <span className="text-xs font-bold text-primary">AI</span>
       </div>
 
-      {/* Dots bubble */}
-      <div className="glass-card flex items-center gap-1.5 rounded-2xl rounded-bl-sm px-4 py-3">
+      <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-sm border border-border/70 bg-background px-4 py-3">
         {[0, 1, 2].map((i) => (
-          <motion.span
+          <span
             key={i}
             className="block h-2 w-2 rounded-full bg-muted-foreground/60"
-            animate={{ y: [0, -6, 0] }}
-            transition={{
-              duration: 0.6,
-              repeat: Infinity,
-              delay: i * 0.15,
-              ease: "easeInOut",
+            style={{
+              animation: "chat-dot-bounce 1s infinite ease-in-out",
+              animationDelay: `${i * 0.15}s`,
             }}
           />
         ))}

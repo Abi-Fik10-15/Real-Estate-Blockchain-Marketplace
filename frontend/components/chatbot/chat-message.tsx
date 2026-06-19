@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { motion } from "framer-motion";
 import type { ChatMessage } from "@/types/chatbot";
 
@@ -19,25 +20,32 @@ interface ChatMessageBubbleProps {
   message: ChatMessage;
 }
 
-export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
+export const ChatMessageBubble = React.memo(function ChatMessageBubble({
+  message,
+}: ChatMessageBubbleProps) {
   const isUser = message.role === "user";
+  const formattedTime = React.useMemo(
+    () => formatRelativeTime(new Date(message.timestamp)),
+    [message.timestamp]
+  );
+  const lines = React.useMemo(() => message.content.split("\n"), [message.content]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12, scale: 0.96 }}
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.3, ease: [0.25, 0.4, 0, 1] }}
-      className={`flex items-end gap-3 px-4 py-1.5 ${isUser ? "flex-row-reverse" : "flex-row"}`}
+      transition={{ duration: 0.24, ease: [0.25, 0.4, 0, 1] }}
+      className={`flex items-end gap-3 px-2 py-1.5 ${isUser ? "flex-row-reverse" : "flex-row"}`}
     >
       {/* Avatar */}
       {!isUser && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[hsl(var(--brand-1))] to-[hsl(var(--brand-3))]">
-          <span className="text-xs font-bold text-white">AI</span>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/5">
+          <span className="text-xs font-bold text-primary">AI</span>
         </div>
       )}
       {isUser && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-          <span className="text-xs font-semibold text-muted-foreground">U</span>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40">
+          <span className="text-xs font-semibold text-muted-foreground">You</span>
         </div>
       )}
 
@@ -46,12 +54,12 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
         <div
           className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
             isUser
-              ? "rounded-br-sm bg-gradient-to-br from-[hsl(var(--brand-1))] to-[hsl(var(--brand-2))] text-white"
-              : "glass-card rounded-bl-sm"
+              ? "rounded-br-sm bg-primary text-primary-foreground"
+              : "rounded-bl-sm border border-border/70 bg-background"
           }`}
         >
           {/* Render markdown-like bold text */}
-          {message.content.split("\n").map((line, i) => {
+          {lines.map((line, i) => {
             const parts = line.split(/(\*\*[^*]+\*\*)/g);
             return (
               <span key={i}>
@@ -75,9 +83,9 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
         <span
           className={`text-[10px] text-muted-foreground/60 ${isUser ? "text-right" : "text-left"} px-1`}
         >
-          {formatRelativeTime(message.timestamp)}
+          {formattedTime}
         </span>
       </div>
     </motion.div>
   );
-}
+});
