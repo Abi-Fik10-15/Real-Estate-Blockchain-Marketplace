@@ -1,0 +1,17 @@
+# Dependencies & build
+node_modules
+dist
+coverage
+
+# Environment — NEVER commit secrets
+.env
+.env.*
+!.env.example
+
+# Hardhat
+cache
+artifacts
+typechain-types
+
+# Logs
+*.log
