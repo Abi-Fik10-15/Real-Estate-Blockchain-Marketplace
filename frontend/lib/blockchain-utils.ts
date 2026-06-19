@@ -8,12 +8,17 @@ export function escrowEthAmount(property: Pick<Property, "priceEth" | "price">):
 }
 
 export function isOnChainTokenId(tokenId: string): boolean {
-  return /^\d+$/.test(tokenId);
+  // Accept plain numeric IDs (e.g. "369189") or EST-prefixed IDs (e.g. "EST-369189")
+  return /^\d+$/.test(tokenId) || /^EST-\d+$/i.test(tokenId);
 }
 
-/** Numeric Sepolia token id for on-chain reads, or null if not minted. */
+/** Extract the numeric part of a token id for on-chain calls.
+ *  "EST-369189" → "369189", "369189" → "369189", anything else → null */
 export function resolvePropertyTokenId(chainId: string): string | null {
-  return isOnChainTokenId(chainId) ? chainId : null;
+  if (!chainId) return null;
+  if (/^\d+$/.test(chainId)) return chainId;
+  const match = chainId.match(/^EST-(\d+)$/i);
+  return match ? match[1] : null;
 }
 
 export function etherscanTxUrl(txHash: string): string {
