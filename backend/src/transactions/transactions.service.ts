@@ -94,14 +94,53 @@ export class TransactionsService {
       throw new BadRequestException('Transaction is not awaiting sale confirmation');
     }
 
-    if (!tx.blockchainTokenId) {
-      throw new BadRequestException('Property has no blockchain token ID');
-    }
-
     if (!confirmTxHash) {
       throw new BadRequestException(
         'confirmTxHash required — sign confirmSale in MetaMask first',
       );
+    }
+
+    if (tx.type === 'rental') {
+      tx.status = 'completed';
+      tx.confirmTxHash = confirmTxHash;
+      await tx.save();
+
+      await this.propertiesService.completeRental(tx.propertyId.toString());
+
+      this.notifications.emitTransactionCompleted(
+        tx.buyerId.toString(),
+        tx.sellerId.toString(),
+        tx.id,
+      );
+
+      return tx;
+    }
+
+    if (!tx.blockchainTokenId) {
+      tx.status = 'completed';
+      tx.confirmTxHash = confirmTxHash;
+      await tx.save();
+
+      const buyer = await this.usersService.findById(tx.buyerId.toString());
+      const buyerWallet = buyer?.walletAddress ?? '';
+
+      if (buyerWallet) {
+        await this.propertiesService.completeSale(
+          tx.propertyId.toString(),
+          buyerWallet,
+          tx.buyerId.toString(),
+        );
+      } else {
+        await this.propertiesService.updateStatus(tx.propertyId.toString(), 'sold');
+      }
+
+      this.notifications.emitTransactionCompleted(
+        tx.buyerId.toString(),
+        tx.sellerId.toString(),
+        tx.id,
+      );
+
+      return tx;
     }
 
     const buyer = await this.usersService.findById(tx.buyerId.toString());

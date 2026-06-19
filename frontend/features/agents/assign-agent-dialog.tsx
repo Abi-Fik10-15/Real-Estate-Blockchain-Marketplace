@@ -49,6 +49,8 @@ export function AssignAgentDialog({
         setAssigned(agentId);
         toast.success("Agent assigned to listing");
       }
+    } catch {
+      toast.error("Failed to update agent assignment");
     } finally {
       setPendingId(null);
     }

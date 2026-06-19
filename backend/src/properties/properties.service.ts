@@ -131,8 +131,23 @@ export class PropertiesService {
     const property = await this.findById(id);
     this.assertCanManage(property, user);
 
+    const set: Record<string, unknown> = { ...dto };
+    const unset: Record<string, 1> = {};
+
+    if ('agentId' in dto && (dto.agentId === null || dto.agentId === '')) {
+      unset.agentId = 1;
+      delete set.agentId;
+    }
+    if ('agentWallet' in dto && dto.agentWallet === '') {
+      set.agentWallet = '';
+    }
+
+    const updateOps: Record<string, unknown> = {};
+    if (Object.keys(set).length > 0) updateOps.$set = set;
+    if (Object.keys(unset).length > 0) updateOps.$unset = unset;
+
     const updated = await this.propertyModel
-      .findByIdAndUpdate(property._id, dto, { new: true })
+      .findByIdAndUpdate(property._id ?? property.id, updateOps, { new: true })
       .exec();
 
     if (!updated) {
@@ -161,8 +176,14 @@ export class PropertiesService {
     status: PropertyDocument['status'],
   ): Promise<PropertyDocument> {
     const property = await this.findById(id);
-    property.status = status;
-    return property.save();
+    const updated = await this.propertyModel
+      .findByIdAndUpdate(property._id ?? property.id, { status }, { new: true })
+      .exec();
+
+    if (!updated) {
+      throw new NotFoundException('Property not found');
+    }
+    return updated;
   }
 
   async completeSale(
@@ -171,12 +192,45 @@ export class PropertiesService {
     buyerId: string,
   ): Promise<PropertyDocument> {
     const property = await this.findById(id);
-    property.status = 'sold';
-    property.ownerWallet = buyerWallet;
-    property.ownerId = new Types.ObjectId(buyerId);
-    property.agentId = undefined;
-    property.agentWallet = '';
-    return property.save();
+    const updated = await this.propertyModel
+      .findByIdAndUpdate(
+        property._id ?? property.id,
+        {
+          $set: {
+            status: 'sold',
+            ownerWallet: buyerWallet,
+            ownerId: new Types.ObjectId(buyerId),
+            agentWallet: '',
+          },
+          $unset: { agentId: 1 },
+        },
+        { new: true },
+      )
+      .exec();
+
+    if (!updated) {
+      throw new NotFoundException('Property not found');
+    }
+    return updated;
+  }
+
+  async completeRental(id: string): Promise<PropertyDocument> {
+    const property = await this.findById(id);
+    const updated = await this.propertyModel
+      .findByIdAndUpdate(
+        property._id ?? property.id,
+        {
+          $set: { status: 'rented', agentWallet: '' },
+          $unset: { agentId: 1 },
+        },
+        { new: true },
+      )
+      .exec();
+
+    if (!updated) {
+      throw new NotFoundException('Property not found');
+    }
+    return updated;
   }
 
   async getOwnershipRecords() {

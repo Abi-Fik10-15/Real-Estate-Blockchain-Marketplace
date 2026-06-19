@@ -18,6 +18,8 @@ type EscrowTx = {
   id: string;
   propertyId: string;
   buyerId: string;
+  sellerId: string;
+  type: string;
   amount: number;
   status: string;
   txHash: string;
@@ -28,6 +30,7 @@ export function EscrowPanel({ transactions }: { transactions: EscrowTx[] }) {
   const queryClient = useQueryClient();
   const { wallet, connect, isConnecting } = useWalletStore();
   const properties = usePropertyStore((s) => s.properties);
+  const fetchProperties = usePropertyStore((s) => s.fetchProperties);
   const [pendingId, setPendingId] = React.useState<string | null>(null);
 
   const escrowPending = transactions.filter((t) => t.status === "escrow");
@@ -42,23 +45,33 @@ export function EscrowPanel({ transactions }: { transactions: EscrowTx[] }) {
       return;
     }
 
-    if (!isOnChainTokenId(tx.blockchainTokenId)) {
-      toast.error("This property has no on-chain token — mint it first");
-      return;
-    }
-
     setPendingId(tx.id);
     try {
-      await contractClient.ensureSepolia();
-      const { txHash } = await contractClient.confirmSale(tx.blockchainTokenId);
-      await api.confirmSaleTransaction(tx.id, txHash);
+      let confirmTxHash = `completed-${tx.id}`;
 
+      if (tx.type === "rental") {
+        await api.confirmSaleTransaction(tx.id, confirmTxHash);
+      } else if (isOnChainTokenId(tx.blockchainTokenId)) {
+        await contractClient.ensureSepolia();
+        const result = await contractClient.confirmSale(tx.blockchainTokenId);
+        confirmTxHash = result.txHash;
+        await api.confirmSaleTransaction(tx.id, confirmTxHash);
+      } else {
+        await api.confirmSaleTransaction(tx.id, confirmTxHash);
+      }
+
+      await fetchProperties(true);
       queryClient.invalidateQueries({ queryKey: ["transactions", "mine"] });
       queryClient.invalidateQueries({ queryKey: ["properties"] });
 
-      toast.success("Sale confirmed on-chain", {
-        description: txHash ? `Tx ${shortenAddress(txHash, 8)}` : undefined,
-      });
+      toast.success(
+        tx.type === "rental" ? "Rental confirmed" : "Sale confirmed on-chain",
+        {
+          description: confirmTxHash.startsWith("0x")
+            ? `Tx ${shortenAddress(confirmTxHash, 8)}`
+            : undefined,
+        }
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Confirm sale failed");
     } finally {
@@ -128,7 +141,8 @@ export function EscrowPanel({ transactions }: { transactions: EscrowTx[] }) {
                   </>
                 ) : (
                   <>
-                    <ShieldCheck className="h-4 w-4" /> Confirm Sale
+                    <ShieldCheck className="h-4 w-4" />{" "}
+                    {tx.type === "rental" ? "Confirm Rental" : "Confirm Sale"}
                   </>
                 )}
               </Button>

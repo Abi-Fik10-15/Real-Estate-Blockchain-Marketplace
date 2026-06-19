@@ -15,6 +15,8 @@ import { useSavedStore } from "@/store/saved-store";
 import { useInquiryStore } from "@/store/inquiry-store";
 import { useAuthStore } from "@/store/auth-store";
 import { useWalletStore } from "@/store/wallet-store";
+import { useBuyerProperties } from "@/hooks/use-buyer-properties";
+import { useMyTransactions } from "@/hooks/use-transactions";
 import { formatCurrency, shortenAddress } from "@/lib/utils";
 import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 
@@ -44,11 +46,19 @@ export default function BuyerDashboard() {
 
   const buyerId = user?.id ?? "u-buyer-1";
   const myInquiries = inquiries.filter((i) => i.buyerId === buyerId);
+  const acquiredProperties = useBuyerProperties();
+  const { data: transactions = [] } = useMyTransactions();
+  const completedTransactions = transactions.filter(
+    (t) => t.buyerId === buyerId && t.status === "completed"
+  );
   const activeListings = properties.filter((p) => p.status === "active");
   const saved = activeListings.filter((p) => savedIds.includes(p.id));
   const display = saved.length > 0 ? saved : activeListings.slice(0, 4);
-  const purchases = myInquiries.filter((i) => i.type === "purchase").length;
-  const rentals = myInquiries.filter((i) => i.type === "rental").length;
+  const purchases = completedTransactions.filter((t) => t.type === "sale").length;
+  const rentals = completedTransactions.filter((t) => t.type === "rental").length;
+  const ownedOrRented = acquiredProperties.filter(
+    (p) => p.status === "sold" || p.status === "rented"
+  );
 
   // Onboarding Checklist logic
   const isWalletConnected = !!wallet;
@@ -147,7 +157,7 @@ export default function BuyerDashboard() {
           <Card className="relative overflow-hidden border border-border/80 bg-card/50 backdrop-blur-sm shadow-sm transition-all hover:shadow-md">
             <CardContent className="flex items-center justify-between p-6">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">Purchase Inquiries</p>
+                <p className="text-sm font-medium text-muted-foreground">Purchased</p>
                 <p className="text-3xl font-extrabold tracking-tight text-primary">{purchases}</p>
               </div>
               <div className="rounded-xl bg-purple-500/10 p-3 text-purple-500">
@@ -161,7 +171,7 @@ export default function BuyerDashboard() {
           <Card className="relative overflow-hidden border border-border/80 bg-card/50 backdrop-blur-sm shadow-sm transition-all hover:shadow-md">
             <CardContent className="flex items-center justify-between p-6">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">Rental Inquiries</p>
+                <p className="text-sm font-medium text-muted-foreground">Rented</p>
                 <p className="text-3xl font-extrabold tracking-tight text-primary">{rentals}</p>
               </div>
               <div className="rounded-xl bg-emerald-500/10 p-3 text-emerald-500">
@@ -187,6 +197,44 @@ export default function BuyerDashboard() {
           </Card>
         </ScaleOnHover>
       </div>
+
+      {ownedOrRented.length > 0 && (
+        <Card className="mt-6 border border-border/80 bg-card/30 backdrop-blur-md shadow-lg">
+          <CardHeader className="pb-3 border-b border-border/40">
+            <CardTitle className="text-lg text-primary-600">My Properties</CardTitle>
+            <CardDescription>
+              Properties you have purchased or rented after completing the transaction
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-3">
+            {ownedOrRented.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-background/40 p-3"
+              >
+                <div className="min-w-0">
+                  <p className="flex items-center gap-2 truncate text-sm font-semibold">
+                    <Home className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    {p.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {formatCurrency(p.price)}
+                    {p.listingType === "rent" && "/mo"} · {p.location.city}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Badge variant={p.status === "sold" ? "secondary" : "verified"} className="capitalize">
+                    {p.status === "sold" ? "Purchased" : "Rented"}
+                  </Badge>
+                  <Button size="sm" variant="outline" className="h-7 px-3 text-xs" asChild>
+                    <Link href={`/property/${p.id}`}>View</Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         {/* Onboarding Checklist Card */}

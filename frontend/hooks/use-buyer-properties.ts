@@ -5,21 +5,21 @@ import { usePropertyStore } from "@/store/property-store";
 import { useMyTransactions } from "@/hooks/use-transactions";
 import type { Property } from "@/types";
 
-/** Properties owned by or sold/rented by the currently logged-in owner. */
-export function useOwnerProperties(): Property[] {
+/** Properties purchased or rented by the currently logged-in buyer. */
+export function useBuyerProperties(): Property[] {
   const user = useAuthStore((s) => s.user);
   const properties = usePropertyStore((s) => s.properties);
   const { data: transactions = [] } = useMyTransactions();
 
   if (!user) return [];
 
-  const completedAsSeller = new Set(
+  const completedAsBuyer = new Set(
     transactions
-      .filter((t) => t.sellerId === user.id && t.status === "completed")
+      .filter((t) => t.buyerId === user.id && t.status === "completed")
       .map((t) => t.propertyId)
   );
 
   return properties.filter(
-    (p) => p.ownerId === user.id || completedAsSeller.has(p.id)
+    (p) => p.ownerId === user.id || completedAsBuyer.has(p.id)
   );
 }

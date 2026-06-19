@@ -169,7 +169,7 @@ export const api = {
     return data;
   },
 
-  async updateProperty(id: string, patch: Partial<ApiProperty>): Promise<Property> {
+  async updateProperty(id: string, patch: Partial<ApiProperty> & { agentId?: string | null }): Promise<Property> {
     const { data } = await apiClient.patch<ApiProperty>(`/properties/${id}`, patch);
     return mapProperty(data);
   },

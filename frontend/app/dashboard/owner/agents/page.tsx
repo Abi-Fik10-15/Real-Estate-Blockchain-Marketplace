@@ -45,6 +45,8 @@ export default function OwnerAgentsPage() {
         toast.success(`${agent.name} assigned to listing`);
         setSelectedAgent((prev) => ({ ...prev, [propertyId]: "" }));
       }
+    } catch {
+      toast.error("Failed to update agent assignment");
     } finally {
       setPendingId(null);
     }

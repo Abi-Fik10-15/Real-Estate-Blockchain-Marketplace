@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { usePropertyStore } from "@/store/property-store";
 import { useOwnerProperties } from "@/hooks/use-owner-properties";
+import { useMyTransactions } from "@/hooks/use-transactions";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { ListingStatus } from "@/types";
@@ -43,9 +44,16 @@ const STATUS_COLOR: Record<ListingStatus, string> = {
 
 export default function OwnerPropertiesPage() {
   const properties = useOwnerProperties();
+  const { data: transactions = [] } = useMyTransactions();
   const setStatus = usePropertyStore((s) => s.setStatus);
   const deleteProperty = usePropertyStore((s) => s.deleteProperty);
   const [toDelete, setToDelete] = React.useState<string | null>(null);
+
+  const completedAsSeller = new Set(
+    transactions
+      .filter((t) => t.status === "completed")
+      .map((t) => t.propertyId)
+  );
 
   const confirmDelete = () => {
     if (toDelete) {
@@ -92,7 +100,9 @@ export default function OwnerPropertiesPage() {
         <Card className="border-border/60">
           <CardContent className="p-0">
             <div className="divide-y divide-border/40">
-              {properties.map((p) => (
+              {properties.map((p) => {
+                const isCompletedDeal = completedAsSeller.has(p.id) && (p.status === "sold" || p.status === "rented");
+                return (
                 <div
                   key={p.id}
                   className="flex flex-col gap-4 px-5 py-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between"
@@ -126,7 +136,14 @@ export default function OwnerPropertiesPage() {
 
                   {/* Controls */}
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    {/* Status selector */}
+                    {isCompletedDeal ? (
+                      <Badge
+                        variant={p.status === "sold" ? "secondary" : "verified"}
+                        className="capitalize text-xs"
+                      >
+                        {p.status === "sold" ? "Sold" : "Rented"}
+                      </Badge>
+                    ) : (
                     <Select
                       value={p.status}
                       onValueChange={(v) => {
@@ -154,6 +171,7 @@ export default function OwnerPropertiesPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    )}
 
                     {/* Verification badge */}
                     {p.verification.status === "verified" ? (
@@ -177,12 +195,14 @@ export default function OwnerPropertiesPage() {
                       variant="ghost"
                       className="h-8 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => setToDelete(p.id)}
+                      disabled={isCompletedDeal}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </CardContent>
         </Card>

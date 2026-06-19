@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateIf,
   ValidateNested,
   ArrayMinSize,
   ArrayMaxSize,
@@ -195,10 +196,11 @@ export class UpdatePropertyDto {
   @IsString({ each: true })
   imagePublicIds?: string[];
 
-  @ApiPropertyOptional({ description: 'Agent user ID' })
+  @ApiPropertyOptional({ description: 'Agent user ID — send null to remove', nullable: true })
   @IsOptional()
+  @ValidateIf((_obj, value) => value !== null)
   @IsString()
-  agentId?: string;
+  agentId?: string | null;
 
   @ApiPropertyOptional({ description: 'Agent wallet address' })
   @IsOptional()
