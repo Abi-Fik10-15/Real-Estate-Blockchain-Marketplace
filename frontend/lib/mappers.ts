@@ -7,7 +7,8 @@ import type {
 } from "@/types";
 
 export interface ApiUser {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   email: string;
   phone?: string;
@@ -20,7 +21,8 @@ export interface ApiUser {
 }
 
 export interface ApiProperty {
-  id: string;
+  id?: string;
+  _id?: string;
   ownerId: string;
   agentId?: string;
   title: string;
@@ -47,7 +49,8 @@ export interface ApiProperty {
 }
 
 export interface ApiInquiry {
-  id: string;
+  id?: string;
+  _id?: string;
   propertyId: string;
   propertyTitle: string;
   buyerId: string;
@@ -59,8 +62,9 @@ export interface ApiInquiry {
 }
 
 export function mapUser(api: ApiUser): User {
+  const id = String(api.id ?? api._id ?? "");
   return {
-    id: api.id,
+    id,
     name: api.name,
     email: api.email,
     phone: api.phone,
@@ -80,9 +84,10 @@ function mapVerificationStatus(status: ListingStatus): VerificationStatus {
 }
 
 export function mapProperty(api: ApiProperty): Property {
-  const chainId = api.blockchainTokenId || `EST-${api.id.slice(-6).toUpperCase()}`;
+  const id = String(api.id ?? api._id ?? "");
+  const chainId = api.blockchainTokenId || (id ? `EST-${id.slice(-6).toUpperCase()}` : "EST-000000");
   return {
-    id: api.id,
+    id,
     chainId,
     title: api.title,
     description: api.description,
@@ -116,8 +121,9 @@ export function mapProperty(api: ApiProperty): Property {
 }
 
 export function mapInquiry(api: ApiInquiry): Inquiry {
+  const id = String(api.id ?? api._id ?? "");
   return {
-    id: api.id,
+    id,
     propertyId: api.propertyId,
     propertyTitle: api.propertyTitle,
     buyerId: api.buyerId,

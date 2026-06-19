@@ -55,7 +55,8 @@ export class AuthController {
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Get current user profile' })
   profile(@CurrentUser() user: UserDocument) {
-    return this.authService.getProfile(user.id);
+    // JWT strategy already loaded the user — return it directly, no second DB hit
+    return user;
   }
 
   @Patch('profile')

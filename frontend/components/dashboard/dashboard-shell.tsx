@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Bell, LogOut, Menu, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { WalletConnect } from "@/components/wallet/wallet-connect";
+import { LazyWalletConnect } from "@/components/wallet/lazy-wallet-connect";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,8 @@ export function DashboardShell({
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  // useNotifications is already called in AppBootstrap — read from shared store state here
+  // to avoid spawning a second WebSocket connection per dashboard mount.
   const { count, clearCount } = useNotifications();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const initials = user?.name
@@ -278,7 +280,7 @@ export function DashboardShell({
               )}
             </Button>
             <ThemeToggle />
-            <WalletConnect size="sm" />
+            <LazyWalletConnect size="sm" />
           </div>
         </header>
 

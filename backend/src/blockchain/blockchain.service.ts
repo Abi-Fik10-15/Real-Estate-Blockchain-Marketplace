@@ -108,17 +108,15 @@ export class BlockchainService {
     if (!this.isEnabled()) return [];
 
     const numericIds = tokenIds.filter((id) => /^\d+$/.test(id));
-    const records: OnChainRecord[] = [];
 
-    for (const tokenId of numericIds) {
-      try {
-        records.push(await this.getTokenProperty(tokenId));
-      } catch {
-        // skip invalid or burned tokens
-      }
-    }
+    // Fetch all token records in parallel instead of sequentially
+    const results = await Promise.allSettled(
+      numericIds.map((tokenId) => this.getTokenProperty(tokenId)),
+    );
 
-    return records;
+    return results
+      .filter((r): r is PromiseFulfilledResult<OnChainProperty> => r.status === 'fulfilled')
+      .map((r) => r.value);
   }
 
   async verifyOwnership(

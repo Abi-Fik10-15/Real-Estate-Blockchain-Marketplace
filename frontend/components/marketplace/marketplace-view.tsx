@@ -22,8 +22,16 @@ import type { PropertyFilters } from "@/types";
 
 export function MarketplaceView() {
   const [filters, setFilters] = React.useState<PropertyFilters>(BUYER_MARKETPLACE_FILTERS);
+  const [debouncedFilters, setDebouncedFilters] = React.useState<PropertyFilters>(BUYER_MARKETPLACE_FILTERS);
   const [view, setView] = React.useState<"grid" | "list">("grid");
-  const { data, isLoading } = useProperties({ ...filters, status: "active" });
+
+  // Debounce filter changes (especially search text) to avoid a new API call per keystroke
+  React.useEffect(() => {
+    const id = setTimeout(() => setDebouncedFilters(filters), 300);
+    return () => clearTimeout(id);
+  }, [filters]);
+
+  const { data, isLoading } = useProperties({ ...debouncedFilters, status: "active" });
 
   const patch = (p: Partial<PropertyFilters>) => setFilters((f) => ({ ...f, ...p }));
 

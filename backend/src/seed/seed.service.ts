@@ -18,6 +18,19 @@ export class SeedService implements OnModuleInit {
   async onModuleInit() {
     this.logger.log('Ensuring demo users exist…');
 
+    // Check if demo users already exist before hashing (skips bcrypt on warm boots)
+    const existingCount = await this.userModel.countDocuments({
+      email: { $in: ['sophia@chainestate.io', 'elena@chainestate.io', 'admin@chainestate.io'] },
+    });
+
+    if (existingCount >= 3) {
+      const propCount = await this.propertyModel.countDocuments();
+      if (propCount > 0) {
+        this.logger.log('Seed already complete — skipping.');
+        return;
+      }
+    }
+
     const passwordHash = await bcrypt.hash('DemoPassword123!', 10);
 
     const demoUsers: Partial<User>[] = [

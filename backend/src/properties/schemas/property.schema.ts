@@ -108,6 +108,14 @@ export class Property {
 export type PropertyDocument = HydratedDocument<Property>;
 export const PropertySchema = SchemaFactory.createForClass(Property);
 
+// Missing indexes discovered during performance audit
+PropertySchema.index({ agentId: 1 });
+PropertySchema.index({ blockchainTokenId: 1 });
+PropertySchema.index({ createdAt: -1 });
+PropertySchema.index({ price: 1 });
+// Compound index for common list filters
+PropertySchema.index({ status: 1, createdAt: -1 });
+
 PropertySchema.set('toJSON', {
   virtuals: true,
   transform(_doc, ret) {
