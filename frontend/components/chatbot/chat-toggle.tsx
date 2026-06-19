@@ -5,20 +5,23 @@ import { Sparkles, X } from "lucide-react";
 
 interface ChatToggleProps {
   isOpen: boolean;
-  onClick: () => void;
+  onClick?: () => void;
   unreadCount?: number;
 }
 
 export function ChatToggle({ isOpen, onClick, unreadCount = 0 }: ChatToggleProps) {
   return (
     <motion.button
+      type="button"
       onClick={onClick}
-      className={`relative flex h-14 w-14 items-center justify-center rounded-full text-white shadow-glow transition-all hover:scale-105 active:scale-95 ${
+      className={`relative flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform duration-200 hover:scale-105 active:scale-95 ${
         isOpen
-          ? "bg-muted-foreground/80 shadow-none"
-          : "animate-float bg-gradient-to-br from-[hsl(var(--brand-1))] via-[hsl(var(--brand-2))] to-[hsl(var(--brand-3))]"
+          ? "bg-muted-foreground/80"
+          : "bg-primary"
       }`}
       aria-label={isOpen ? "Close chat" : "Open AI Assistant"}
+      aria-haspopup="dialog"
+      aria-expanded={isOpen}
       whileHover={{ scale: 1.08 }}
       whileTap={{ scale: 0.94 }}
     >
@@ -64,8 +67,7 @@ export function ChatToggle({ isOpen, onClick, unreadCount = 0 }: ChatToggleProps
 
       {/* Idle pulse ring (shown when no unread count) */}
       {!isOpen && unreadCount === 0 && (
-        <span className="absolute right-0 top-0 flex h-3.5 w-3.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+        <span className="absolute right-0 top-0 flex h-3 w-3">
           <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-[hsl(var(--brand-2))] bg-white" />
         </span>
       )}

@@ -1,103 +1,88 @@
 "use client";
 
 import {
-  ArrowLeftRight,
-  ArrowRight,
-  MapPinned,
   ShieldCheck,
-  UserCheck,
+  FileSearch,
+  Wallet,
+  Users,
+  TrendingUp,
+  Globe,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 
 const FEATURES = [
   {
     icon: ShieldCheck,
-    title: "Ownership Verification",
+    title: "Blockchain Ownership Verification",
     description:
-      "Verify property ownership through immutable blockchain records with cryptographic proof.",
-    accent: "text-primary",
-    iconBg: "bg-primary/8 border-primary/20",
+      "Every property title is anchored to an ERC-721 token. Buyers and agents can verify authentic ownership without relying on third-party registries.",
   },
   {
-    icon: UserCheck,
-    title: "Agent Authorization",
+    icon: FileSearch,
+    title: "Transparent Transaction History",
     description:
-      "Property owners can authorize trusted agents to manage listings securely on-chain.",
-    accent: "text-indigo-500",
-    iconBg: "bg-indigo-500/8 border-indigo-500/20",
+      "Full on-chain audit trail of every listing, transfer, and escrow event. Immutable records prevent document fraud and title disputes.",
   },
   {
-    icon: ArrowLeftRight,
-    title: "Transparent Transfers",
+    icon: Wallet,
+    title: "Crypto & Fiat Settlement",
     description:
-      "Track ownership transfers with complete audit trails, recorded permanently on the blockchain.",
-    accent: "text-emerald-500",
-    iconBg: "bg-emerald-500/8 border-emerald-500/20",
+      "Smart-contract escrow holds funds in ETH until both parties sign off. Automatic release on confirmation; instant refund on cancellation.",
   },
   {
-    icon: MapPinned,
-    title: "Smart Property Discovery",
+    icon: Users,
+    title: "Agent Authorization System",
     description:
-      "Search and explore properties through advanced filters and interactive maps worldwide.",
-    accent: "text-amber-500",
-    iconBg: "bg-amber-500/8 border-amber-500/20",
+      "Property owners grant wallet-level permissions to agents. Revoke access instantly without paperwork or third-party intermediaries.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Real-time Market Data",
+    description:
+      "Live market metrics, comparable sales, and liquidity signals sourced from verified on-chain transactions across the global registry.",
+  },
+  {
+    icon: Globe,
+    title: "Cross-border Property Access",
+    description:
+      "Buy and sell properties in any jurisdiction. Ownership tokens comply with ERC standards accepted by international property platforms.",
   },
 ];
 
 export function Features() {
   return (
-    <section id="features" className="border-b border-border/50 py-16 lg:py-20 bg-primary-50/20">
+    <section id="features" className="border-b border-border/50 bg-background py-20">
       <div className="container mx-auto px-6 lg:px-8">
-
-        {/* Header */}
-        <FadeIn className="mb-12 flex flex-col items-center gap-3 text-center">
-          <Badge
-            variant="outline"
-            className="border-primary/30 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary"
-          >
-            Platform features
-          </Badge>
-          <h2 className="max-w-2xl text-balance text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            Everything you need to{" "}
-            <span className="text-primary">trust the transaction</span>
-          </h2>
-          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-            A complete toolkit for owners, agents, and buyers — backed by
-            verifiable on-chain records.
+        {/* Heading */}
+        <div className="mb-12">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary">
+            Platform Features
           </p>
-        </FadeIn>
+          <h2 className="max-w-xl text-3xl font-semibold tracking-tight text-foreground">
+            Everything you need for property ownership
+          </h2>
+        </div>
 
-        {/* Feature cards */}
-        <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map((f) => (
-            <StaggerItem key={f.title}>
-              <div className="group flex h-full flex-col gap-4 rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:border-border/80 hover:shadow-sm">
-
-                {/* Icon */}
-                <div className={`flex h-9 w-9 items-center justify-center rounded-lg border ${f.iconBg}`}>
-                  <f.icon className={`h-4 w-4 ${f.accent}`} />
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <h3 className="text-lg font-bold text-primary-500">
-                    {f.title}
-                  </h3>
-                  <p className="text-[12px] leading-relaxed text-muted-foreground">
-                    {f.description}
-                  </p>
-                </div>
-
-                {/* Learn more */}
-                <div className={`flex items-center gap-1 text-[11px] font-semibold ${f.accent} opacity-0 transition-all duration-200 group-hover:opacity-100`}>
-                  Learn more
-                  <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-                </div>
+        {/* Grid */}
+        <div className="grid gap-px rounded-xl border border-border/80 bg-border/30 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map(({ icon: Icon, title, description }) => (
+            <div
+              key={title}
+              className="group relative z-0 flex flex-col gap-4 bg-background p-6 transition-all duration-300 ease-out hover:z-10 hover:scale-[1.02] hover:bg-muted/40 active:scale-[0.99] first:rounded-tl-xl last:rounded-br-xl sm:[&:nth-child(2)]:rounded-tr-xl sm:[&:nth-child(5)]:rounded-bl-xl"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 transition-all duration-300 group-hover:border-primary/40 group-hover:bg-primary/10">
+                <Icon className="h-4 w-4 text-primary transition-colors duration-300 group-hover:text-primary-500" />
               </div>
-            </StaggerItem>
+              <div>
+                <h3 className="mb-1.5 text-sm font-semibold text-foreground transition-colors duration-300 group-hover:text-primary-600">
+                  {title}
+                </h3>
+                <p className="text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-foreground/75">
+                  {description}
+                </p>
+              </div>
+            </div>
           ))}
-        </StaggerContainer>
+        </div>
       </div>
     </section>
   );

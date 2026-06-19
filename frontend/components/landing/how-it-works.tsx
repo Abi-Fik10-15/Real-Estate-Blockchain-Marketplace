@@ -1,160 +1,98 @@
 "use client";
 
-import {
-  BadgeCheck,
-  ClipboardCheck,
-  FileKey2,
-  Link2,
-  UserCheck,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const STEPS = [
   {
-    step: 1,
-    icon: ClipboardCheck,
-    title: "Register Property",
+    step: "01",
+    title: "Create Your Account",
     description:
-      "Submit property details including title deeds, location data, and ownership documents to the ChainEstate platform.",
-    accent: "text-primary",
-    iconBg: "bg-primary/8 border-primary/20",
-    stepBg: "bg-primary/10 text-primary border-primary/25",
+      "Register as a buyer, seller, or agent. Connect your Ethereum wallet to unlock on-chain ownership verification and secure document signing.",
   },
   {
-    step: 2,
-    icon: FileKey2,
-    title: "Verify Ownership Documents",
+    step: "02",
+    title: "Discover & Verify Properties",
     description:
-      "Our verification engine cross-references submitted documents with government registries and title oracles.",
-    accent: "text-violet-500",
-    iconBg: "bg-violet-500/8 border-violet-500/20",
-    stepBg: "bg-violet-500/10 text-violet-500 border-violet-500/25",
+      "Browse the marketplace and inspect each listing's on-chain provenance. Every title deed is anchored to an ERC-721 token with a full audit trail.",
   },
   {
-    step: 3,
-    icon: Link2,
-    title: "Blockchain Record Creation",
+    step: "03",
+    title: "Submit an Offer",
     description:
-      "A unique, tamper-proof ownership record is created on-chain with cryptographic proof of authenticity.",
-    accent: "text-cyan-500",
-    iconBg: "bg-cyan-500/8 border-cyan-500/20",
-    stepBg: "bg-cyan-500/10 text-cyan-500 border-cyan-500/25",
+      "Place a purchase offer directly through the platform. Funds are locked in a smart-contract escrow — released only when both parties confirm the transaction.",
   },
   {
-    step: 4,
-    icon: UserCheck,
-    title: "Agent Authorization",
+    step: "04",
+    title: "Transfer Ownership On-Chain",
     description:
-      "Property owners can authorize verified agents to manage listings, schedule viewings, and negotiate on their behalf.",
-    accent: "text-emerald-500",
-    iconBg: "bg-emerald-500/8 border-emerald-500/20",
-    stepBg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/25",
-  },
-  {
-    step: 5,
-    icon: BadgeCheck,
-    title: "Secure Ownership Transfer",
-    description:
-      "Smart contracts automate the entire transfer process — escrow, verification, and title update — in minutes, not weeks.",
-    accent: "text-amber-500",
-    iconBg: "bg-amber-500/8 border-amber-500/20",
-    stepBg: "bg-amber-500/10 text-amber-500 border-amber-500/25",
+      "Once escrow is fulfilled, the property NFT transfers to your wallet and the public registry updates instantly — no lawyers or manual filing required.",
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="border-b border-border/50 py-16 lg:py-20">
-      <div className="container mx-auto px-6 lg:px-8">
-
-        {/* Header */}
-        <FadeIn className="mb-12 flex flex-col items-center gap-3 text-center">
-          <Badge
-            variant="outline"
-            className="border-primary/30 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary"
-          >
-            How it works
-          </Badge>
-          <h2 className="max-w-2xl text-balance text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            From listing to deed —{" "}
-            <span className="text-primary">fully on-chain</span>
-          </h2>
-          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-            From property registration to secure ownership transfer — everything
-            happens on-chain, transparently, and in minutes.
-          </p>
-        </FadeIn>
-
-        {/* Steps — vertical timeline on mobile, alternating on desktop */}
-        <StaggerContainer className="relative">
-          {/* Vertical connector line (desktop) */}
-          <div className="absolute left-1/2 hidden h-full w-px -translate-x-1/2 bg-border/50 lg:block" />
-
-          <div className="space-y-6 lg:space-y-0">
-            {STEPS.map((s, i) => {
-              const isEven = i % 2 === 0;
-              return (
-                <StaggerItem key={s.step}>
-                  <div
-                    className={`relative flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-0 ${
-                      isEven ? "" : "lg:flex-row-reverse"
-                    }`}
-                  >
-                    {/* Content card */}
-                    <div
-                      className={`flex-1 ${
-                        isEven ? "lg:pr-14 lg:text-right" : "lg:pl-14"
-                      }`}
-                    >
-                      <div className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:border-border/80 hover:shadow-sm">
-
-                        {/* Icon + step label row */}
-                        <div
-                          className={`flex items-center gap-3 ${
-                            isEven ? "lg:flex-row-reverse" : ""
-                          }`}
-                        >
-                          <div
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${s.iconBg}`}
-                          >
-                            <s.icon className={`h-4 w-4 ${s.accent}`} />
-                          </div>
-                          <div className={isEven ? "lg:text-right" : ""}>
-                            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                              Step {s.step}
-                            </p>
-                            <h3 className="text-sm font-semibold text-foreground">
-                              {s.title}
-                            </h3>
-                          </div>
-                        </div>
-
-                        <p className={`mt-3 text-[12px] leading-relaxed text-muted-foreground ${isEven ? "lg:text-right" : ""}`}>
-                          {s.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Center dot on the connector */}
-                    <div className="relative z-10 hidden lg:flex lg:shrink-0 lg:items-center lg:justify-center">
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full border-2 border-background bg-card ring-2 ${s.stepBg}`}
-                      >
-                        <span className={`text-xs font-bold ${s.accent}`}>
-                          {s.step}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Spacer — other side */}
-                    <div className="hidden flex-1 lg:block" />
-                  </div>
-                </StaggerItem>
-              );
-            })}
+    <section id="how-it-works" className="primary-band relative overflow-hidden border-b border-primary-foreground/20 py-20">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,rgba(255,255,255,0.07),transparent)]" />
+      <div className="container relative mx-auto px-6 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-[1fr_2fr] lg:gap-16">
+          {/* Left — heading + CTA */}
+          <div className="lg:pt-2">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary-foreground/70">
+              How It Works
+            </p>
+            <h2 className="text-3xl font-semibold tracking-tight text-primary-foreground">
+              Own property in four steps
+            </h2>
+            <p className="mt-4 text-sm leading-relaxed text-primary-foreground/80">
+              From account creation to on-chain deed transfer, ChainEstate
+              guides you through a fully transparent, trustless process.
+            </p>
+            <Button
+              variant="outline"
+              size="lg"
+              className="mt-8 border-white/35 bg-transparent text-white shadow-none hover:bg-white/10 hover:text-white dark:border-white/35 dark:bg-transparent dark:text-white dark:hover:bg-white/10 dark:hover:text-white"
+              asChild
+            >
+              <Link href="/register">
+                Get started <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
-        </StaggerContainer>
+
+          {/* Right — vertical timeline */}
+          <div className="relative flex flex-col gap-0">
+            {STEPS.map(({ step, title, description }) => (
+              <div
+                key={step}
+                className="group relative flex items-start gap-4 rounded-lg pb-10 pr-3 transition-transform duration-300 ease-out hover:scale-[1.02] active:scale-[0.99] last:pb-0"
+              >
+                {/* Circle number */}
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/40 bg-white/10 text-xs font-semibold text-white transition-all duration-300 group-hover:scale-105 group-hover:border-white/60 group-hover:bg-white/20">
+                  {step}
+                </div>
+                {/* Text */}
+                <div className="min-w-0 flex-1 transition-colors duration-300">
+                  <h3 className="text-sm font-semibold text-primary-foreground transition-colors duration-300 group-hover:text-white">
+                    {title}
+                  </h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-primary-foreground/75 transition-colors duration-300 group-hover:text-primary-foreground/90">
+                    {description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

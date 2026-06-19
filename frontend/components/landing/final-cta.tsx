@@ -1,121 +1,57 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ShoppingBag, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FadeIn, FloatingElement } from "@/components/ui/motion";
 
 export function FinalCTA() {
   return (
-    <section id="final-cta" className="relative overflow-hidden py-14 lg:py-20">
+    <section className="primary-band relative overflow-hidden py-24">
+      {/* Dot-grid pattern */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      />
+      {/* Subtle radial glow in the center */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,rgba(255,255,255,0.07),transparent)]" />
 
-      {/* ── Background — matches Features section exactly ─────────────────── */}
-      <div className="absolute inset-0 -z-10 section-gradient" />
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="glow-orb left-1/4 top-0 h-[320px] w-[320px]
-          bg-[hsl(262,83%,58%)] opacity-[0.08]" />
-        <div className="glow-orb right-1/4 bottom-0 h-[260px] w-[260px]
-          bg-[hsl(199,89%,48%)] opacity-[0.07]" />
-        <div className="glow-orb left-1/2 top-1/2 h-[200px] w-[200px]
-          -translate-x-1/2 -translate-y-1/2
-          bg-[hsl(262,83%,58%)] opacity-[0.05]" />
-
-        {/* Subtle dot grid */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: "radial-gradient(circle, currentColor 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-          }}
-        />
-      </div>
-
-      {/* ── Floating decorative dots ─────────────────────────────────────── */}
-      <FloatingElement delay={0} duration={8} y={12}
-        className="pointer-events-none absolute left-[8%] top-[20%] hidden lg:block">
-        <div className="h-2 w-2 rounded-full bg-primary/20" />
-      </FloatingElement>
-      <FloatingElement delay={2} duration={10} y={16}
-        className="pointer-events-none absolute right-[12%] top-[30%] hidden lg:block">
-        <div className="h-3 w-3 rounded-full bg-primary/15" />
-      </FloatingElement>
-      <FloatingElement delay={1} duration={9} y={10}
-        className="pointer-events-none absolute right-[22%] bottom-[25%] hidden lg:block">
-        <div className="h-2 w-2 rounded-sm rotate-45 border border-primary/20" />
-      </FloatingElement>
-
-      {/* ── Content ──────────────────────────────────────────────────────── */}
-      <div className="container relative">
-        <FadeIn className="mx-auto max-w-3xl text-center">
-
-          {/* Pill badge — same style as feature cards' icon containers */}
-          <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full
-            border border-border/50 bg-card/80 px-4 py-1.5 backdrop-blur-sm">
-            <div className="grid h-5 w-5 place-items-center rounded-full bg-gradient-brand shadow-glow">
-              <Sparkles className="h-3 w-3 text-primary-foreground" />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground">
-              Blockchain-powered real estate
-            </span>
-          </div>
-
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            Ready to transform{" "}
-            <span className="text-gradient">real estate ownership</span>?
+      <div className="container relative mx-auto px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground/60">
+            Get Started
+          </p>
+          <h2 className="text-3xl font-semibold tracking-tight text-primary-foreground sm:text-4xl">
+            Start buying and selling property on-chain
           </h2>
-
-          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Join owners, agents, and investors using on-chain property
-            verification to buy, sell, and manage real estate with complete
-            transparency.
+          <p className="mt-4 text-sm leading-relaxed text-primary-foreground/70">
+            Join thousands of buyers, sellers, and agents who trust ChainEstate
+            for transparent, borderless real estate transactions.
           </p>
 
-          {/* Stats */}
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-6
-            text-xs font-medium text-muted-foreground">
-            {["12,500+ Properties", "2,500+ Agents", "$180M+ Volume"].map((s) => (
-              <span key={s} className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-gradient-brand
-                  [background:linear-gradient(135deg,hsl(262,83%,58%),hsl(199,89%,48%))]" />
-                {s}
-              </span>
-            ))}
-          </div>
-
-          {/* CTA buttons — mirrors Features card style */}
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button
               size="lg"
-              className="group relative min-w-[200px] overflow-hidden
-                bg-gradient-brand text-primary-foreground shadow-glow
-                transition-all duration-300 hover:shadow-glow-lg hover:-translate-y-0.5"
+              className="bg-white text-primary shadow-none hover:bg-white/90 dark:bg-white dark:text-primary dark:hover:bg-white/90"
               asChild
             >
-              <Link href="/login">
-                Join now
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <Link href="/register">
+                Create free account <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-
             <Button
               size="lg"
               variant="outline"
-              className="min-w-[200px] border-border/50 bg-card/80 backdrop-blur-sm
-                transition-all duration-300 hover:border-border hover:shadow-card-hover hover:-translate-y-0.5"
+              className="border-white/35 bg-transparent text-white shadow-none hover:bg-white/10 hover:text-white dark:border-white/35 dark:bg-transparent dark:text-white dark:hover:bg-white/10 dark:hover:text-white"
               asChild
             >
-              <Link href="/marketplace">
-                <ShoppingBag className="h-4 w-4" />
-                Explore marketplace
-              </Link>
+              <Link href="/marketplace">Browse listings</Link>
             </Button>
           </div>
-
-          {/* Trust line */}
-          <p className="mt-6 text-xs text-muted-foreground/50">
-            No credit card required · Free property verification · Cancel anytime
-          </p>
-        </FadeIn>
+        </div>
       </div>
     </section>
   );
