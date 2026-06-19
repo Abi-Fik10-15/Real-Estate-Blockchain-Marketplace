@@ -5,10 +5,13 @@ import { api } from "@/services/api";
 import type { CreatePropertyValues } from "@/lib/validations";
 import type { ListingStatus, Property } from "@/types";
 
+const PROPERTIES_TTL_MS = 60_000; // 1 minute
+
 interface PropertyState {
   properties: Property[];
   isLoading: boolean;
-  fetchProperties: () => Promise<void>;
+  lastFetchedAt: number | null;
+  fetchProperties: (force?: boolean) => Promise<void>;
   fetchByOwner: (ownerId: string) => Promise<Property[]>;
   createProperty: (
     values: CreatePropertyValues,
@@ -27,14 +30,20 @@ interface PropertyState {
 export const usePropertyStore = create<PropertyState>()((set, get) => ({
   properties: [],
   isLoading: false,
+  lastFetchedAt: null,
 
   setProperties: (properties) => set({ properties }),
 
-  fetchProperties: async () => {
+  fetchProperties: async (force = false) => {
+    const { isLoading, lastFetchedAt, properties } = get();
+    // Skip if already loading, or data is fresh and not forced
+    if (isLoading) return;
+    if (!force && lastFetchedAt && Date.now() - lastFetchedAt < PROPERTIES_TTL_MS && properties.length > 0) return;
+
     set({ isLoading: true });
     try {
       const properties = await api.getProperties();
-      set({ properties, isLoading: false });
+      set({ properties, isLoading: false, lastFetchedAt: Date.now() });
     } catch {
       set({ isLoading: false });
     }

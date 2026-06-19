@@ -47,6 +47,9 @@ export class User {
 export type UserDocument = HydratedDocument<User>;
 export const UserSchema = SchemaFactory.createForClass(User);
 
+// Compound index for agent lookups (findAgents)
+UserSchema.index({ role: 1, status: 1 });
+
 UserSchema.set('toJSON', {
   virtuals: true,
   transform(_doc, ret) {

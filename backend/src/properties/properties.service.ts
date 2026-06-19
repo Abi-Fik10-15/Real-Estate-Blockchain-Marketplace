@@ -64,7 +64,7 @@ export class PropertiesService {
         break;
     }
 
-    return this.propertyModel.find(filter).sort(sort).exec();
+    return this.propertyModel.find(filter).sort(sort).limit(200).lean({ virtuals: true }).exec() as unknown as Promise<PropertyDocument[]>;
   }
 
   async findById(id: string): Promise<PropertyDocument> {
@@ -72,7 +72,8 @@ export class PropertiesService {
       .findOne({
         $or: [{ _id: Types.ObjectId.isValid(id) ? id : null }, { blockchainTokenId: id }],
       })
-      .exec();
+      .lean({ virtuals: true })
+      .exec() as unknown as PropertyDocument | null;
 
     if (!property) {
       throw new NotFoundException('Property not found');
@@ -81,23 +82,25 @@ export class PropertiesService {
   }
 
   async findByOwner(ownerId: string): Promise<PropertyDocument[]> {
-    return this.propertyModel.find({ ownerId: new Types.ObjectId(ownerId) }).exec();
+    return this.propertyModel.find({ ownerId: new Types.ObjectId(ownerId) }).lean({ virtuals: true }).exec() as unknown as Promise<PropertyDocument[]>;
   }
 
   async findIdsByOwner(ownerId: string): Promise<Types.ObjectId[]> {
     const properties = await this.propertyModel
       .find({ ownerId: new Types.ObjectId(ownerId) })
       .select('_id')
+      .lean()
       .exec();
-    return properties.map((p) => p._id);
+    return properties.map((p) => p._id as Types.ObjectId);
   }
 
   async findIdsByAgent(agentId: string): Promise<Types.ObjectId[]> {
     const properties = await this.propertyModel
       .find({ agentId: new Types.ObjectId(agentId) })
       .select('_id')
+      .lean()
       .exec();
-    return properties.map((p) => p._id);
+    return properties.map((p) => p._id as Types.ObjectId);
   }
 
   async create(user: UserDocument, dto: CreatePropertyDto): Promise<PropertyDocument> {
@@ -177,7 +180,7 @@ export class PropertiesService {
   }
 
   async getOwnershipRecords() {
-    const properties = await this.propertyModel.find().exec();
+    const properties = await this.propertyModel.find().lean({ virtuals: true }).exec() as unknown as PropertyDocument[];
     const tokenIds = properties
       .map((p) => p.blockchainTokenId)
       .filter((id) => id && /^\d+$/.test(id));
@@ -213,18 +216,32 @@ export class PropertiesService {
   }
 
   async getStats() {
-    const [total, active, sold, rented] = await Promise.all([
-      this.propertyModel.countDocuments(),
-      this.propertyModel.countDocuments({ status: 'active' }),
-      this.propertyModel.countDocuments({ status: 'sold' }),
-      this.propertyModel.countDocuments({ status: 'rented' }),
+    const [result] = await this.propertyModel.aggregate<{
+      total: number; active: number; sold: number; rented: number;
+    }>([
+      {
+        $facet: {
+          total: [{ $count: 'n' }],
+          active: [{ $match: { status: 'active' } }, { $count: 'n' }],
+          sold: [{ $match: { status: 'sold' } }, { $count: 'n' }],
+          rented: [{ $match: { status: 'rented' } }, { $count: 'n' }],
+        },
+      },
+      {
+        $project: {
+          total: { $ifNull: [{ $arrayElemAt: ['$total.n', 0] }, 0] },
+          active: { $ifNull: [{ $arrayElemAt: ['$active.n', 0] }, 0] },
+          sold: { $ifNull: [{ $arrayElemAt: ['$sold.n', 0] }, 0] },
+          rented: { $ifNull: [{ $arrayElemAt: ['$rented.n', 0] }, 0] },
+        },
+      },
     ]);
 
     return {
-      totalProperties: total,
-      activeListings: active,
-      soldProperties: sold,
-      rentedProperties: rented,
+      totalProperties: result?.total ?? 0,
+      activeListings: result?.active ?? 0,
+      soldProperties: result?.sold ?? 0,
+      rentedProperties: result?.rented ?? 0,
     };
   }
 

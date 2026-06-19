@@ -19,6 +19,11 @@ import { SeedModule } from './seed/seed.module';
       inject: [AppConfigService],
       useFactory: async (config: AppConfigService) => ({
         uri: await config.resolveMongoUri(),
+        maxPoolSize: 20,
+        minPoolSize: 2,
+        serverSelectionTimeoutMS: 5_000,
+        socketTimeoutMS: 30_000,
+        maxIdleTimeMS: 60_000,
       }),
     }),
     SeedModule,

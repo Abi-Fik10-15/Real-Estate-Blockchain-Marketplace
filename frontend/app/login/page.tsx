@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { WalletConnect } from "@/components/wallet/wallet-connect";
+import { LazyWalletConnect } from "@/components/wallet/lazy-wallet-connect";
 
 import { useAuthStore } from "@/store/auth-store";
 import { loginSchema, type LoginValues } from "@/lib/validations";
-import { Building2 } from "lucide-react";
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
@@ -118,7 +117,7 @@ export default function LoginPage() {
             </div>
 
             <div className="[&>button]:w-full">
-              <WalletConnect />
+              <LazyWalletConnect />
             </div>
           </CardContent>
 

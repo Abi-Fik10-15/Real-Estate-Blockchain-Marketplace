@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ChatWidget } from "@/components/chatbot";
 import { AppBootstrap } from "@/components/app-bootstrap";
 import { CookieBanner } from "@/components/cookies/cookie-banner";
+import { NotificationsProvider } from "@/contexts/notifications-context";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -24,11 +25,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
-        <AppBootstrap />
-        {children}
-        <Toaster position="top-right" richColors />
-        <ChatWidget />
-        <CookieBanner />
+        <NotificationsProvider>
+          <AppBootstrap />
+          {children}
+          <Toaster position="top-right" richColors />
+          <ChatWidget />
+          <CookieBanner />
+        </NotificationsProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

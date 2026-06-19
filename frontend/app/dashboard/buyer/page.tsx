@@ -129,7 +129,7 @@ export default function BuyerDashboard() {
 
       {/* Stats Cards Section */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <ScaleOnHover>
+        <ScaleOnHover key="stat-saved">
           <Card className="relative overflow-hidden border border-border/80 bg-card/50 backdrop-blur-sm shadow-sm transition-all hover:shadow-md">
             <CardContent className="flex items-center justify-between p-6">
               <div className="space-y-1">
@@ -143,7 +143,7 @@ export default function BuyerDashboard() {
           </Card>
         </ScaleOnHover>
 
-        <ScaleOnHover>
+        <ScaleOnHover key="stat-purchases">
           <Card className="relative overflow-hidden border border-border/80 bg-card/50 backdrop-blur-sm shadow-sm transition-all hover:shadow-md">
             <CardContent className="flex items-center justify-between p-6">
               <div className="space-y-1">
@@ -157,7 +157,7 @@ export default function BuyerDashboard() {
           </Card>
         </ScaleOnHover>
 
-        <ScaleOnHover>
+        <ScaleOnHover key="stat-rentals">
           <Card className="relative overflow-hidden border border-border/80 bg-card/50 backdrop-blur-sm shadow-sm transition-all hover:shadow-md">
             <CardContent className="flex items-center justify-between p-6">
               <div className="space-y-1">
@@ -171,7 +171,7 @@ export default function BuyerDashboard() {
           </Card>
         </ScaleOnHover>
 
-        <ScaleOnHover>
+        <ScaleOnHover key="stat-verified">
           <Card className="relative overflow-hidden border border-border/80 bg-card/50 backdrop-blur-sm shadow-sm transition-all hover:shadow-md">
             <CardContent className="flex items-center justify-between p-6">
               <div className="space-y-1">
@@ -264,9 +264,9 @@ export default function BuyerDashboard() {
             </Button>
           </CardHeader>
           <CardContent className="pt-4 space-y-4">
-            {display.slice(0, 3).map((p) => (
+            {display.slice(0, 3).map((p, index) => (
               <div
-                key={p.id}
+                key={p.id || `listing-${index}`}
                 className="group relative flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-background/40 p-3 transition-colors hover:bg-muted/30"
               >
                 <div className="min-w-0">

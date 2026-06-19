@@ -6,8 +6,7 @@ import { usePropertyStore } from "@/store/property-store";
 import { useInquiryStore } from "@/store/inquiry-store";
 import { useUserStore } from "@/store/user-store";
 import { useSavedStore } from "@/store/saved-store";
-import { useNotifications } from "@/hooks/use-notifications";
-
+// Note: WebSocket is managed by NotificationsProvider in providers.tsx — not here
 /** Syncs authenticated session data from the NestJS API into Zustand stores. */
 export function AppBootstrap() {
   const token = useAuthStore((s) => s.token);
@@ -18,11 +17,11 @@ export function AppBootstrap() {
   const fetchUsers = useUserStore((s) => s.fetchUsers);
   const syncSaved = useSavedStore((s) => s.syncWithServer);
 
-  useNotifications();
-
   React.useEffect(() => {
+    // Only fetch properties when authenticated — skips /login and /register
+    if (!token) return;
     void fetchProperties();
-  }, [fetchProperties]);
+  }, [token, fetchProperties]);
 
   React.useEffect(() => {
     if (!token || !user) return;
