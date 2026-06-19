@@ -300,11 +300,13 @@ export class PropertiesService {
   }
 
   private assertCanManage(property: PropertyDocument, user: UserDocument) {
-    const isOwner = property.ownerId.toString() === user.id;
+    const userId = String((user as any)._id ?? user.id);
+    const isOwner = String(property.ownerId) === userId;
     const isAdmin = user.role === 'admin';
     const isAgent =
       user.role === 'agent' &&
-      property.agentId?.toString() === user.id;
+      property.agentId != null &&
+      String(property.agentId) === userId;
 
     if (!isOwner && !isAdmin && !isAgent) {
       throw new ForbiddenException('Not allowed to modify this property');
