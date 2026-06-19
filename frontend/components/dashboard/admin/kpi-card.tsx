@@ -84,13 +84,13 @@ export function KpiCard({
   value: number;
   icon: LucideIcon;
   accent?: KpiAccent;
-  trend?: { value: number; label: string };
+  trend?: { value: number; label: string; positive?: boolean };
   prefix?: string;
   suffix?: string;
 }) {
   const preset = accentPresets[accent];
   const sparkData = React.useMemo(() => generateSparkline(value), [value]);
-  const isPositive = trend ? trend.value >= 0 : true;
+  const isPositive = trend ? (trend.positive ?? trend.value >= 0) : true;
 
   return (
     <motion.div

@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { BUYER_NAV } from "@/components/dashboard/nav-configs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,34 +13,66 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { usePropertyStore } from "@/store/property-store";
 import { useSavedStore } from "@/store/saved-store";
-import { useWalletStore } from "@/store/wallet-store";
-import { formatCurrency } from "@/lib/utils";
-import { Search, ShieldCheck, Activity, Award, Loader2, CheckCircle2, Sparkles, Network } from "lucide-react";
+import { useAuthStore } from "@/store/auth-store";
+import { api } from "@/services/api";
+import { CONTRACT_ADDRESS } from "@/lib/constants";
+import {
+  etherscanTokenUrl,
+  resolvePropertyTokenId,
+} from "@/lib/blockchain-utils";
+import { formatCurrency, shortenAddress } from "@/lib/utils";
+import {
+  Search,
+  ShieldCheck,
+  Activity,
+  Award,
+  Loader2,
+  ExternalLink,
+  Network,
+  AlertCircle,
+} from "lucide-react";
 import { toast } from "sonner";
+import type { Property } from "@/types";
+
+type OnChainSnapshot = {
+  owner: string;
+  tokenURI: string;
+  inEscrow: boolean;
+  escrowBuyer: string;
+  escrowAmount: string;
+};
+
+function findPropertyByQuery(properties: Property[], query: string): Property | undefined {
+  const q = query.trim().toLowerCase();
+  return properties.find(
+    (p) =>
+      p.id === q ||
+      p.chainId.toLowerCase() === q ||
+      resolvePropertyTokenId(p.chainId) === q,
+  );
+}
 
 function VerificationContent() {
   const searchParams = useSearchParams();
   const queryId = searchParams.get("id");
+  const queryClient = useQueryClient();
 
   const { properties, updateProperty } = usePropertyStore();
   const savedIds = useSavedStore((s) => s.savedIds);
-  const { wallet } = useWalletStore();
+  const user = useAuthStore((s) => s.user);
 
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [selectedPropId, setSelectedPropId] = React.useState<string>("");
+  const [selectedPropId, setSelectedPropId] = React.useState("");
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [verifyLogs, setVerifyLogs] = React.useState<string[]>([]);
-  const [currentBlock, setCurrentBlock] = React.useState(194582192);
+  const [onChainSnapshot, setOnChainSnapshot] = React.useState<OnChainSnapshot | null>(null);
+  const [networkLabel, setNetworkLabel] = React.useState("Ethereum Sepolia");
 
-  // Filter listings for the dropdown
   const savedProperties = properties.filter((p) => savedIds.includes(p.id));
 
-  // Sync state with URL queries if loaded
   React.useEffect(() => {
     if (queryId) {
-      const match = properties.find(
-        (p) => p.chainId.toLowerCase() === queryId.toLowerCase() || p.id === queryId
-      );
+      const match = findPropertyByQuery(properties, queryId);
       if (match) {
         setSelectedPropId(match.id);
         setSearchQuery(match.chainId);
@@ -48,328 +80,387 @@ function VerificationContent() {
     }
   }, [queryId, properties]);
 
-  // Handle manual input search
+  const appendLog = (message: string) => {
+    setVerifyLogs((prev) => [...prev, message]);
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    const match = properties.find(
-      (p) => p.chainId.toLowerCase() === searchQuery.trim().toLowerCase()
-    );
-
+    const match = findPropertyByQuery(properties, searchQuery);
     if (match) {
       setSelectedPropId(match.id);
-      toast.success(`Found listing details for ID ${match.chainId}`);
+      setOnChainSnapshot(null);
+      toast.success(`Loaded ${match.title}`);
     } else {
-      toast.error(`Property Chain ID "${searchQuery}" not found in title registry index.`);
+      toast.error(`No listing found for "${searchQuery}"`);
     }
   };
 
-  // Switch selection from dropdown
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     setSelectedPropId(val);
+    setOnChainSnapshot(null);
     const match = properties.find((p) => p.id === val);
-    if (match) {
-      setSearchQuery(match.chainId);
-    }
+    if (match) setSearchQuery(match.chainId);
   };
 
-  // Perform Simulated Oracle Ledger Lookup
-  const handleOracleVerify = async () => {
+  const handleOnChainVerify = async () => {
     const property = properties.find((p) => p.id === selectedPropId);
     if (!property) return;
 
-    setIsVerifying(true);
-    setVerifyLogs([]);
-
-    const steps = [
-      "Connecting to oracle validators on decentralized consensus registry...",
-      `Querying Smart Contract storage for Asset ID: ${property.chainId}...`,
-      "Fetching cryptographic audit signatures from Chainestate Title Registry...",
-      "Resolving GPS metadata coordinates and owner signature keys...",
-      "Consensus confirmed! Deed matches 7/7 validator hashes.",
-    ];
-
-    for (let i = 0; i < steps.length; i++) {
-      setVerifyLogs((prev) => [...prev, steps[i]]);
-      await new Promise((r) => setTimeout(r, 650));
+    const tokenId = resolvePropertyTokenId(property.chainId);
+    if (!tokenId) {
+      toast.error("This listing is not minted on Sepolia yet (no on-chain token ID).");
+      return;
     }
 
-    // Generate simulated block details
-    const targetBlock = Math.floor(194582192 + Math.random() * 5000);
-    setCurrentBlock(targetBlock);
+    if (!CONTRACT_ADDRESS) {
+      toast.error("Smart contract is not configured (NEXT_PUBLIC_CONTRACT_ADDRESS).");
+      return;
+    }
 
-    const txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
-    const verifiedAt = new Date().toISOString();
+    setIsVerifying(true);
+    setVerifyLogs([]);
+    setOnChainSnapshot(null);
 
-    // Update Property Store state to verified
-    updateProperty(property.id, {
-      verification: {
-        status: "verified",
-        verifiedAt,
-        txHash,
-      },
-      history: [
-        {
-          id: `ev-${Date.now()}`,
-          type: "verification" as const,
-          description: "Ownership details independently re-verified via ledger registry oracle",
-          txHash,
-          actor: wallet?.address ?? "0x0000000000000000000000000000000000000000",
-          timestamp: verifiedAt,
+    try {
+      appendLog(`Reading ERC-721 token #${tokenId} on Sepolia…`);
+      const [status, onChain] = await Promise.all([
+        api.getBlockchainStatus(),
+        api.getOnChainToken(tokenId),
+      ]);
+
+      if (!status.enabled) {
+        throw new Error("Backend blockchain service is not connected to Sepolia.");
+      }
+
+      setNetworkLabel(`${status.network} (chain ${status.chainId})`);
+      appendLog(`Contract: ${shortenAddress(status.contractAddress, 8)}`);
+      appendLog(`On-chain owner: ${shortenAddress(onChain.owner, 10)}`);
+
+      const listingOwner = property.ownerWallet?.toLowerCase();
+      const onChainOwner = onChain.owner.toLowerCase();
+
+      if (listingOwner) {
+        appendLog(`Listing owner wallet: ${shortenAddress(property.ownerWallet, 10)}`);
+        if (listingOwner !== onChainOwner) {
+          throw new Error(
+            "Listing owner wallet does not match the on-chain deed owner. This deed may be misrepresented.",
+          );
+        }
+        appendLog("Listing metadata matches on-chain ownerOf() — deed is authentic.");
+      } else {
+        const valid = await api.verifyOwnershipOnChain(onChain.owner, tokenId);
+        if (!valid) throw new Error("Could not confirm on-chain ownership.");
+        appendLog("On-chain token exists and ownership record is valid.");
+      }
+
+      if (onChain.inEscrow) {
+        appendLog(
+          `Note: token is in escrow (buyer ${shortenAddress(onChain.escrowBuyer, 8)}, ${onChain.escrowAmount} ETH).`,
+        );
+      }
+
+      const verifiedAt = new Date().toISOString();
+      const recordRef = `sepolia:token:${tokenId}`;
+
+      await updateProperty(property.id, {
+        ownerWallet: onChain.owner,
+        verification: {
+          status: "verified",
+          verifiedAt,
+          txHash: recordRef,
         },
-        ...property.history,
-      ],
-    });
+        history: [
+          {
+            id: `ev-${Date.now()}`,
+            type: "verification",
+            description: `Buyer ${user?.name ?? "user"} verified deed against Sepolia contract`,
+            txHash: recordRef,
+            actor: user?.walletAddress || onChain.owner,
+            timestamp: verifiedAt,
+          },
+          ...property.history,
+        ],
+      });
 
-    localStorage.setItem("chainestate_verified_at_least_once", "true");
-    toast.success("Immutability parameters successfully verified on-chain!");
-    setIsVerifying(false);
+      setOnChainSnapshot(onChain);
+      localStorage.setItem("chainestate_verified_at_least_once", "true");
+      queryClient.invalidateQueries({ queryKey: ["property", property.id] });
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+
+      appendLog("Verification complete — deed matches Sepolia registry.");
+      toast.success("Property deed verified on Sepolia");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Verification failed";
+      appendLog(`Error: ${message}`);
+      toast.error(message);
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const activeProperty = properties.find((p) => p.id === selectedPropId);
+  const tokenId = activeProperty ? resolvePropertyTokenId(activeProperty.chainId) : null;
   const isVerified = activeProperty?.verification.status === "verified";
+  const tokenExplorer =
+    tokenId && CONTRACT_ADDRESS ? etherscanTokenUrl(CONTRACT_ADDRESS, tokenId) : "";
 
   return (
     <DashboardShell title="Ownership Verification" roleLabel="Buyer / Renter" nav={BUYER_NAV}>
       <div className="grid gap-6 lg:grid-cols-5">
-        {/* Left Side: Autocomplete Selector & Verification Trigger */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="border border-border/80 bg-card/30 backdrop-blur-md shadow-md">
+        <div className="space-y-6 lg:col-span-2">
+          <Card className="border border-border/80 bg-card/30 shadow-md backdrop-blur-md">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Search className="h-4.5 w-4.5 text-primary" />
-                Select Listing to Verify
+              <CardTitle className="flex items-center gap-2 text-base font-bold">
+                <Search className="h-4 w-4 text-primary" />
+                Select listing to verify
               </CardTitle>
               <CardDescription className="text-xs">
-                Select one of your saved listings or enter a Property Chain ID directly
+                Pick a saved property or search by database ID / on-chain token ID
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 pt-2">
-              {/* Dropdown Selector */}
               <div className="space-y-1.5">
-                <Label htmlFor="dropdown-select" className="text-xs font-semibold text-muted-foreground">Saved Listings</Label>
+                <Label htmlFor="dropdown-select" className="text-xs font-semibold text-muted-foreground">
+                  Saved listings
+                </Label>
                 <select
                   id="dropdown-select"
-                  className="w-full rounded-xl border border-border/80 bg-background/50 backdrop-blur-sm px-3 py-2.5 text-xs text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
+                  className="w-full cursor-pointer rounded-xl border border-border/80 bg-background/50 px-3 py-2.5 text-xs shadow-sm backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   value={selectedPropId}
                   onChange={handleSelectChange}
                 >
-                  <option value="">-- Choose Bookmarked Property --</option>
+                  <option value="">— Choose saved property —</option>
                   {savedProperties.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.chainId} - {p.title}
+                      {p.chainId} — {p.title}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Direct Chain ID Search Form */}
-              <form onSubmit={handleSearchSubmit} className="space-y-2.5 pt-2 border-t border-border/30">
-                <Label htmlFor="search-id" className="text-xs font-semibold text-muted-foreground">Or Search Property Chain ID (e.g. EST-1001)</Label>
+              <form onSubmit={handleSearchSubmit} className="space-y-2.5 border-t border-border/30 pt-2">
+                <Label htmlFor="search-id" className="text-xs font-semibold text-muted-foreground">
+                  Or search by token / listing ID
+                </Label>
                 <div className="flex gap-2">
                   <Input
                     id="search-id"
-                    placeholder="e.g. EST-1000"
+                    placeholder="e.g. 1 or EST-ABC123"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-9 text-xs bg-background/50 rounded-xl"
+                    className="h-9 rounded-xl bg-background/50 text-xs"
                   />
-                  <Button type="submit" size="sm" variant="outline" className="h-9 shrink-0 px-4 rounded-xl text-xs font-semibold">
+                  <Button type="submit" size="sm" variant="outline" className="h-9 shrink-0 rounded-xl px-4 text-xs">
                     Load
                   </Button>
                 </div>
               </form>
 
-              {/* Loaded Property Quick Information */}
               {activeProperty && (
-                <div className="rounded-xl bg-background/40 border border-border/40 p-4 mt-3 space-y-3 text-xs shadow-inner">
-                  <div className="flex justify-between items-center pb-2 border-b border-border/20">
-                    <span className="text-muted-foreground font-medium">Deed Title</span>
-                    <span className="font-bold text-foreground truncate max-w-[150px]">{activeProperty.title}</span>
+                <div className="mt-3 space-y-3 rounded-xl border border-border/40 bg-background/40 p-4 text-xs shadow-inner">
+                  <div className="flex items-center justify-between border-b border-border/20 pb-2">
+                    <span className="font-medium text-muted-foreground">Title</span>
+                    <span className="max-w-[150px] truncate font-bold">{activeProperty.title}</span>
                   </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-border/20">
-                    <span className="text-muted-foreground font-medium">Asset Value</span>
-                    <span className="font-semibold text-foreground">{formatCurrency(activeProperty.price)}</span>
+                  <div className="flex items-center justify-between border-b border-border/20 pb-2">
+                    <span className="font-medium text-muted-foreground">Price</span>
+                    <span className="font-semibold">{formatCurrency(activeProperty.price)}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground font-medium">Registry Status</span>
-                    <Badge variant={isVerified ? "verified" : "warning"} className="h-5 px-2 py-0 text-[10px] font-bold">
-                      {isVerified ? "Verified ✓" : "Pending Verification"}
+                  <div className="flex items-center justify-between border-b border-border/20 pb-2">
+                    <span className="font-medium text-muted-foreground">On-chain token</span>
+                    <span className="font-mono">{tokenId ?? "Not minted"}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-muted-foreground">Status</span>
+                    <Badge variant={isVerified ? "verified" : "warning"} className="h-5 px-2 py-0 text-[10px]">
+                      {isVerified ? "Verified" : "Not verified"}
                     </Badge>
                   </div>
+                  {!tokenId && (
+                    <p className="flex items-start gap-1.5 text-amber-600 dark:text-amber-400">
+                      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      Only minted Sepolia NFTs can be verified on-chain.
+                    </p>
+                  )}
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Verification Logs Console Card */}
-          {activeProperty && (isVerifying || verifyLogs.length > 0) && (
-            <Card className="border border-border/80 bg-zinc-950 text-zinc-300 font-mono shadow-md overflow-hidden">
-              <CardHeader className="bg-zinc-900/50 pb-2.5 border-b border-zinc-800 flex flex-row items-center justify-between">
-                <CardTitle className="text-xs text-zinc-400 flex items-center gap-1.5 font-bold">
-                  <Activity className="h-3.5 w-3.5 text-emerald-500 animate-pulse" />
-                  ORACLE LEDGER CONSOLE
+          {(isVerifying || verifyLogs.length > 0) && (
+            <Card className="overflow-hidden border border-border/80 bg-zinc-950 font-mono text-zinc-300 shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between border-b border-zinc-800 bg-zinc-900/50 pb-2.5">
+                <CardTitle className="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
+                  <Activity className="h-3.5 w-3.5 text-emerald-500" />
+                  SEPOLIA VERIFICATION LOG
                 </CardTitle>
-                <div className="flex items-center gap-1.5 text-[9px] text-emerald-500 font-bold tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-                  ONLINE
-                </div>
+                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold tracking-widest text-emerald-500">
+                  LIVE RPC
+                </span>
               </CardHeader>
-              <CardContent className="p-3 text-[10px] space-y-2 max-h-56 overflow-y-auto leading-relaxed">
+              <CardContent className="max-h-56 space-y-2 overflow-y-auto p-3 text-[10px] leading-relaxed">
                 {verifyLogs.map((log, index) => (
-                  <div key={index} className="flex gap-2 items-start text-emerald-500">
+                  <div key={index} className="flex items-start gap-2 text-emerald-500">
                     <span className="text-zinc-600">[{index + 1}]</span>
                     <span>{log}</span>
                   </div>
                 ))}
                 {isVerifying && (
-                  <div className="flex items-center gap-2 text-primary pt-1 animate-pulse">
-                    <Loader2 className="h-3 w-3 animate-spin shrink-0" />
-                    <span>Synchronizing consensus hashes...</span>
+                  <div className="flex items-center gap-2 pt-1 text-primary">
+                    <Loader2 className="h-3 w-3 shrink-0 animate-spin" />
+                    <span>Querying Sepolia…</span>
                   </div>
                 )}
               </CardContent>
             </Card>
           )}
 
-          {/* Registry Verify Button */}
-          {activeProperty && !isVerifying && (
+          {activeProperty && (
             <Button
               variant="hero"
-              className="w-full text-xs py-2 shadow-md shadow-primary/20 rounded-xl"
-              onClick={handleOracleVerify}
-              disabled={isVerifying}
+              className="w-full rounded-xl py-2 text-xs shadow-md shadow-primary/20"
+              onClick={handleOnChainVerify}
+              disabled={isVerifying || !tokenId}
             >
-              <ShieldCheck className="mr-1.5 h-4 w-4" />
-              Verify Registry Oracle
+              {isVerifying ? (
+                <>
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  Verifying on Sepolia…
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="mr-1.5 h-4 w-4" />
+                  Verify on Sepolia
+                </>
+              )}
             </Button>
           )}
         </div>
 
-        {/* Right Side: Certified Blockchain Verification Certificate */}
         <div className="lg:col-span-3">
           {activeProperty && isVerified ? (
-            <Card className="relative overflow-hidden border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-card to-background p-6 md:p-8 shadow-xl rounded-2xl flex flex-col justify-between min-h-[460px]">
-              
-              {/* Premium Background Artifact elements */}
-              <div className="absolute top-0 right-0 h-48 w-48 bg-amber-500/5 rounded-full filter blur-3xl -z-10" />
-              <div className="absolute bottom-0 left-0 h-32 w-32 bg-primary/5 rounded-full filter blur-2xl -z-10" />
+            <Card className="relative flex min-h-[460px] flex-col justify-between overflow-hidden rounded-2xl border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-card to-background p-6 shadow-xl md:p-8">
+              <div className="absolute -z-10 right-0 top-0 h-48 w-48 rounded-full bg-amber-500/5 blur-3xl" />
 
-              {/* Certificate Header */}
-              <div className="border-b-2 border-amber-500/20 pb-4 space-y-2 text-center">
+              <div className="space-y-2 border-b-2 border-amber-500/20 pb-4 text-center">
                 <div className="flex justify-center">
-                  <div className="rounded-full bg-amber-500/15 p-3.5 border-2 border-amber-500/30 text-amber-500 shadow-md">
-                    <Award className="h-8 w-8 text-amber-500 animate-pulse" />
+                  <div className="rounded-full border-2 border-amber-500/30 bg-amber-500/15 p-3.5 text-amber-500 shadow-md">
+                    <Award className="h-8 w-8" />
                   </div>
                 </div>
-                <div>
-                  <h2 className="text-base font-extrabold tracking-widest text-amber-500 uppercase">
-                    Certificate of Registry Title Deed
-                  </h2>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">
-                    Immutable Smart Contract Title Proof
-                  </p>
-                </div>
+                <h2 className="text-base font-extrabold uppercase tracking-widest text-amber-500">
+                  Sepolia Deed Verification
+                </h2>
+                <p className="mt-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  On-chain ownerOf() matched listing metadata
+                </p>
               </div>
 
-              {/* Property Card Detail Panel inside Certificate */}
-              <div className="mt-4 flex flex-col sm:flex-row items-center gap-3.5 bg-background/40 border border-border/40 rounded-xl p-3.5 shadow-sm">
+              <div className="mt-4 flex flex-col items-center gap-3.5 rounded-xl border border-border/40 bg-background/40 p-3.5 sm:flex-row">
                 <img
                   src={activeProperty.images[0]}
                   alt={activeProperty.title}
-                  className="h-16 w-24 object-cover rounded-lg border border-border/60 shadow-sm shrink-0"
+                  className="h-16 w-24 shrink-0 rounded-lg border border-border/60 object-cover shadow-sm"
                 />
                 <div className="min-w-0 flex-1 text-left">
-                  <p className="font-extrabold text-sm text-foreground truncate">{activeProperty.title}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                  <p className="truncate text-sm font-extrabold">{activeProperty.title}</p>
+                  <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
                     {activeProperty.location.address}, {activeProperty.location.city}
                   </p>
-                  <p className="font-bold text-[11px] text-primary mt-1">{formatCurrency(activeProperty.price)}</p>
+                  <p className="mt-1 text-[11px] font-bold text-primary">
+                    {formatCurrency(activeProperty.price)}
+                  </p>
                 </div>
               </div>
 
-              {/* Certificate Details */}
-              <div className="py-6 space-y-4 text-xs">
+              <div className="space-y-4 py-6 text-xs">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Property Chain Token ID</p>
-                    <p className="font-mono text-sm font-bold text-foreground bg-background/50 border border-border/40 rounded px-2.5 py-1">
-                      {activeProperty.chainId}
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Token ID
+                    </p>
+                    <p className="rounded border border-border/40 bg-background/50 px-2.5 py-1 font-mono text-sm font-bold">
+                      #{tokenId}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Title Registry Name</p>
-                    <p className="font-bold text-foreground text-xs leading-normal bg-background/50 border border-border/40 rounded px-2.5 py-1.5 truncate">
-                      {activeProperty.title}
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Network
+                    </p>
+                    <p className="rounded border border-border/40 bg-background/50 px-2.5 py-1.5 text-xs font-bold capitalize">
+                      {networkLabel}
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Verified Deed Owner Wallet</p>
-                  <p className="font-mono text-xs text-foreground bg-background/50 border border-border/40 rounded px-2.5 py-1 truncate">
-                    {activeProperty.ownerWallet}
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Verified on-chain owner
+                  </p>
+                  <p className="truncate rounded border border-border/40 bg-background/50 px-2.5 py-1 font-mono text-xs">
+                    {onChainSnapshot?.owner ?? activeProperty.ownerWallet}
                   </p>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">GPS Coordinates</p>
-                    <p className="font-mono text-xs text-foreground bg-background/50 border border-border/40 rounded px-2.5 py-1">
-                      {activeProperty.location.lat.toFixed(4)}, {activeProperty.location.lng.toFixed(4)}
-                    </p>
+                {onChainSnapshot?.inEscrow && (
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-400">
+                    In escrow — buyer {shortenAddress(onChainSnapshot.escrowBuyer, 8)},{" "}
+                    {onChainSnapshot.escrowAmount} ETH locked
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Blockchain Ledger</p>
-                    <p className="text-xs font-semibold text-foreground bg-background/50 border border-border/40 rounded px-2.5 py-1">
-                      Polygon Amoy Testnet
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Verified Block</p>
-                    <p className="font-mono text-xs text-foreground bg-background/50 border border-border/40 rounded px-2.5 py-1">
-                      #{currentBlock.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
+                )}
 
-                <div className="space-y-1.5 pt-2 border-t border-border/30">
-                  <div className="flex justify-between items-center text-[10px] text-muted-foreground">
-                    <span className="uppercase tracking-wider font-semibold">Ledger Transaction Hash</span>
-                    <Badge variant="outline" className="h-4 px-1 py-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-500 text-[8px] font-bold uppercase">
-                      Immutably Synced
-                    </Badge>
-                  </div>
-                  <p className="font-mono text-[10px] text-muted-foreground bg-background/60 border border-border/30 rounded px-2.5 py-1 truncate select-all">
-                    {activeProperty.verification.txHash ?? "0x7a892b0c34ef9a12c8b0c2d4e6f8a0a2b4c6d8e0f1122334455"}
+                <div className="space-y-1.5 border-t border-border/30 pt-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Verified at
+                  </p>
+                  <p className="text-xs text-foreground">
+                    {activeProperty.verification.verifiedAt
+                      ? new Date(activeProperty.verification.verifiedAt).toLocaleString()
+                      : "—"}
                   </p>
                 </div>
+
+                {tokenExplorer && (
+                  <Button variant="outline" size="sm" className="w-full text-xs" asChild>
+                    <a href={tokenExplorer} target="_blank" rel="noreferrer">
+                      View NFT on Etherscan
+                      <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                    </a>
+                  </Button>
+                )}
               </div>
 
-              {/* Certificate Footer Stamp Seal */}
-              <div className="border-t-2 border-amber-500/20 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex flex-col items-center justify-between gap-4 border-t-2 border-amber-500/20 pt-4 sm:flex-row">
                 <div className="flex items-center gap-2">
                   <Network className="h-8 w-8 text-amber-500/60" />
                   <div className="text-[10px] leading-tight">
-                    <p className="font-bold text-foreground">CHAINESTATE PROTOCOL v1.0</p>
-                    <p className="text-muted-foreground">Title Deed Verification Stamp</p>
+                    <p className="font-bold">ChainEstate · Sepolia</p>
+                    <p className="text-muted-foreground">Read-only deed verification</p>
                   </div>
                 </div>
-                <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-1 text-[9px] font-mono text-amber-600 dark:text-amber-500 text-center uppercase tracking-widest font-black">
-                  SEAL OF IMMUTABILITY
-                </div>
+                <Badge variant="verified" className="px-3 py-1">
+                  On-chain verified
+                </Badge>
               </div>
-
             </Card>
           ) : (
-            <Card className="border border-dashed border-border/80 bg-card/10 h-full flex flex-col items-center justify-center py-20 px-6 text-center">
-              <Award className="h-14 w-14 text-muted-foreground/30 mb-3" />
-              <h3 className="font-bold text-base text-foreground">No Verified Title Deed Loaded</h3>
-              <p className="text-sm text-muted-foreground max-w-sm leading-normal mt-1">
-                Select a bookmarked listing or paste a valid Property Chain ID on the left, then click "Verify Registry Oracle" to fetch the authenticated deed certificate.
+            <Card className="flex h-full flex-col items-center justify-center border border-dashed border-border/80 bg-card/10 px-6 py-20 text-center">
+              <Award className="mb-3 h-14 w-14 text-muted-foreground/30" />
+              <h3 className="text-base font-bold">No verified deed yet</h3>
+              <p className="mt-1 max-w-sm text-sm leading-normal text-muted-foreground">
+                Select a minted listing and click <strong>Verify on Sepolia</strong> to compare the
+                listing owner wallet with the ERC-721 owner on-chain.
               </p>
+              {!CONTRACT_ADDRESS && (
+                <p className="mt-4 text-xs text-amber-600">
+                  Set <code className="rounded bg-muted px-1">NEXT_PUBLIC_CONTRACT_ADDRESS</code> in
+                  frontend/.env
+                </p>
+              )}
             </Card>
           )}
         </div>
@@ -380,7 +471,13 @@ function VerificationContent() {
 
 export default function BuyerVerificationPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground animate-pulse">Loading search params...</div>}>
+    <Suspense
+      fallback={
+        <div className="animate-pulse p-8 text-center text-xs text-muted-foreground">
+          Loading…
+        </div>
+      }
+    >
       <VerificationContent />
     </Suspense>
   );

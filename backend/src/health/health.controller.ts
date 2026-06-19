@@ -1,24 +1,27 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('health')
 @Controller()
 export class HealthController {
   @Get()
+  @ApiOperation({ summary: 'API root — links and version' })
   root() {
     return {
       service: 'chainestate-api',
       status: 'ok',
-      version: '0.1.0',
+      version: '1.0.0',
       docs: {
+        swagger: 'GET /api/docs',
+        openApiJson: 'GET /api/docs/openapi.json',
         health: 'GET /api/health',
-        auth: 'POST /api/auth/register | /api/auth/login',
-        properties: 'GET /api/properties',
-        users: 'GET /api/users/agents',
       },
     };
   }
 
   @Get('health')
+  @ApiOperation({ summary: 'Health check for load balancers and Docker' })
   health() {
-    return { status: 'ok', service: 'chainestate-api' };
+    return { status: 'ok', service: 'chainestate-api', version: '1.0.0' };
   }
 }

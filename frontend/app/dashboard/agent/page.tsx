@@ -24,14 +24,13 @@ import {
 } from "@/components/ui/table";
 import { usePropertyStore } from "@/store/property-store";
 import { useInquiryStore } from "@/store/inquiry-store";
+import { useAuthStore } from "@/store/auth-store";
 import { formatCurrency } from "@/lib/utils";
 
-const AGENT_ID = "u-agent-1";
-
 export default function AgentDashboard() {
-  const assigned = usePropertyStore((s) => s.properties).filter(
-    (p) => p.agentId === AGENT_ID
-  );
+  const userId = useAuthStore((s) => s.user?.id);
+  const properties = usePropertyStore((s) => s.properties);
+  const assigned = userId ? properties.filter((p) => p.agentId === userId) : [];
   const inquiries = useInquiryStore((s) => s.inquiries);
   const openLeads = inquiries.filter((i) => i.status !== "closed").length;
 

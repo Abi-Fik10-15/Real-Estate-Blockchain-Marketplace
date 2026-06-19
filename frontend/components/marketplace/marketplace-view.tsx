@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DEFAULT_FILTERS,
+  BUYER_MARKETPLACE_FILTERS,
   PropertyFiltersPanel,
 } from "@/components/property/property-filters";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/property/property-card";
@@ -21,9 +21,9 @@ import { cn } from "@/lib/utils";
 import type { PropertyFilters } from "@/types";
 
 export function MarketplaceView() {
-  const [filters, setFilters] = React.useState<PropertyFilters>(DEFAULT_FILTERS);
+  const [filters, setFilters] = React.useState<PropertyFilters>(BUYER_MARKETPLACE_FILTERS);
   const [view, setView] = React.useState<"grid" | "list">("grid");
-  const { data, isLoading } = useProperties(filters);
+  const { data, isLoading } = useProperties({ ...filters, status: "active" });
 
   const patch = (p: Partial<PropertyFilters>) => setFilters((f) => ({ ...f, ...p }));
 
@@ -66,7 +66,8 @@ export function MarketplaceView() {
           <PropertyFiltersPanel
             filters={filters}
             onChange={patch}
-            onReset={() => setFilters(DEFAULT_FILTERS)}
+            onReset={() => setFilters(BUYER_MARKETPLACE_FILTERS)}
+            hideStatusFilter
           />
         </aside>
 
@@ -122,7 +123,7 @@ export function MarketplaceView() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Try adjusting your search or resetting the filters.
               </p>
-              <Button variant="outline" className="mt-3" onClick={() => setFilters(DEFAULT_FILTERS)}>
+              <Button variant="outline" className="mt-3" onClick={() => setFilters(BUYER_MARKETPLACE_FILTERS)}>
                 Reset filters
               </Button>
             </div>

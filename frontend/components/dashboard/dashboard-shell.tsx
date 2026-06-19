@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { settingsPath } from "@/lib/routes";
 import { useAuthStore } from "@/store/auth-store";
 import { useNotifications } from "@/hooks/use-notifications";
 import type { LucideIcon } from "lucide-react";
@@ -44,6 +45,7 @@ export function DashboardShell({
     .join("")
     .slice(0, 2)
     .toUpperCase();
+  const settingsHref = user?.role ? settingsPath(user.role) : "/login";
 
   const isActive = (href: string) =>
     pathname === href || (href !== nav[0]?.href && pathname.startsWith(`${href}/`));
@@ -114,7 +116,10 @@ export function DashboardShell({
         </nav>
 
         <div className="space-y-2 border-t border-border p-3">
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2.5">
+          <Link
+            href={settingsHref}
+            className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2.5 transition hover:bg-muted/50"
+          >
             <Avatar className="h-9 w-9">
               <AvatarImage src={user?.avatar} alt={user?.name} />
               <AvatarFallback>{initials || "U"}</AvatarFallback>
@@ -127,7 +132,7 @@ export function DashboardShell({
                 {roleLabel}
               </p>
             </div>
-          </div>
+          </Link>
 
           <Button
             variant="ghost"
@@ -204,7 +209,10 @@ export function DashboardShell({
           </div>
         )}
         <div className="space-y-2 border-t border-border p-3">
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2.5">
+          <Link
+            href={settingsHref}
+            className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2.5 transition hover:bg-muted/50"
+          >
             <Avatar className="h-9 w-9">
               <AvatarImage src={user?.avatar} alt={user?.name} />
               <AvatarFallback>{initials || "U"}</AvatarFallback>
@@ -213,7 +221,7 @@ export function DashboardShell({
               <p className="truncate text-sm font-medium">{user?.name ?? "Guest User"}</p>
               <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
             </div>
-          </div>
+          </Link>
           <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground" onClick={handleLogout}>
             <LogOut className="h-4 w-4" /> Sign out
           </Button>

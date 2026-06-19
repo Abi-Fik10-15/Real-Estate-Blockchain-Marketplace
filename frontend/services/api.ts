@@ -60,6 +60,38 @@ export const api = {
     return mapUser(data);
   },
 
+  async uploadAvatar(
+    file: File,
+    onProgress?: (progress: number) => void,
+  ): Promise<{ url: string; publicId: string; user: User }> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const { data } = await apiClient.post<{
+      url: string;
+      publicId: string;
+      user: ApiUser;
+    }>("/auth/avatar", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && onProgress) {
+          const percent = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total,
+          );
+          onProgress(percent);
+        }
+      },
+    });
+
+    return {
+      url: data.url,
+      publicId: data.publicId,
+      user: mapUser(data.user),
+    };
+  },
+
   async getProperties(filters?: Partial<PropertyFilters>): Promise<Property[]> {
     const { data } = await apiClient.get<ApiProperty[]>("/properties", {
       params: toQuery(filters),
@@ -206,6 +238,29 @@ export const api = {
     return data;
   },
 
+  async getOnChainToken(tokenId: string) {
+    const { data } = await apiClient.get<{
+      tokenId: string;
+      owner: string;
+      tokenURI: string;
+      inEscrow: boolean;
+      escrowBuyer: string;
+      escrowAmount: string;
+    }>(`/blockchain/token/${tokenId}`);
+    return data;
+  },
+
+  async getBlockchainStatus() {
+    const { data } = await apiClient.get<{
+      enabled: boolean;
+      contractAddress: string;
+      network: string;
+      chainId: number;
+      explorerUrl: string;
+    }>("/blockchain/status");
+    return data;
+  },
+
   async createTransaction(payload: {
     propertyId: string;
     type: "sale" | "rental";
@@ -247,22 +302,10 @@ export const api = {
     return data;
   },
 
-  async getOnChainToken(tokenId: string) {
-    const { data } = await apiClient.get(`/blockchain/token/${tokenId}`);
-    return data;
-  },
-
   async getBlockchainRecords(tokenIds: string[]) {
     const { data } = await apiClient.get("/blockchain/records", {
       params: { tokenIds: tokenIds.join(",") },
     });
-    return data;
-  },
-
-  async getBlockchainStatus() {
-    const { data } = await apiClient.get<{ enabled: boolean; contractAddress: string }>(
-      "/blockchain/status"
-    );
     return data;
   },
 

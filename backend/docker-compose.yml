@@ -34,6 +34,9 @@ services:
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
       JWT_SECRET: ${JWT_SECRET:-chainestate-dev-secret-change-in-production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-http://localhost:3001}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+      SWAGGER_PATH: ${SWAGGER_PATH:-docs}
       SEPOLIA_RPC_URL: ${SEPOLIA_RPC_URL:-}
       PRIVATE_KEY: ${PRIVATE_KEY:-}
       CONTRACT_ADDRESS: ${CONTRACT_ADDRESS:-}

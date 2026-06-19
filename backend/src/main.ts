@@ -1,17 +1,28 @@
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AppConfigService } from './config/app-config.service';
+import { setupSwagger } from './config/swagger.setup';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const config = app.get(AppConfigService);
+
+  config.assertProductionSecrets();
+
+  if (config.nodeEnv === 'production') {
+    app.use(
+      helmet({
+        contentSecurityPolicy: false,
+        crossOriginEmbedderPolicy: false,
+      }),
+    );
+  }
 
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ limit: '10mb', extended: true }));
-
-  const config = app.get(AppConfigService);
 
   app.enableCors({
     origin: config.frontendOrigins,
@@ -28,18 +39,14 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('ChainEstate API')
-    .setDescription('ChainEstate API Documentation')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api-docs', app, document);
+  setupSwagger(app, config);
 
   await app.listen(config.port);
-  console.log(`ChainEstate API running on http://localhost:${config.port}/api`);
-  console.log(`Swagger documentation available at http://localhost:${config.port}/api-docs`);
+
+  const publicBase = config.apiPublicUrl ?? config.localApiBaseUrl;
+  Logger.log(`ChainEstate API listening on port ${config.port}`, 'Bootstrap');
+  Logger.log(`REST base: ${publicBase}/api`, 'Bootstrap');
+  Logger.log(`Health: ${publicBase}/api/health`, 'Bootstrap');
 }
 
 bootstrap();

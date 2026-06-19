@@ -11,6 +11,11 @@ export function isOnChainTokenId(tokenId: string): boolean {
   return /^\d+$/.test(tokenId);
 }
 
+/** Numeric Sepolia token id for on-chain reads, or null if not minted. */
+export function resolvePropertyTokenId(chainId: string): string | null {
+  return isOnChainTokenId(chainId) ? chainId : null;
+}
+
 export function etherscanTxUrl(txHash: string): string {
   if (!txHash || txHash.startsWith("local-") || txHash === "verified") {
     return "";

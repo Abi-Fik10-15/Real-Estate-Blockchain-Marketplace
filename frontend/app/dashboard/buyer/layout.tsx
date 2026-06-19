@@ -10,15 +10,16 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
   const isHydrating = useAuthStore((s) => s.isHydrating);
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
 
   React.useEffect(() => {
-    if (isHydrating || !token || !user) return;
+    if (!hasHydrated || isHydrating || !token || !user) return;
     if (user.role !== "buyer") {
       router.replace(`/dashboard/${user.role}`);
     }
-  }, [user, token, isHydrating, router]);
+  }, [user, token, isHydrating, hasHydrated, router]);
 
-  if (!token || (user && user.role !== "buyer")) {
+  if (!hasHydrated || isHydrating || !token || (user && user.role !== "buyer")) {
     return null;
   }
 

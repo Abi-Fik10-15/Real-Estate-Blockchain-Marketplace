@@ -5,12 +5,12 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { AGENT_NAV } from "@/components/dashboard/nav-configs";
 import { OwnershipVerification } from "@/components/property/ownership-verification";
 import { usePropertyStore } from "@/store/property-store";
-
-const AGENT_ID = "u-agent-1";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function AgentVerificationPage() {
+  const userId = useAuthStore((s) => s.user?.id);
   const assigned = usePropertyStore((s) => s.properties).filter(
-    (p) => p.agentId === AGENT_ID
+    (p) => p.agentId === userId,
   );
 
   return (

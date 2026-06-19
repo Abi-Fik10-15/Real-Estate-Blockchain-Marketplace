@@ -44,8 +44,9 @@ export default function BuyerDashboard() {
 
   const buyerId = user?.id ?? "u-buyer-1";
   const myInquiries = inquiries.filter((i) => i.buyerId === buyerId);
-  const saved = properties.filter((p) => savedIds.includes(p.id));
-  const display = saved.length > 0 ? saved : properties.slice(0, 4);
+  const activeListings = properties.filter((p) => p.status === "active");
+  const saved = activeListings.filter((p) => savedIds.includes(p.id));
+  const display = saved.length > 0 ? saved : activeListings.slice(0, 4);
   const purchases = myInquiries.filter((i) => i.type === "purchase").length;
   const rentals = myInquiries.filter((i) => i.type === "rental").length;
 
@@ -61,7 +62,7 @@ export default function BuyerDashboard() {
       description: "Connect your decentralized wallet to sign property escrows and hold title NFTs.",
       completed: isWalletConnected,
       actionLabel: "Connect Wallet",
-      actionHref: "/dashboard/buyer/profile",
+      actionHref: "/dashboard/buyer/settings",
       actionFn: isWalletConnected ? undefined : handleConnectWallet,
     },
     {
@@ -70,7 +71,7 @@ export default function BuyerDashboard() {
       description: "Provide contact information to facilitate off-chain legal contracts.",
       completed: isProfileComplete,
       actionLabel: "Update Settings",
-      actionHref: "/dashboard/buyer/profile",
+      actionHref: "/dashboard/buyer/settings",
     },
     {
       id: "save",

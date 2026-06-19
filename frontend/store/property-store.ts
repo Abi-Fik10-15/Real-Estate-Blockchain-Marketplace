@@ -86,16 +86,12 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
   },
 
   assignAgent: async (id, agent) => {
-    await api.updateProperty(id, {
+    const updated = await api.updateProperty(id, {
       agentId: agent?.id,
       agentWallet: agent?.wallet ?? "",
     });
     set((s) => ({
-      properties: s.properties.map((p) =>
-        p.id === id
-          ? { ...p, agentId: agent?.id, agentWallet: agent?.wallet }
-          : p
-      ),
+      properties: s.properties.map((p) => (p.id === id ? updated : p)),
     }));
   },
 

@@ -28,7 +28,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { PropertiesService } from './properties.service';
-import { CloudinaryService } from './cloudinary.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import {
   CreatePropertyDto,
   PropertyQueryDto,
@@ -88,7 +88,7 @@ export class PropertiesController {
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('owner', 'admin')
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Create a new property listing' })
   @ApiResponse({ status: 201, description: 'Property created successfully' })
   @ApiResponse({ status: 400, description: 'Validation failed' })
@@ -112,7 +112,7 @@ export class PropertiesController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('owner', 'admin')
   @UseInterceptors(FileInterceptor('file'))
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -147,7 +147,7 @@ export class PropertiesController {
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('owner', 'agent', 'admin')
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Update a property by patch' })
   @ApiResponse({ status: 200, description: 'Property updated' })
   update(
@@ -161,7 +161,7 @@ export class PropertiesController {
   @Put(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('owner', 'agent', 'admin')
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Update a property by put' })
   @ApiResponse({ status: 200, description: 'Property updated' })
   putUpdate(
@@ -176,7 +176,7 @@ export class PropertiesController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('owner', 'admin')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Delete a property listing' })
   @ApiResponse({ status: 244, description: 'Property deleted' })
   async delete(@Param('id') id: string, @CurrentUser() user: UserDocument) {
@@ -186,7 +186,7 @@ export class PropertiesController {
   @Patch(':id/approve')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin')
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Approve property listing' })
   @ApiResponse({ status: 200, description: 'Property approved' })
   async approve(@Param('id') id: string) {

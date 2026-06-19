@@ -20,6 +20,28 @@ export class InquiriesService {
     return this.inquiryModel.find().sort({ createdAt: -1 }).exec();
   }
 
+  async findForUser(user: UserDocument): Promise<InquiryDocument[]> {
+    if (user.role === 'admin') {
+      return this.findAll();
+    }
+
+    const propertyIds =
+      user.role === 'owner'
+        ? await this.propertiesService.findIdsByOwner(user.id)
+        : user.role === 'agent'
+          ? await this.propertiesService.findIdsByAgent(user.id)
+          : [];
+
+    if (propertyIds.length === 0) {
+      return [];
+    }
+
+    return this.inquiryModel
+      .find({ propertyId: { $in: propertyIds } })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
   findByBuyer(buyerId: string): Promise<InquiryDocument[]> {
     return this.inquiryModel.find({ buyerId }).sort({ createdAt: -1 }).exec();
   }

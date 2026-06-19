@@ -9,26 +9,7 @@ NestJS REST API for the ChainEstate blockchain real estate marketplace.
 - **Passport JWT** — authentication
 - **Ethers.js v6** — Sepolia smart contract integration
 - **Socket.IO** — real-time notifications
-
-## Folder Structure
-
-```
-backend/
-├── src/
-│   ├── auth/           # Register, login, JWT profile
-│   ├── users/          # User schema & admin/agent listings
-│   ├── properties/     # Property CRUD, filters, approval
-│   ├── inquiries/      # Buyer inquiries & visit requests
-│   ├── transactions/   # Sale/rental transaction lifecycle
-│   ├── blockchain/     # Sepolia contract service + ABI
-│   ├── notifications/  # Socket.IO gateway & emitters
-│   ├── config/         # Typed environment configuration
-│   ├── common/         # Shared decorators & guards
-│   └── health/         # Health check endpoint
-├── Dockerfile
-├── docker-compose.yml  # MongoDB + API + frontend (run from backend/)
-└── .env.example
-```
+- **Swagger / OpenAPI** — interactive API docs
 
 ## Quick Start (Local)
 
@@ -39,71 +20,97 @@ npm install
 npm run start:dev
 ```
 
-API base URL: `http://localhost:3001/api`
+| Resource | URL |
+|----------|-----|
+| REST API | http://localhost:3001/api |
+| **Swagger UI** | http://localhost:3001/api/docs |
+| **OpenAPI JSON** | http://localhost:3001/api/docs/openapi.json |
+| Health | http://localhost:3001/api/health |
 
-## Quick Start (Docker)
+## Swagger — test APIs (not localhost-only)
 
-From the **`backend/`** folder:
+Swagger is wired for **production and local** via the **Servers** dropdown:
+
+1. Open **http://localhost:3001/api/docs** (or your deployed URL + `/api/docs`).
+2. Set **`API_PUBLIC_URL`** in `.env` to your deployed API origin (e.g. `https://api.yourdomain.com` — no `/api` suffix).
+3. In Swagger, choose **Production (API_PUBLIC_URL)** from the server dropdown — requests go to your live API, not hardcoded localhost.
+4. Call **POST /auth/login**, copy `accessToken`.
+5. Click **Authorize**, enter: `Bearer <your-token>`.
+6. Test any endpoint from the UI.
+
+```env
+# backend/.env
+API_PUBLIC_URL=https://api.yourdomain.com
+SWAGGER_ENABLED=true
+SWAGGER_PATH=docs
+```
+
+Import **`/api/docs/openapi.json`** into Postman, Insomnia, or Hoppscotch for offline testing.
+
+## Docker
 
 ```bash
 cd backend
-cp .env.example .env   # optional
+cp .env.example .env
 docker compose up --build
 ```
 
-Services:
-
-| Service   | URL                          |
-|-----------|------------------------------|
-| Frontend  | http://localhost:3000        |
-| Backend   | http://localhost:3001/api    |
-| MongoDB   | mongodb://localhost:27017    |
-
-## API Endpoints
-
-### Auth
-| Method | Path              | Auth | Description        |
-|--------|-------------------|------|--------------------|
-| POST   | `/auth/register`  | —    | Create account     |
-| POST   | `/auth/login`     | —    | Get JWT token      |
-| GET    | `/auth/profile`   | JWT  | Current user       |
-| PATCH  | `/auth/profile`   | JWT  | Update profile     |
-
-### Properties
-| Method | Path                        | Auth  | Description          |
-|--------|-----------------------------|-------|----------------------|
-| GET    | `/properties`               | —     | List with filters    |
-| GET    | `/properties/:id`           | —     | Property detail      |
-| POST   | `/properties`               | JWT   | Create (owner/admin) |
-| PATCH  | `/properties/:id/approve`   | admin | Verify listing       |
-
-### Inquiries, Transactions, Blockchain
-See Phase 2 integration plan for full endpoint mapping.
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| API | http://localhost:3001/api |
+| Swagger | http://localhost:3001/api/docs |
+| MongoDB | mongodb://localhost:27017 |
 
 ## Environment Variables
 
-Copy `.env.example` to `.env`:
+See `.env.example`. Production requirements:
 
-```env
-PORT=3001
-MONGODB_URI=mongodb://localhost:27017/chainestate
-JWT_SECRET=change-me-in-production
-FRONTEND_ORIGIN=http://localhost:3000
+| Variable | Required in prod | Notes |
+|----------|------------------|-------|
+| `JWT_SECRET` | Yes | 32+ chars, not a placeholder |
+| `MONGODB_URI` | Yes | Real MongoDB connection string |
+| `FRONTEND_ORIGIN` | Yes | Comma-separated allowed origins |
+| `API_PUBLIC_URL` | Recommended | Powers Swagger production server |
+| `SEPOLIA_RPC_URL` | Optional | Blockchain features |
+| `PRIVATE_KEY` | Optional | Backend minting / txs |
+| `CONTRACT_ADDRESS` | Optional | Deployed marketplace contract |
+| `CLOUDINARY_*` | Optional | Image uploads (falls back to base64) |
+| `SWAGGER_ENABLED` | Optional | Default `true`; set `false` to hide docs |
 
-# Optional — blockchain (Sepolia)
-SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
-PRIVATE_KEY=0x...
-CONTRACT_ADDRESS=0x...
-```
+## API Modules
 
-## Verification
+| Tag | Base path | Description |
+|-----|-----------|-------------|
+| health | `/api` | Health check |
+| auth | `/api/auth` | Register, login, profile, avatar |
+| users | `/api/users` | Agents list, saved properties |
+| properties | `/api/properties` | CRUD, upload, approve |
+| inquiries | `/api/inquiries` | Buyer inquiries |
+| transactions | `/api/transactions` | Sales & escrow |
+| blockchain | `/api/blockchain` | Sepolia reads & mint |
+
+Full request/response schemas: **Swagger UI** at `/api/docs`.
+
+## Production checklist
+
+| Done | Item |
+|------|------|
+| ✅ | JWT auth + role guards |
+| ✅ | Swagger on all controllers |
+| ✅ | Configurable public API URL for Swagger |
+| ✅ | OpenAPI JSON export |
+| ✅ | Docker healthchecks |
+| ✅ | On-chain verification (Sepolia) |
+| ✅ | Profile settings + avatar upload |
+| ⬜ | Real KYC document upload + admin review |
+| ⬜ | Email notifications (currently localStorage toggle) |
+| ⬜ | Rate limiting / helmet hardening |
+| ⬜ | Deploy to cloud with HTTPS + secrets manager |
+
+## Build
 
 ```bash
-# Register
-curl -X POST http://localhost:3001/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@test.com","password":"TestPassword123!","role":"buyer","name":"Test User"}'
-
-# List properties
-curl http://localhost:3001/api/properties
+npm run build
+npm run start:prod
 ```

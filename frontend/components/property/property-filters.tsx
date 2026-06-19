@@ -32,10 +32,12 @@ export function PropertyFiltersPanel({
   filters,
   onChange,
   onReset,
+  hideStatusFilter = false,
 }: {
   filters: PropertyFilters;
   onChange: (patch: Partial<PropertyFilters>) => void;
   onReset: () => void;
+  hideStatusFilter?: boolean;
 }) {
   return (
     <Card className="lg:sticky lg:top-20">
@@ -148,24 +150,26 @@ export function PropertyFiltersPanel({
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Listing status</Label>
-          <Select
-            value={filters.status}
-            onValueChange={(v) => onChange({ status: v as ListingStatus | "all" })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s === "all" ? "All statuses" : s[0].toUpperCase() + s.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!hideStatusFilter && (
+          <div className="space-y-1.5">
+            <Label>Listing status</Label>
+            <Select
+              value={filters.status}
+              onValueChange={(v) => onChange({ status: v as ListingStatus | "all" })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s === "all" ? "All statuses" : s[0].toUpperCase() + s.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -182,4 +186,10 @@ export const DEFAULT_FILTERS: PropertyFilters = {
   status: "all",
   listingType: "all",
   sort: "newest",
+};
+
+/** Buyer marketplace only shows live listings available to browse. */
+export const BUYER_MARKETPLACE_FILTERS: PropertyFilters = {
+  ...DEFAULT_FILTERS,
+  status: "active",
 };

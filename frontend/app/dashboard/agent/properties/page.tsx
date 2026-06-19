@@ -25,16 +25,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { usePropertyStore } from "@/store/property-store";
+import { useAuthStore } from "@/store/auth-store";
 import { formatCurrency, shortenAddress } from "@/lib/utils";
 import type { ListingStatus } from "@/types";
 
-const AGENT_ID = "u-agent-1";
 const STATUSES: ListingStatus[] = ["active", "pending", "sold", "rented", "draft"];
 
 export default function AgentPropertiesPage() {
-  const assigned = usePropertyStore((s) => s.properties).filter(
-    (p) => p.agentId === AGENT_ID
-  );
+  const userId = useAuthStore((s) => s.user?.id);
+  const properties = usePropertyStore((s) => s.properties);
+  const assigned = userId ? properties.filter((p) => p.agentId === userId) : [];
   const setStatus = usePropertyStore((s) => s.setStatus);
 
   return (

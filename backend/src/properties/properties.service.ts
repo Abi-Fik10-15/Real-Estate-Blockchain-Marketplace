@@ -84,6 +84,22 @@ export class PropertiesService {
     return this.propertyModel.find({ ownerId: new Types.ObjectId(ownerId) }).exec();
   }
 
+  async findIdsByOwner(ownerId: string): Promise<Types.ObjectId[]> {
+    const properties = await this.propertyModel
+      .find({ ownerId: new Types.ObjectId(ownerId) })
+      .select('_id')
+      .exec();
+    return properties.map((p) => p._id);
+  }
+
+  async findIdsByAgent(agentId: string): Promise<Types.ObjectId[]> {
+    const properties = await this.propertyModel
+      .find({ agentId: new Types.ObjectId(agentId) })
+      .select('_id')
+      .exec();
+    return properties.map((p) => p._id);
+  }
+
   async create(user: UserDocument, dto: CreatePropertyDto): Promise<PropertyDocument> {
     const addressCountry = dto.location.address.includes(',')
       ? dto.location.address.split(',').pop()?.trim()
