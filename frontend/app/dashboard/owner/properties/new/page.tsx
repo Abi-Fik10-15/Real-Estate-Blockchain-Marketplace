@@ -179,6 +179,7 @@ export default function CreatePropertyPage() {
         title="Create Property"
         description="List a new property and register its ownership on-chain."
       />
+      <div className="flex items-center justify-center">
       <Card className="max-w-3xl">
         <CardContent className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -400,6 +401,7 @@ export default function CreatePropertyPage() {
           </form>
         </CardContent>
       </Card>
+      </div>
     </DashboardShell>
   );
 }
