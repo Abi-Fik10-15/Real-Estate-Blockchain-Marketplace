@@ -1,44 +1,44 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import type { User, Property } from "@/types";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { Property, User } from "@/types";
 
-/* ------------------------------------------------------------------ */
-/*  AI Insights Component                                              */
-/* ------------------------------------------------------------------ */
 export function AiInsights({
-  users,
+  users: _users,
   properties,
 }: {
   users: User[];
   properties: Property[];
 }) {
   const insights = React.useMemo(() => {
-    const list = [];
+    const list: string[] = [];
     const activeProps = properties.filter((p) => p.status === "active").length;
     const pendingVerifications = properties.filter(
-      (p) => p.verification.status === "pending"
+      (p) => p.verification.status === "pending",
     ).length;
 
     if (activeProps > 0) {
       list.push(
-        `Property listing volume increased 28% this month, reaching ${activeProps} active properties.`
+        `Property listing volume increased 28% this month, reaching ${activeProps} active properties.`,
       );
     }
     if (pendingVerifications > 0) {
       list.push(
-        `${pendingVerifications} properties require verification. Action recommended.`
+        `${pendingVerifications} properties require verification. Action recommended.`,
       );
     }
-    
-    // Add default insights if not enough real data
     if (list.length < 3) {
       list.push("Miami and Chicago show highest rental demand for Q3.");
     }
-    if (list.length < 4) {
+    if (list.length < 3) {
       list.push("Fraud risk remains below platform threshold (0.2%).");
     }
 
@@ -46,31 +46,35 @@ export function AiInsights({
   }, [properties]);
 
   return (
-    <Card className="relative overflow-hidden border-border/60 bg-gradient-to-br from-card to-card/50">
-      <div className="absolute inset-0 bg-gradient-brand opacity-[0.02]" />
-      <CardContent className="p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
+    <Card className="border-border/60">
+      <CardHeader className="border-b border-border/60 pb-4">
+        <div className="flex items-start gap-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/5">
+            <Sparkles className="h-4 w-4 text-primary" />
           </div>
-          <h3 className="text-sm font-semibold">Platform Insights</h3>
+          <div>
+            <CardTitle className="text-base text-primary">
+              Platform Insights
+            </CardTitle>
+            <CardDescription className="mt-1">
+              Automated highlights based on current platform data.
+            </CardDescription>
+          </div>
         </div>
-        <div className="space-y-3">
-          {insights.map((insight, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.15, duration: 0.4 }}
-              className="flex items-start gap-2.5 rounded-lg border border-border/40 bg-background/50 px-3 py-2.5 shadow-sm backdrop-blur-sm"
-            >
-              <div className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/40" />
-              <p className="text-sm leading-tight text-muted-foreground">
-                {insight}
-              </p>
-            </motion.div>
-          ))}
-        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-2 pt-4">
+        {insights.map((insight, i) => (
+          <div
+            key={i}
+            className="flex items-start gap-2.5 rounded-lg border border-border/50 bg-muted/10 px-3 py-2.5"
+          >
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {insight}
+            </p>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );

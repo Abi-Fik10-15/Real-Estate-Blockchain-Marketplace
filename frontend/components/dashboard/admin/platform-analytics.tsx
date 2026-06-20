@@ -1,76 +1,72 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "framer-motion";
 import {
-  AreaChart,
   Area,
+  AreaChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import type { User, Property } from "@/types";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { Property, User } from "@/types";
 
-/* ------------------------------------------------------------------ */
-/*  Growth data generator (simulates last 30 days)                     */
-/* ------------------------------------------------------------------ */
+const ROLE_COLORS = ["#3b82f6", "#8b5cf6", "#06b6d4", "#f59e0b"];
+
 function generateGrowthData(userCount: number, propertyCount: number) {
   const labels = ["Apr 26", "May 01", "May 06", "May 11", "May 16", "May 21", "May 26"];
   return labels.map((name, i) => {
     const factor = (i + 1) / labels.length;
+    const wave = 0.9 + (i % 3) * 0.05;
     return {
       name,
-      users: Math.round(userCount * factor * (0.85 + Math.random() * 0.15)),
-      properties: Math.round(propertyCount * factor * (0.8 + Math.random() * 0.2)),
-      transfers: Math.round(propertyCount * 0.15 * factor * (0.7 + Math.random() * 0.3)),
-      transactions: Math.round(propertyCount * 0.3 * factor * (0.75 + Math.random() * 0.25)),
+      users: Math.round(userCount * factor * wave),
+      properties: Math.round(propertyCount * factor * (wave - 0.05)),
+      transactions: Math.round(propertyCount * 0.3 * factor * wave),
     };
   });
 }
 
-/* ------------------------------------------------------------------ */
-/*  Role distribution colors                                           */
-/* ------------------------------------------------------------------ */
-const ROLE_COLORS = [
-  { role: "Buyers", color: "#3b82f6" },
-  { role: "Owners", color: "#8b5cf6" },
-  { role: "Agents", color: "#06b6d4" },
-  { role: "Admins", color: "#f59e0b" },
-];
-
-/* ------------------------------------------------------------------ */
-/*  Custom Tooltip                                                     */
-/* ------------------------------------------------------------------ */
-function ChartTooltip({ active, payload, label }: any) {
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { name: string; value: number; color: string }[];
+  label?: string;
+}) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-border/60 bg-card/95 px-3 py-2 shadow-lg backdrop-blur-sm">
-      <p className="mb-1 text-xs font-medium text-muted-foreground">{label}</p>
-      {payload.map((entry: any) => (
-        <div key={entry.name} className="flex items-center gap-2 text-sm">
+    <div className="rounded-lg border border-border/60 bg-card px-3 py-2 text-sm shadow-sm">
+      <p className="mb-1 text-xs text-muted-foreground">{label}</p>
+      {payload.map((entry) => (
+        <div key={entry.name} className="flex items-center gap-2">
           <span
             className="h-2 w-2 rounded-full"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="text-muted-foreground">{entry.name}:</span>
-          <span className="font-semibold">{entry.value?.toLocaleString()}</span>
+          <span className="text-muted-foreground">{entry.name}</span>
+          <span className="font-semibold text-foreground">
+            {entry.value?.toLocaleString()}
+          </span>
         </div>
       ))}
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Platform Analytics Component                                       */
-/* ------------------------------------------------------------------ */
 export function PlatformAnalytics({
   users,
   properties,
@@ -78,111 +74,93 @@ export function PlatformAnalytics({
   users: User[];
   properties: Property[];
 }) {
-  const [activeTab, setActiveTab] = React.useState("Overview");
-  const tabs = ["Overview", "Users", "Properties", "Transactions"];
-
-  /* Growth data */
   const growthData = React.useMemo(
     () => generateGrowthData(users.length, properties.length),
-    [users.length, properties.length]
+    [users.length, properties.length],
   );
 
-  /* Role distribution */
   const roleData = React.useMemo(() => {
-    const buyers = users.filter((u) => u.role === "buyer").length;
-    const owners = users.filter((u) => u.role === "owner").length;
-    const agents = users.filter((u) => u.role === "agent").length;
-    const admins = users.filter((u) => u.role === "admin").length;
-    return [
-      { name: "Buyers", value: buyers, pct: users.length ? ((buyers / users.length) * 100).toFixed(1) : "0" },
-      { name: "Owners", value: owners, pct: users.length ? ((owners / users.length) * 100).toFixed(1) : "0" },
-      { name: "Agents", value: agents, pct: users.length ? ((agents / users.length) * 100).toFixed(1) : "0" },
-      { name: "Admins", value: admins, pct: users.length ? ((admins / users.length) * 100).toFixed(1) : "0" },
-    ];
+    const counts = {
+      Buyers: users.filter((u) => u.role === "buyer").length,
+      Owners: users.filter((u) => u.role === "owner").length,
+      Agents: users.filter((u) => u.role === "agent").length,
+      Admins: users.filter((u) => u.role === "admin").length,
+    };
+    return Object.entries(counts).map(([name, value]) => ({
+      name,
+      value,
+      pct: users.length ? ((value / users.length) * 100).toFixed(1) : "0",
+    }));
   }, [users]);
 
   const totalGrowth = users.length > 0 ? "+24.8%" : "+0%";
 
   return (
-    <Card className="overflow-hidden border-border/60">
-      <CardHeader className="pb-2">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-base font-semibold">
-            Platform Analytics
-          </CardTitle>
-          <div className="flex items-center gap-1 rounded-lg bg-muted/50 p-0.5">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
-                  activeTab === tab
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
+    <Card className="border-border/60">
+      <CardHeader className="border-b border-border/60 pb-4">
+        <CardTitle className="text-base text-primary">Platform Analytics</CardTitle>
+        <CardDescription>
+          Growth trends and user role distribution over the last 30 days.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="pt-4">
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-          {/* Area Chart */}
+
+      <CardContent className="pt-5">
+        <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
+          {/* Area chart */}
           <div>
-            <div className="mb-4 space-y-0.5">
-              <p className="text-sm text-muted-foreground">
-                Total Platform Growth
-              </p>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-foreground">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Total platform growth
+                </p>
+                <p className="mt-1 text-2xl font-bold tabular-nums text-primary">
                   {totalGrowth}
-                </span>
-                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                  ▲ Growing
-                </span>
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  vs previous 30 days
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                vs previous 30 days
-              </p>
+              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400">
+                ▲ Growing
+              </span>
             </div>
 
-            <div className="h-[260px] w-full">
+            <div className="flex flex-wrap gap-3 pb-3 text-xs text-muted-foreground">
+              {[
+                { label: "Users", color: "#3b82f6" },
+                { label: "Properties", color: "#8b5cf6" },
+                { label: "Transactions", color: "#06b6d4" },
+              ].map((item) => (
+                <span key={item.label} className="inline-flex items-center gap-1.5">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  {item.label}
+                </span>
+              ))}
+            </div>
+
+            <div className="h-[240px] w-full rounded-lg border border-border/60 bg-muted/10 p-2">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={growthData}>
-                  <defs>
-                    <linearGradient id="growthUsers" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
-                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="growthProps" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="growthTx" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     stroke="hsl(var(--border))"
-                    strokeOpacity={0.4}
+                    strokeOpacity={0.5}
                     vertical={false}
                   />
                   <XAxis
                     dataKey="name"
-                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                     axisLine={false}
                     tickLine={false}
-                    width={40}
+                    width={32}
                   />
                   <Tooltip content={<ChartTooltip />} />
                   <Area
@@ -191,8 +169,9 @@ export function PlatformAnalytics({
                     name="Users"
                     stroke="#3b82f6"
                     strokeWidth={2}
-                    fill="url(#growthUsers)"
-                    animationDuration={1200}
+                    fill="#3b82f6"
+                    fillOpacity={0.08}
+                    dot={false}
                   />
                   <Area
                     type="monotone"
@@ -200,8 +179,9 @@ export function PlatformAnalytics({
                     name="Properties"
                     stroke="#8b5cf6"
                     strokeWidth={2}
-                    fill="url(#growthProps)"
-                    animationDuration={1400}
+                    fill="#8b5cf6"
+                    fillOpacity={0.08}
+                    dot={false}
                   />
                   <Area
                     type="monotone"
@@ -209,65 +189,68 @@ export function PlatformAnalytics({
                     name="Transactions"
                     stroke="#06b6d4"
                     strokeWidth={2}
-                    fill="url(#growthTx)"
-                    animationDuration={1600}
+                    fill="#06b6d4"
+                    fillOpacity={0.08}
+                    dot={false}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Donut Chart — Users by Role */}
-          <div>
-            <p className="mb-3 text-sm font-medium text-muted-foreground">
-              Users by Role
+          {/* Users by role */}
+          <div className="rounded-xl border border-border/60 bg-muted/10 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Users by role
             </p>
-            <div className="relative h-[200px]">
+
+            <div className="relative mx-auto mt-3 h-[160px] w-full max-w-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={roleData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={80}
-                    paddingAngle={3}
+                    innerRadius={48}
+                    outerRadius={72}
+                    paddingAngle={2}
                     dataKey="value"
-                    animationDuration={1200}
+                    stroke="hsl(var(--background))"
+                    strokeWidth={2}
                   >
                     {roleData.map((_, index) => (
                       <Cell
                         key={index}
-                        fill={ROLE_COLORS[index].color}
-                        stroke="transparent"
+                        fill={ROLE_COLORS[index % ROLE_COLORS.length]}
                       />
                     ))}
                   </Pie>
                   <Tooltip content={<ChartTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
-              {/* Center label */}
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold">{users.length.toLocaleString()}</span>
-                <span className="text-xs text-muted-foreground">Total Users</span>
+                <span className="text-xl font-bold tabular-nums text-primary">
+                  {users.length.toLocaleString()}
+                </span>
+                <span className="text-[10px] text-muted-foreground">Total</span>
               </div>
             </div>
 
-            {/* Legend */}
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-3 space-y-2">
               {roleData.map((entry, i) => (
-                <div key={entry.name} className="flex items-center gap-2 text-sm">
+                <div
+                  key={entry.name}
+                  className="flex items-center gap-2 rounded-md border border-border/50 bg-card px-2.5 py-1.5 text-xs"
+                >
                   <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: ROLE_COLORS[i].color }}
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: ROLE_COLORS[i] }}
                   />
                   <span className="text-muted-foreground">{entry.name}</span>
-                  <span className="ml-auto font-medium">
-                    {entry.value.toLocaleString()}
+                  <span className="ml-auto font-semibold text-primary">
+                    {entry.value}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    ({entry.pct}%)
-                  </span>
+                  <span className="text-muted-foreground">({entry.pct}%)</span>
                 </div>
               ))}
             </div>
