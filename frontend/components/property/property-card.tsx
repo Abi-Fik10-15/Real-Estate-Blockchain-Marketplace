@@ -11,6 +11,7 @@ import { useSavedStore } from "@/store/saved-store";
 import type { Property } from "@/types";
 
 export function PropertyCard({ property, view = "grid" }: { property: Property; view?: "grid" | "list" }) {
+  console.log("Property:", property);
   const { isSaved, toggleSaved } = useSavedStore();
   const saved = isSaved(property.id);
   const verified = property.verification.status === "verified";
