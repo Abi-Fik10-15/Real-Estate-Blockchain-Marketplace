@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShieldCheck, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LazyWalletConnect } from "@/components/wallet/lazy-wallet-connect";
@@ -90,10 +90,15 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/95 supports-[backdrop-filter]:bg-background/80 supports-[backdrop-filter]:backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between gap-4 px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="ChainEstate home">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary">
-            <ShieldCheck className="h-5 w-5" aria-hidden />
-          </span>
+        <Link href="/" className="flex shrink-0 items-center " aria-label="ChainEstate home">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="ChainEstate"
+            width={40}
+            height={40}
+            className="h-10 w-10 shrink-0 rounded-lg object-contain"
+          />
           <span className="text-lg font-semibold tracking-tight text-foreground" aria-hidden>
             Chain<span className="text-primary">Estate</span>
           </span>

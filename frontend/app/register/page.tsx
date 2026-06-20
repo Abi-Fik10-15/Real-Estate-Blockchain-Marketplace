@@ -4,20 +4,22 @@ import * as React from "react";
 import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Building2, CheckCircle2, Home, Mail, RefreshCw, UserCheck } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  Home,
+  Mail,
+  RefreshCw,
+  UserCheck,
+} from "lucide-react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { AuthSplitShell } from "@/components/auth/auth-shell";
 import { useAuthStore } from "@/store/auth-store";
 import { api } from "@/services/api";
 import { registerSchema, type RegisterValues } from "@/lib/validations";
@@ -46,7 +48,7 @@ const ROLES = [
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return <p className="text-xs text-destructive mt-1">{message}</p>;
+  return <p className="mt-1 text-xs text-destructive">{message}</p>;
 }
 
 function CheckEmailState({ email }: { email: string }) {
@@ -67,32 +69,36 @@ function CheckEmailState({ email }: { email: string }) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 py-4 text-center">
+    <div className="flex flex-col items-center gap-6 py-2 text-center">
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
         <Mail className="h-8 w-8 text-primary" />
       </span>
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">Check your inbox</h2>
-        <p className="max-w-sm text-sm text-muted-foreground leading-relaxed">
+        <h2 className="text-xl font-semibold text-primary">Check your inbox</h2>
+        <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
           We sent a verification link to{" "}
           <span className="font-medium text-foreground">{email}</span>.
-          Click the link in the email to activate your account.
+          Click it to activate your account.
         </p>
       </div>
 
       <div className="w-full rounded-lg border bg-muted/40 p-4 text-left space-y-2">
         <div className="flex items-start gap-2 text-sm text-muted-foreground">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-          <span>The link is valid for <strong>24 hours</strong>.</span>
+          <span>
+            The link is valid for <strong>24 hours</strong>.
+          </span>
         </div>
         <div className="flex items-start gap-2 text-sm text-muted-foreground">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-          <span>Check your spam or junk folder if you don&apos;t see it.</span>
+          <span>Check your spam folder if you don&apos;t see it.</span>
         </div>
       </div>
 
       {resent ? (
-        <p className="text-sm text-green-600 font-medium">Verification email resent ✓</p>
+        <p className="text-sm font-medium text-green-600">
+          Verification email resent ✓
+        </p>
       ) : (
         <Button
           variant="outline"
@@ -139,7 +145,8 @@ export default function RegisterPage() {
         typeof err === "object" &&
         err !== null &&
         "response" in err &&
-        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === "string"
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message === "string"
           ? (err as { response: { data: { message: string } } }).response.data.message
           : null;
 
@@ -152,26 +159,28 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-2xl font-bold text-primary">
-            Join ChainEstate
-          </CardTitle>
-          <CardDescription>
-            {submittedEmail
-              ? "One more step to activate your account."
-              : "Choose the role that best describes how you'll use the marketplace."}
-          </CardDescription>
-        </CardHeader>
+    <AuthSplitShell>
+      <div className="w-full max-w-sm">
+        {/* Mobile brand */}
+        <Link href="/" className="mb-8 flex items-center gap-2.5 lg:hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="" className="h-8 w-8 rounded-lg object-contain" />
+          <span className="font-semibold text-foreground">ChainEstate</span>
+        </Link>
 
-        <CardContent className="pt-4">
-          <Separator className="mb-4" />
+        {submittedEmail ? (
+          <CheckEmailState email={submittedEmail} />
+        ) : (
+          <>
+            {/* Heading */}
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-primary">Join ChainEstate</h1>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Choose the role that best describes how you&apos;ll use the marketplace.
+              </p>
+            </div>
 
-          {submittedEmail ? (
-            <CheckEmailState email={submittedEmail} />
-          ) : (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Role selector */}
               <div className="space-y-2">
                 <Label>Account type</Label>
@@ -186,10 +195,10 @@ export default function RegisterPage() {
                           key={r.value}
                           onClick={() => field.onChange(r.value)}
                           className={cn(
-                            "flex flex-col items-start gap-1 rounded-md border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            "flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                             field.value === r.value
                               ? "border-primary bg-primary/5 ring-2 ring-primary/10"
-                              : "border-border bg-background hover:border-primary/40 hover:bg-primary/5"
+                              : "border-border bg-background hover:border-primary/40 hover:bg-primary/5",
                           )}
                         >
                           <span
@@ -197,12 +206,14 @@ export default function RegisterPage() {
                               "mb-1 flex h-7 w-7 items-center justify-center rounded-md border transition-colors",
                               field.value === r.value
                                 ? "border-primary bg-primary text-primary-foreground"
-                                : "border-border bg-muted text-muted-foreground"
+                                : "border-border bg-muted text-muted-foreground",
                             )}
                           >
                             <r.icon className="h-4 w-4" />
                           </span>
-                          <span className="text-sm font-medium text-foreground">{r.label}</span>
+                          <span className="text-sm font-medium text-foreground">
+                            {r.label}
+                          </span>
                           <span className="text-xs leading-snug text-muted-foreground">
                             {r.description}
                           </span>
@@ -214,16 +225,28 @@ export default function RegisterPage() {
                 <FieldError message={errors.role?.message} />
               </div>
 
+              <Separator />
+
               {/* Name + Phone */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="name">Full name</Label>
-                  <Input id="name" autoComplete="name" placeholder="Jane Doe" {...register("name")} />
+                  <Input
+                    id="name"
+                    autoComplete="name"
+                    placeholder="Jane Doe"
+                    {...register("name")}
+                  />
                   <FieldError message={errors.name?.message} />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" autoComplete="tel" placeholder="+1 555 000 0000" {...register("phone")} />
+                  <Input
+                    id="phone"
+                    autoComplete="tel"
+                    placeholder="+1 555 000 0000"
+                    {...register("phone")}
+                  />
                   <FieldError message={errors.phone?.message} />
                 </div>
               </div>
@@ -255,7 +278,7 @@ export default function RegisterPage() {
                   <FieldError message={errors.password?.message} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="confirmPassword">Confirm password</Label>
+                  <Label htmlFor="confirmPassword">Confirm</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -267,7 +290,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              <Button type="submit" className="w-full gap-2" disabled={isSubmitting}>
                 {isSubmitting ? (
                   "Creating account…"
                 ) : (
@@ -279,24 +302,20 @@ export default function RegisterPage() {
               </Button>
 
               <p className="text-center text-xs text-muted-foreground">
-                By creating an account you agree to use ChainEstate for verified property
-                discovery and blockchain-backed transaction workflows.
+                By creating an account you agree to use ChainEstate for verified
+                property discovery and blockchain-backed transaction workflows.
               </p>
             </form>
-          )}
-        </CardContent>
 
-        {!submittedEmail && (
-          <CardFooter className="justify-center border-t bg-muted/30 py-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link href="/login" className="font-medium text-primary hover:underline">
                 Sign in
               </Link>
             </p>
-          </CardFooter>
+          </>
         )}
-      </Card>
-    </div>
+      </div>
+    </AuthSplitShell>
   );
 }
