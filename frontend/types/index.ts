@@ -32,6 +32,32 @@ export interface User {
   status: "active" | "suspended";
   joinedAt: string;
   verified: boolean;
+  kycStatus?: "pending" | "verified" | "rejected";
+}
+
+export type KycIdType = "passport" | "drivers_license" | "national_id";
+export type KycSubmissionStatus = "submitted" | "approved" | "rejected";
+
+export interface KycSubmission {
+  id: string;
+  userId: string;
+  status: KycSubmissionStatus;
+  legalName: string;
+  dateOfBirth: string;
+  address: string;
+  idType: KycIdType;
+  idDocumentUrl: string;
+  selfieUrl: string;
+  addressProofUrl: string;
+  brokerLicenseUrl?: string;
+  reviewNotes?: string;
+  reviewedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  userName?: string;
+  userEmail?: string;
+  userRole?: UserRole;
+  userKycStatus?: string;
 }
 export type AuthUser = User & {
   password: string;

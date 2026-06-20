@@ -15,15 +15,23 @@ import { FileText, Shield, Sparkles, HelpCircle } from "lucide-react";
 
 export default function BuyerRequestsPage() {
   const user = useAuthStore((s) => s.user);
-  const buyerId = user?.id ?? "u-buyer-1";
+  const allInquiries = useInquiryStore((s) => s.inquiries);
+  const fetchMine = useInquiryStore((s) => s.fetchMine);
+  const isLoading = useInquiryStore((s) => s.isLoading);
 
-  const allInquiries = useInquiryStore((s) => s.inquiries).filter(
-    (i) => i.buyerId === buyerId
-  );
+  React.useEffect(() => {
+    if (user?.id) {
+      void fetchMine();
+    }
+  }, [user?.id, fetchMine]);
+
+  const myInquiries = user?.id
+    ? allInquiries.filter((i) => i.buyerId === user.id)
+    : allInquiries;
 
   const [activeTab, setActiveTab] = React.useState<"all" | "purchase" | "rental" | "question">("all");
 
-  const filteredInquiries = allInquiries.filter((inq) => {
+  const filteredInquiries = myInquiries.filter((inq) => {
     if (activeTab === "all") return true;
     return inq.type === activeTab;
   });
@@ -38,24 +46,28 @@ export default function BuyerRequestsPage() {
           <Tabs defaultValue="all" className="w-full" onValueChange={(v) => setActiveTab(v as any)}>
             <TabsList className="bg-muted/40 border border-border/40 p-1 rounded-xl">
               <TabsTrigger value="all" className="rounded-lg text-xs font-bold px-4">
-                All ({allInquiries.length})
+                All ({myInquiries.length})
               </TabsTrigger>
               <TabsTrigger value="purchase" className="rounded-lg text-xs font-bold px-4">
-                Purchases ({allInquiries.filter((i) => i.type === "purchase").length})
+                Purchases ({myInquiries.filter((i) => i.type === "purchase").length})
               </TabsTrigger>
               <TabsTrigger value="rental" className="rounded-lg text-xs font-bold px-4">
-                Rentals ({allInquiries.filter((i) => i.type === "rental").length})
+                Rentals ({myInquiries.filter((i) => i.type === "rental").length})
               </TabsTrigger>
               <TabsTrigger value="question" className="rounded-lg text-xs font-bold px-4">
-                Questions ({allInquiries.filter((i) => i.type === "question").length})
+                Questions ({myInquiries.filter((i) => i.type === "question").length})
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value={activeTab} className="mt-4 border-0 p-0 focus-visible:outline-none focus-visible:ring-0">
+              {isLoading && myInquiries.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Loading your requests…</p>
+              ) : (
               <InquiryList
                 inquiries={filteredInquiries}
                 emptyLabel={`You haven't submitted any ${activeTab === "all" ? "" : activeTab + " "}requests yet.`}
               />
+              )}
             </TabsContent>
           </Tabs>
         </div>
@@ -108,11 +120,11 @@ export default function BuyerRequestsPage() {
                 <div className="relative group/step">
                   <div className="absolute -left-[21px] top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border border-background transition-transform duration-200 group-hover/step:scale-125" />
                   <p className="text-xs font-bold text-foreground flex items-center gap-1 transition-colors group-hover/step:text-emerald-500">
-                    4. Deed NFT Release
+                    4. Owner Confirms Transfer
                     <Sparkles className="h-3 w-3 text-amber-500 animate-pulse" />
                   </p>
                   <p className="text-[10px] text-muted-foreground leading-normal mt-0.5">
-                    Upon validation, the smart contract mints and transfers the title deed token immutably to your wallet.
+                    The owner confirms the sale or rental in Escrow &amp; Sales. The property then shows as purchased or rented on both dashboards.
                   </p>
                 </div>
 

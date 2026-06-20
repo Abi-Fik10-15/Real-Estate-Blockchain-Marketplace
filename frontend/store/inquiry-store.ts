@@ -38,12 +38,7 @@ export const useInquiryStore = create<InquiryState>()((set, get) => ({
     set({ isLoading: true });
     try {
       const inquiries = await api.getMyInquiries();
-      set((s) => {
-        const others = s.inquiries.filter(
-          (i) => !inquiries.some((n) => n.id === i.id)
-        );
-        return { inquiries: [...inquiries, ...others], isLoading: false };
-      });
+      set({ inquiries, isLoading: false });
     } catch {
       set({ isLoading: false });
     }

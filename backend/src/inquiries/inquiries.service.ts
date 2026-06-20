@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Inquiry, InquiryDocument } from './schemas/inquiry.schema';
 import { CreateInquiryDto, UpdateInquiryDto } from './dto/inquiry.dto';
 import { PropertiesService } from '../properties/properties.service';
 import type { UserDocument } from '../users/schemas/user.schema';
 import { NotificationsService } from '../notifications/notifications.service';
+import { resolveDocumentId } from '../common/utils/document-id';
 
 @Injectable()
 export class InquiriesService {
@@ -25,11 +26,12 @@ export class InquiriesService {
       return this.findAll();
     }
 
+    const ownerId = resolveDocumentId(user);
     const propertyIds =
       user.role === 'owner'
-        ? await this.propertiesService.findIdsByOwner(user.id)
+        ? await this.propertiesService.findIdsByOwner(ownerId)
         : user.role === 'agent'
-          ? await this.propertiesService.findIdsByAgent(user.id)
+          ? await this.propertiesService.findIdsByAgent(ownerId)
           : [];
 
     if (propertyIds.length === 0) {
@@ -43,7 +45,13 @@ export class InquiriesService {
   }
 
   findByBuyer(buyerId: string): Promise<InquiryDocument[]> {
-    return this.inquiryModel.find({ buyerId }).sort({ createdAt: -1 }).exec();
+    if (!Types.ObjectId.isValid(buyerId)) {
+      return Promise.resolve([]);
+    }
+    return this.inquiryModel
+      .find({ buyerId: new Types.ObjectId(buyerId) })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async create(
@@ -51,11 +59,13 @@ export class InquiriesService {
     dto: CreateInquiryDto,
   ): Promise<InquiryDocument> {
     const property = await this.propertiesService.findById(dto.propertyId);
+    const propertyObjectId = new Types.ObjectId(resolveDocumentId(property));
+    const buyerObjectId = new Types.ObjectId(resolveDocumentId(buyer));
 
     const inquiry = await this.inquiryModel.create({
-      propertyId: property._id,
+      propertyId: propertyObjectId,
       propertyTitle: property.title,
-      buyerId: buyer._id,
+      buyerId: buyerObjectId,
       buyerName: buyer.name,
       type: dto.type,
       message: dto.message,
@@ -84,5 +94,21 @@ export class InquiriesService {
       throw new NotFoundException('Inquiry not found');
     }
     return inquiry;
+  }
+
+  async closeForBuyerProperty(
+    propertyId: string,
+    buyerId: string,
+  ): Promise<void> {
+    await this.inquiryModel
+      .updateMany(
+        {
+          propertyId: new Types.ObjectId(propertyId),
+          buyerId: new Types.ObjectId(buyerId),
+          status: { $ne: 'closed' },
+        },
+        { status: 'closed' },
+      )
+      .exec();
   }
 }

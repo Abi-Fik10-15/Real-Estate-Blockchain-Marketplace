@@ -34,6 +34,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { useWalletStore } from "@/store/wallet-store";
 import { api } from "@/services/api";
 import { shortenAddress } from "@/lib/utils";
+import { KycVerification } from "@/components/settings/kyc-verification";
 import type { UserRole } from "@/types";
 
 const ROLE_NAV = {
@@ -222,8 +223,10 @@ export function ProfileSettings({
               </div>
 
               <div className="flex flex-wrap justify-center gap-2">
-                {user?.verified ? (
+                {user?.kycStatus === "verified" || user?.verified ? (
                   <Badge variant="verified">KYC Verified</Badge>
+                ) : user?.kycStatus === "rejected" ? (
+                  <Badge variant="destructive">KYC Rejected</Badge>
                 ) : (
                   <Badge
                     variant="outline"
@@ -456,6 +459,8 @@ export function ProfileSettings({
               </div>
             </CardContent>
           </Card>
+
+          <KycVerification role={role} />
         </div>
       </div>
     </DashboardShell>

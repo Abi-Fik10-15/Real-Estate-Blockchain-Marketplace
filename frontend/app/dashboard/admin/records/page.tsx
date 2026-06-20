@@ -2,9 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { PageHeader } from "@/components/dashboard/page-header";
-import { ADMIN_NAV } from "@/components/dashboard/nav-configs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,6 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { ADMIN_NAV } from "@/components/dashboard/nav-configs";
+import { AdminKycPanel } from "@/components/dashboard/admin/admin-kyc-panel";
 import { api } from "@/services/api";
 import { CONTRACT_ADDRESS } from "@/lib/constants";
 import { etherscanAddressUrl, etherscanTokenUrl, isOnChainTokenId } from "@/lib/blockchain-utils";
@@ -46,97 +48,118 @@ export default function AdminRecordsPage() {
     queryFn: () => api.getBlockchainStatus(),
   });
 
+  const { data: kycStats } = useQuery({
+    queryKey: ["kyc", "stats"],
+    queryFn: () => api.getKycStats(),
+  });
+
   return (
-    <DashboardShell title="Ownership Records" roleLabel="Administrator" nav={ADMIN_NAV}>
+    <DashboardShell title="KYC & Verification" roleLabel="Administrator" nav={ADMIN_NAV}>
       <PageHeader
-        title="Ownership Records"
+        title="KYC & Verification"
         description={
           chainStatus?.enabled
-            ? `On-chain registry via Sepolia contract ${shortenAddress(chainStatus.contractAddress, 8)}`
-            : "Database records — configure Sepolia contract for live on-chain data (see BLOCKCHAIN.md)."
+            ? `Review identity documents and on-chain ownership via Sepolia ${shortenAddress(chainStatus.contractAddress, 8)}`
+            : "Review KYC submissions and property ownership records."
         }
       />
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <p className="p-6 text-sm text-muted-foreground">Loading records…</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Token</TableHead>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Owner Wallet</TableHead>
-                  <TableHead>Escrow</TableHead>
-                  <TableHead>Price (ETH)</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Chain</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {records.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-mono text-xs">
-                      {isOnChainTokenId(p.propertyId) && CONTRACT_ADDRESS ? (
-                        <a
-                          href={etherscanTokenUrl(CONTRACT_ADDRESS, p.propertyId)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-primary hover:underline"
-                        >
-                          #{p.propertyId}
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      ) : (
-                        p.propertyId
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">{p.propertyTitle}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {p.ownerWallet ? (
-                        <a
-                          href={etherscanAddressUrl(p.ownerWallet)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          {shortenAddress(p.ownerWallet, 5)}
-                        </a>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {p.inEscrow ? (
-                        <Badge variant="warning">
-                          {p.escrowAmount} ETH locked
-                        </Badge>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs">{p.priceEth ?? "—"}</TableCell>
-                    <TableCell>
-                      {p.verificationStatus === "verified" ? (
-                        <Badge variant="verified">Verified</Badge>
-                      ) : (
-                        <Badge variant="warning">Pending</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {p.onChain ? (
-                        <Badge variant="success">Sepolia</Badge>
-                      ) : (
-                        <Badge variant="secondary">Off-chain</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+
+      <Tabs defaultValue="kyc" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="kyc">
+            KYC Review{kycStats?.pending ? ` (${kycStats.pending})` : ""}
+          </TabsTrigger>
+          <TabsTrigger value="ownership">Ownership Records</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="kyc">
+          <AdminKycPanel />
+        </TabsContent>
+
+        <TabsContent value="ownership">
+          <Card>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <p className="p-6 text-sm text-muted-foreground">Loading records…</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Token</TableHead>
+                      <TableHead>Property</TableHead>
+                      <TableHead>Owner Wallet</TableHead>
+                      <TableHead>Escrow</TableHead>
+                      <TableHead>Price (ETH)</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Chain</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {records.map((record, index) => (
+                      <TableRow key={record.id || `${record.propertyId}-${index}`}>
+                        <TableCell className="font-mono text-xs">
+                          {isOnChainTokenId(record.propertyId) && CONTRACT_ADDRESS ? (
+                            <a
+                              href={etherscanTokenUrl(CONTRACT_ADDRESS, record.propertyId)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-primary hover:underline"
+                            >
+                              #{record.propertyId}
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          ) : (
+                            record.propertyId
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{record.propertyTitle}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {record.ownerWallet ? (
+                            <a
+                              href={etherscanAddressUrl(record.ownerWallet)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              {shortenAddress(record.ownerWallet, 5)}
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {record.inEscrow ? (
+                            <Badge variant="warning">
+                              {record.escrowAmount} ETH locked
+                            </Badge>
+                          ) : (
+                            "—"
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs">{record.priceEth ?? "—"}</TableCell>
+                        <TableCell>
+                          {record.verificationStatus === "verified" ? (
+                            <Badge variant="verified">Verified</Badge>
+                          ) : (
+                            <Badge variant="warning">Pending</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {record.onChain ? (
+                            <Badge variant="success">Sepolia</Badge>
+                          ) : (
+                            <Badge variant="secondary">Off-chain</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </DashboardShell>
   );
 }

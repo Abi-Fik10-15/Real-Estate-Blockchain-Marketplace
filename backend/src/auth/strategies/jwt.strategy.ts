@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from '../../users/users.service';
 import { AppConfigService } from '../../config/app-config.service';
+import type { UserDocument } from '../../users/schemas/user.schema';
 
 interface JwtPayload {
   sub: string;
@@ -28,6 +29,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user || user.status === 'suspended') {
       throw new UnauthorizedException();
     }
+    // Lean user docs may only expose _id — JWT sub is the canonical id for guards/services.
+    (user as UserDocument & { id: string }).id = payload.sub;
     return user;
   }
 }

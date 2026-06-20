@@ -78,9 +78,9 @@ export default function BuyerDashboard() {
     {
       id: "profile",
       title: "Complete KYC Profile",
-      description: "Provide contact information to facilitate off-chain legal contracts.",
-      completed: isProfileComplete,
-      actionLabel: "Update Settings",
+      description: "Fill in contact details and submit identity documents in Settings.",
+      completed: isProfileComplete && user?.kycStatus === "verified",
+      actionLabel: "Open Settings",
       actionHref: "/dashboard/buyer/settings",
     },
     {

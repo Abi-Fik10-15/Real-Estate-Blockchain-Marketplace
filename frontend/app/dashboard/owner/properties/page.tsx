@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Building2, PlusCircle, Trash2, ExternalLink, ShieldCheck } from "lucide-react";
+import { Building2, PlusCircle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -17,14 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { usePropertyStore } from "@/store/property-store";
 import { useOwnerProperties } from "@/hooks/use-owner-properties";
 import { useMyTransactions } from "@/hooks/use-transactions";
@@ -46,8 +38,6 @@ export default function OwnerPropertiesPage() {
   const properties = useOwnerProperties();
   const { data: transactions = [] } = useMyTransactions();
   const setStatus = usePropertyStore((s) => s.setStatus);
-  const deleteProperty = usePropertyStore((s) => s.deleteProperty);
-  const [toDelete, setToDelete] = React.useState<string | null>(null);
 
   const completedAsSeller = new Set(
     transactions
@@ -55,19 +45,11 @@ export default function OwnerPropertiesPage() {
       .map((t) => t.propertyId)
   );
 
-  const confirmDelete = () => {
-    if (toDelete) {
-      deleteProperty(toDelete);
-      toast.success("Property removed from your portfolio");
-      setToDelete(null);
-    }
-  };
-
   return (
     <DashboardShell title="My Properties" roleLabel="Property Owner" nav={OWNER_NAV}>
       <PageHeader
         title="Manage Properties"
-        description="Update listing status, transfer ownership, or remove properties."
+        description="Listings stay pending until an admin approves them for the marketplace. Track sold or rented properties here."
         actions={
           <Button variant="hero" asChild>
             <Link href="/dashboard/owner/properties/new">
@@ -101,132 +83,104 @@ export default function OwnerPropertiesPage() {
           <CardContent className="p-0">
             <div className="divide-y divide-border/40">
               {properties.map((p) => {
-                const isCompletedDeal = completedAsSeller.has(p.id) && (p.status === "sold" || p.status === "rented");
+                const isCompletedDeal =
+                  completedAsSeller.has(p.id) &&
+                  (p.status === "sold" || p.status === "rented");
+
                 return (
-                <div
-                  key={p.id}
-                  className="flex flex-col gap-4 px-5 py-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  {/* Image + info */}
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg border border-border/60">
-                      <img
-                        src={p.images[0]}
-                        alt={p.title}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold">{p.title}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <span className="font-mono text-[10px] text-muted-foreground">
-                          {p.chainId}
-                        </span>
-                        <span className="text-muted-foreground">·</span>
-                        <span className="text-xs text-muted-foreground">
-                          {p.location.city}
-                        </span>
-                        <span className="text-muted-foreground">·</span>
-                        <span className="text-xs font-semibold">
-                          {formatCurrency(p.price)}
-                        </span>
+                  <div
+                    key={p.id}
+                    className="flex flex-col gap-4 px-5 py-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg border border-border/60">
+                        <img
+                          src={p.images[0]}
+                          alt={p.title}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold">{p.title}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <span className="font-mono text-[10px] text-muted-foreground">
+                            {p.chainId}
+                          </span>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-xs text-muted-foreground">
+                            {p.location.city}
+                          </span>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-xs font-semibold">
+                            {formatCurrency(p.price)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Controls */}
-                  <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    {isCompletedDeal ? (
-                      <Badge
-                        variant={p.status === "sold" ? "secondary" : "verified"}
-                        className="capitalize text-xs"
-                      >
-                        {p.status === "sold" ? "Sold" : "Rented"}
-                      </Badge>
-                    ) : (
-                    <Select
-                      value={p.status}
-                      onValueChange={(v) => {
-                        setStatus(p.id, v as ListingStatus);
-                        toast.success(`Status set to "${v}"`);
-                      }}
-                    >
-                      <SelectTrigger
-                        className={cn(
-                          "h-8 w-32 text-xs font-semibold capitalize",
-                          STATUS_COLOR[p.status]
-                        )}
-                      >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUSES.map((s) => (
-                          <SelectItem
-                            key={s}
-                            value={s}
-                            className={cn("text-xs capitalize font-medium", STATUS_COLOR[s])}
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      {isCompletedDeal ? (
+                        <Badge
+                          variant={p.status === "sold" ? "secondary" : "verified"}
+                          className="capitalize text-xs"
+                        >
+                          {p.status === "sold" ? "Sold" : "Rented"}
+                        </Badge>
+                      ) : p.status === "pending" ? (
+                        <Badge variant="warning" className="text-xs">
+                          Awaiting admin approval
+                        </Badge>
+                      ) : (
+                        <Select
+                          value={p.status}
+                          onValueChange={(v) => {
+                            setStatus(p.id, v as ListingStatus);
+                            toast.success(`Status set to "${v}"`);
+                          }}
+                        >
+                          <SelectTrigger
+                            className={cn(
+                              "h-8 w-32 text-xs font-semibold capitalize",
+                              STATUS_COLOR[p.status]
+                            )}
                           >
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    )}
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STATUSES.map((s) => (
+                              <SelectItem
+                                key={s}
+                                value={s}
+                                className={cn("text-xs capitalize font-medium", STATUS_COLOR[s])}
+                              >
+                                {s}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
 
-                    {/* Verification badge */}
-                    {p.verification.status === "verified" ? (
-                      <Badge variant="verified" className="gap-1 text-[10px]">
-                        <ShieldCheck className="h-3 w-3" /> Verified
-                      </Badge>
-                    ) : (
-                      <Badge variant="warning" className="text-[10px]">Pending</Badge>
-                    )}
+                      {p.verification.status === "verified" ? (
+                        <Badge variant="verified" className="gap-1 text-[10px]">
+                          <ShieldCheck className="h-3 w-3" /> Verified
+                        </Badge>
+                      ) : (
+                        <Badge variant="warning" className="text-[10px]">
+                          Pending
+                        </Badge>
+                      )}
 
-                    {/* Actions */}
-                    <Button size="sm" variant="ghost" className="h-8 px-3 text-xs" asChild>
-                      <Link href={`/dashboard/owner/properties/${p.id}`}>
-                    
-                        View 
-                        
-                      </Link>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => setToDelete(p.id)}
-                      disabled={isCompletedDeal}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                      <Button size="sm" variant="ghost" className="h-8 px-3 text-xs" asChild>
+                        <Link href={`/dashboard/owner/properties/${p.id}`}>View</Link>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              );
+                );
               })}
             </div>
           </CardContent>
         </Card>
       )}
-
-      <Dialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete property?</DialogTitle>
-            <DialogDescription>
-              This removes the listing from your portfolio. This action cannot be undone in
-              this demo.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setToDelete(null)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </DashboardShell>
   );
 }

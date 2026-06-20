@@ -19,6 +19,55 @@ Blockchain is **not** a Docker container — Docker passes your Sepolia keys to 
 
 ---
 
+## Platform lifecycle (off-chain + on-chain)
+
+ChainEstate combines MongoDB records with optional Sepolia smart contracts. This is the full path from listing to purchase:
+
+```
+Owner creates listing (status: pending)
+        ↓
+Optional: API mints ERC-721 deed on Sepolia → token ID stored on property
+        ↓
+Admin approves listing (status: active) → appears on marketplace / browse filters
+        ↓
+Buyer submits purchase or rental inquiry (stored in MongoDB, linked to property + buyer)
+        ↓
+Owner approves inquiry (status: in_progress) → buyer can fund escrow
+        ↓
+Buyer funds escrow (MetaMask initiateEscrow or API-only demo path)
+        ↓
+Owner confirms in Escrow & Sales → property status sold/rented, inquiry closed
+```
+
+### Listing approval (marketplace visibility)
+
+| Status | Visible on marketplace? | Who acts |
+|--------|-------------------------|----------|
+| `pending` | No | Owner after create/mint |
+| `active` | Yes | Admin approves in **Admin → Properties** |
+| `sold` / `rented` | No (completed deals) | Automatic after owner confirms escrow |
+
+New properties are always created with `status: pending`. Only **`active`** listings are returned when the frontend requests marketplace/browse data (`status=active`).
+
+### Buyer inquiries (purchase / rental requests)
+
+| Step | Buyer | Owner |
+|------|-------|-------|
+| 1 | Submit inquiry on property page or marketplace detail | — |
+| 2 | See request under **My Requests** (persisted via `GET /inquiries/mine`) | See under **Buyer Inquiries** (`GET /inquiries`) |
+| 3 | Wait for owner to set status **Approved** | Change inquiry to **Approved by Owner** |
+| 4 | **Fund Escrow** from My Requests | — |
+| 5 | Status shows escrow funded; await owner | **Escrow & Sales → Confirm Sale/Rental** |
+| 6 | Property appears under **My Properties** as purchased/rented | Listing shows **Sold** or **Rented** |
+
+Inquiries are stored in MongoDB with `propertyId`, `buyerId`, and `status` (`new` → `in_progress` → `closed`). They survive page reloads; the API is the source of truth (not only local Zustand state).
+
+### KYC (identity verification)
+
+Users submit documents under **Settings → Identity Verification**. Admins review in **KYC & Verification → KYC Review**. Verified users receive a KYC badge on their profile.
+
+---
+
 ## Architecture
 
 ```

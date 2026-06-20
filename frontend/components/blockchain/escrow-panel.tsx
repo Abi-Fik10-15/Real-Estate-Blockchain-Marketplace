@@ -11,6 +11,7 @@ import { contractClient } from "@/lib/contract";
 import { api } from "@/services/api";
 import { useWalletStore } from "@/store/wallet-store";
 import { usePropertyStore } from "@/store/property-store";
+import { useInquiryStore } from "@/store/inquiry-store";
 import { isOnChainTokenId, etherscanTxUrl } from "@/lib/blockchain-utils";
 import { formatCurrency, shortenAddress } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ export function EscrowPanel({ transactions }: { transactions: EscrowTx[] }) {
   const { wallet, connect, isConnecting } = useWalletStore();
   const properties = usePropertyStore((s) => s.properties);
   const fetchProperties = usePropertyStore((s) => s.fetchProperties);
+  const fetchInquiries = useInquiryStore((s) => s.fetchInquiries);
   const [pendingId, setPendingId] = React.useState<string | null>(null);
 
   const escrowPending = transactions.filter((t) => t.status === "escrow");
@@ -61,6 +63,7 @@ export function EscrowPanel({ transactions }: { transactions: EscrowTx[] }) {
       }
 
       await fetchProperties(true);
+      await fetchInquiries();
       queryClient.invalidateQueries({ queryKey: ["transactions", "mine"] });
       queryClient.invalidateQueries({ queryKey: ["properties"] });
 

@@ -63,7 +63,9 @@ export default function PropertyDetailsPage() {
     if (!property) return;
     try {
       await addInquiry({ propertyId: property.id, type, message });
-      toast.success(successLabel);
+      toast.success(successLabel, {
+        description: "Track status anytime under My Requests in your dashboard.",
+      });
     } catch {
       toast.error("Failed to send inquiry");
     }

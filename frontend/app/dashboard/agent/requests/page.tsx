@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { AGENT_NAV } from "@/components/dashboard/nav-configs";
@@ -8,6 +9,12 @@ import { useInquiryStore } from "@/store/inquiry-store";
 
 export default function AgentRequestsPage() {
   const inquiries = useInquiryStore((s) => s.inquiries);
+  const fetchInquiries = useInquiryStore((s) => s.fetchInquiries);
+  const isLoading = useInquiryStore((s) => s.isLoading);
+
+  React.useEffect(() => {
+    void fetchInquiries();
+  }, [fetchInquiries]);
 
   return (
     <DashboardShell title="Buyer Requests" roleLabel="Property Agent" nav={AGENT_NAV}>
@@ -15,7 +22,11 @@ export default function AgentRequestsPage() {
         title="Buyer Requests"
         description="Manage purchase, rental, and viewing requests across your assigned listings."
       />
-      <InquiryList inquiries={inquiries} manageable />
+      {isLoading && inquiries.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Loading inquiries…</p>
+      ) : (
+        <InquiryList inquiries={inquiries} manageable />
+      )}
     </DashboardShell>
   );
 }

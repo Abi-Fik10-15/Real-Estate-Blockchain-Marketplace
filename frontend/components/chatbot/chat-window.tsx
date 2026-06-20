@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, Trash2, ChevronDown, Bot } from "lucide-react";
+import { X, Sparkles, RotateCcw, ChevronDown, Bot } from "lucide-react";
 import { ChatMessageBubble } from "./chat-message";
 import { ChatInput } from "./chat-input";
 import { SuggestedQuestions } from "./suggested-questions";
@@ -104,7 +104,7 @@ export function ChatWindow({
               aria-label="Clear chat"
               title="Clear conversation"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <RotateCcw className="h-3.5 w-3.5" />
             </button>
           )}
           <button

@@ -88,6 +88,7 @@ See `.env.example`. Production requirements:
 | properties | `/api/properties` | CRUD, upload, approve |
 | inquiries | `/api/inquiries` | Buyer inquiries |
 | transactions | `/api/transactions` | Sales & escrow |
+| kyc | `/api/kyc` | Identity verification submissions |
 | blockchain | `/api/blockchain` | Sepolia reads & mint |
 
 Full request/response schemas: **Swagger UI** at `/api/docs`.
@@ -103,7 +104,7 @@ Full request/response schemas: **Swagger UI** at `/api/docs`.
 | ✅ | Docker healthchecks |
 | ✅ | On-chain verification (Sepolia) |
 | ✅ | Profile settings + avatar upload |
-| ⬜ | Real KYC document upload + admin review |
+| ✅ | KYC document upload + admin review |
 | ⬜ | Email notifications (currently localStorage toggle) |
 | ⬜ | Rate limiting / helmet hardening |
 | ⬜ | Deploy to cloud with HTTPS + secrets manager |

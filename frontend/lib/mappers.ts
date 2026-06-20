@@ -1,5 +1,6 @@
 import type {
   Inquiry,
+  KycSubmission,
   ListingStatus,
   Property,
   User,
@@ -74,6 +75,7 @@ export function mapUser(api: ApiUser): User {
     status: api.status,
     joinedAt: api.createdAt ?? new Date().toISOString(),
     verified: api.kycStatus === "verified",
+    kycStatus: api.kycStatus ?? "pending",
   };
 }
 
@@ -132,5 +134,52 @@ export function mapInquiry(api: ApiInquiry): Inquiry {
     message: api.message,
     status: api.status,
     createdAt: api.createdAt ?? new Date().toISOString(),
+  };
+}
+
+export interface ApiKycSubmission {
+  id?: string;
+  _id?: string;
+  userId: string;
+  status: KycSubmission["status"];
+  legalName: string;
+  dateOfBirth: string;
+  address: string;
+  idType: KycSubmission["idType"];
+  idDocumentUrl: string;
+  selfieUrl: string;
+  addressProofUrl: string;
+  brokerLicenseUrl?: string;
+  reviewNotes?: string;
+  reviewedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  userName?: string;
+  userEmail?: string;
+  userRole?: User["role"];
+  userKycStatus?: string;
+}
+
+export function mapKycSubmission(api: ApiKycSubmission): KycSubmission {
+  return {
+    id: String(api.id ?? api._id ?? ""),
+    userId: api.userId,
+    status: api.status,
+    legalName: api.legalName,
+    dateOfBirth: api.dateOfBirth,
+    address: api.address,
+    idType: api.idType,
+    idDocumentUrl: api.idDocumentUrl,
+    selfieUrl: api.selfieUrl,
+    addressProofUrl: api.addressProofUrl,
+    brokerLicenseUrl: api.brokerLicenseUrl,
+    reviewNotes: api.reviewNotes,
+    reviewedAt: api.reviewedAt,
+    createdAt: api.createdAt,
+    updatedAt: api.updatedAt,
+    userName: api.userName,
+    userEmail: api.userEmail,
+    userRole: api.userRole,
+    userKycStatus: api.userKycStatus,
   };
 }

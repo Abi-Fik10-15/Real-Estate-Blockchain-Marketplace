@@ -13,6 +13,7 @@ import { BlockchainService } from '../blockchain/blockchain.service';
 import { UsersService } from '../users/users.service';
 import type { UserDocument } from '../users/schemas/user.schema';
 import { NotificationsService } from '../notifications/notifications.service';
+import { InquiriesService } from '../inquiries/inquiries.service';
 
 @Injectable()
 export class TransactionsService {
@@ -23,6 +24,7 @@ export class TransactionsService {
     private readonly blockchainService: BlockchainService,
     private readonly usersService: UsersService,
     private readonly notifications: NotificationsService,
+    private readonly inquiriesService: InquiriesService,
   ) {}
 
   findAll(): Promise<TransactionDocument[]> {
@@ -107,6 +109,11 @@ export class TransactionsService {
 
       await this.propertiesService.completeRental(tx.propertyId.toString());
 
+      await this.inquiriesService.closeForBuyerProperty(
+        tx.propertyId.toString(),
+        tx.buyerId.toString(),
+      );
+
       this.notifications.emitTransactionCompleted(
         tx.buyerId.toString(),
         tx.sellerId.toString(),
@@ -133,6 +140,11 @@ export class TransactionsService {
       } else {
         await this.propertiesService.updateStatus(tx.propertyId.toString(), 'sold');
       }
+
+      await this.inquiriesService.closeForBuyerProperty(
+        tx.propertyId.toString(),
+        tx.buyerId.toString(),
+      );
 
       this.notifications.emitTransactionCompleted(
         tx.buyerId.toString(),
@@ -171,6 +183,11 @@ export class TransactionsService {
     } else {
       await this.propertiesService.updateStatus(tx.propertyId.toString(), 'sold');
     }
+
+    await this.inquiriesService.closeForBuyerProperty(
+      tx.propertyId.toString(),
+      tx.buyerId.toString(),
+    );
 
     this.notifications.emitTransactionCompleted(
       tx.buyerId.toString(),

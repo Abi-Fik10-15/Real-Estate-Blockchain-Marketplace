@@ -166,9 +166,8 @@ export class PropertiesService {
   }
 
   async approve(id: string): Promise<PropertyDocument> {
-    const property = await this.findById(id);
-    property.status = 'active';
-    return property.save();
+    // FIX: Using the existing updateStatus method instead of .save()
+    return this.updateStatus(id, 'active');
   }
 
   async updateStatus(
@@ -251,8 +250,8 @@ export class PropertiesService {
         : undefined;
 
       return {
-        id: p.id,
-        propertyId: p.blockchainTokenId || p.id,
+        id: String((p as { _id?: Types.ObjectId; id?: string })._id ?? p.id),
+        propertyId: p.blockchainTokenId || String((p as { _id?: Types.ObjectId; id?: string })._id ?? p.id),
         propertyTitle: p.title,
         ownerWallet: onChain?.owner ?? p.ownerWallet,
         agentWallet: p.agentWallet,

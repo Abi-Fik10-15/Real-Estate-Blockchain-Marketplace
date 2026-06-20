@@ -1,14 +1,16 @@
 import { apiClient } from "@/lib/api";
 import {
   mapInquiry,
+  mapKycSubmission,
   mapProperty,
   mapUser,
   type ApiInquiry,
+  type ApiKycSubmission,
   type ApiProperty,
   type ApiUser,
 } from "@/lib/mappers";
 import type { CreatePropertyValues } from "@/lib/validations";
-import type { Inquiry, Property, PropertyFilters, User, UserRole } from "@/types";
+import type { Inquiry, KycSubmission, Property, PropertyFilters, User, UserRole } from "@/types";
 
 function toQuery(filters?: Partial<PropertyFilters>) {
   if (!filters) return {};
@@ -322,6 +324,38 @@ export const api = {
   async unsaveProperty(propertyId: string): Promise<string[]> {
     const { data } = await apiClient.delete<string[]>(`/users/saved/${propertyId}`);
     return data;
+  },
+
+  async getMyKycSubmission(): Promise<KycSubmission | null> {
+    const { data } = await apiClient.get<ApiKycSubmission | null>("/kyc/mine");
+    return data ? mapKycSubmission(data) : null;
+  },
+
+  async submitKyc(formData: FormData): Promise<KycSubmission> {
+    const { data } = await apiClient.post<ApiKycSubmission>("/kyc/submit", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return mapKycSubmission(data);
+  },
+
+  async getKycSubmissions(status?: string): Promise<KycSubmission[]> {
+    const { data } = await apiClient.get<ApiKycSubmission[]>("/kyc", {
+      params: status ? { status } : undefined,
+    });
+    return data.map(mapKycSubmission);
+  },
+
+  async getKycStats(): Promise<{ pending: number }> {
+    const { data } = await apiClient.get<{ pending: number }>("/kyc/stats");
+    return data;
+  },
+
+  async reviewKycSubmission(
+    id: string,
+    payload: { decision: "approved" | "rejected"; reviewNotes?: string },
+  ): Promise<KycSubmission> {
+    const { data } = await apiClient.patch<ApiKycSubmission>(`/kyc/${id}/review`, payload);
+    return mapKycSubmission(data);
   },
 };
 

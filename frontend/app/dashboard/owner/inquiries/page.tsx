@@ -1,18 +1,20 @@
 "use client";
 
+import * as React from "react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { OWNER_NAV } from "@/components/dashboard/nav-configs";
 import { InquiryList } from "@/components/dashboard/inquiry-list";
 import { useInquiryStore } from "@/store/inquiry-store";
-import { useOwnerProperties } from "@/hooks/use-owner-properties";
 
 export default function OwnerInquiriesPage() {
-  const allInquiries = useInquiryStore((s) => s.inquiries);
-  const properties = useOwnerProperties();
-  const inquiries = allInquiries.filter((i) =>
-    properties.some((p) => p.id === i.propertyId)
-  );
+  const inquiries = useInquiryStore((s) => s.inquiries);
+  const fetchInquiries = useInquiryStore((s) => s.fetchInquiries);
+  const isLoading = useInquiryStore((s) => s.isLoading);
+
+  React.useEffect(() => {
+    void fetchInquiries();
+  }, [fetchInquiries]);
 
   return (
     <DashboardShell title="Buyer Inquiries" roleLabel="Property Owner" nav={OWNER_NAV}>
@@ -20,7 +22,11 @@ export default function OwnerInquiriesPage() {
         title="Buyer Inquiries"
         description="Respond to purchase, rental, and general questions about your listings."
       />
-      <InquiryList inquiries={inquiries} manageable />
+      {isLoading && inquiries.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Loading inquiries…</p>
+      ) : (
+        <InquiryList inquiries={inquiries} manageable />
+      )}
     </DashboardShell>
   );
 }

@@ -11,6 +11,7 @@ import { BlockchainModule } from './blockchain/blockchain.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { HealthController } from './health/health.controller';
 import { SeedModule } from './seed/seed.module';
+import { KycModule } from './kyc/kyc.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { SeedModule } from './seed/seed.module';
     TransactionsModule,
     BlockchainModule,
     NotificationsModule,
+    KycModule,
   ],
   controllers: [HealthController],
 })

@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { MessageSquare, Check, Loader2, Wallet, ShieldCheck, ArrowRight, Activity, HelpCircle } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { MessageSquare, Check, Loader2, Wallet, ShieldCheck, Activity, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,18 +25,14 @@ import {
 import { useInquiryStore } from "@/store/inquiry-store";
 import { usePropertyStore } from "@/store/property-store";
 import { useWalletStore } from "@/store/wallet-store";
+import { useAuthStore } from "@/store/auth-store";
+import { useMyTransactions } from "@/hooks/use-transactions";
 import { api } from "@/services/api";
 import { contractClient } from "@/lib/contract";
 import { escrowEthAmount, isOnChainTokenId } from "@/lib/blockchain-utils";
 import { CONTRACT_ADDRESS } from "@/lib/constants";
 import { formatDate, formatCurrency, shortenAddress } from "@/lib/utils";
 import type { Inquiry } from "@/types";
-
-const STATUS_VARIANT: Record<Inquiry["status"], "warning" | "secondary" | "success"> = {
-  new: "warning",
-  in_progress: "secondary",
-  closed: "success",
-};
 
 export function InquiryList({
   inquiries,
@@ -47,6 +44,10 @@ export function InquiryList({
   emptyLabel?: string;
 }) {
   const setStatus = useInquiryStore((s) => s.setStatus);
+  const fetchMine = useInquiryStore((s) => s.fetchMine);
+  const user = useAuthStore((s) => s.user);
+  const queryClient = useQueryClient();
+  const { data: transactions = [] } = useMyTransactions();
   const { properties, updateProperty } = usePropertyStore();
   const { wallet } = useWalletStore();
 
@@ -112,14 +113,13 @@ export function InquiryList({
       } else {
         setTxStep("broadcasting");
         await new Promise((r) => setTimeout(r, 800));
+        await api.markEscrow(tx.id, txHash);
       }
 
       setTxStep("minting");
       await new Promise((r) => setTimeout(r, 400));
       setTxStep("done");
       await new Promise((r) => setTimeout(r, 400));
-
-      await setStatus(activeInquiry.id, "closed");
 
       await updateProperty(targetProp.id, {
         history: [
@@ -136,10 +136,12 @@ export function InquiryList({
       });
 
       localStorage.setItem("chainestate_verified_at_least_once", "true");
+      await queryClient.invalidateQueries({ queryKey: ["transactions", "mine"] });
+      if (user?.role === "buyer") {
+        await fetchMine();
+      }
       toast.success("Escrow funded successfully", {
-        description: canUseContract
-          ? "Owner must confirm the sale to complete the NFT transfer."
-          : undefined,
+        description: "The owner must confirm the transaction to complete the transfer.",
       });
       setShowPayModal(false);
       setActiveInquiry(null);
@@ -160,18 +162,52 @@ export function InquiryList({
     );
   }
 
-  // Helper to map status to stepper steps progress
-  const getStepIndex = (status: Inquiry["status"]) => {
-    if (status === "new") return 0; // Offer Sent
-    if (status === "in_progress") return 1; // Approved (ready to fund)
-    return 3; // Closed / Complete
+  const buyerId = user?.id;
+
+  const getTransactionForInquiry = (inq: Inquiry) =>
+    transactions.find(
+      (t) =>
+        t.propertyId === inq.propertyId &&
+        (!buyerId || t.buyerId === buyerId)
+    );
+
+  const getStepIndex = (inq: Inquiry) => {
+    const tx = getTransactionForInquiry(inq);
+    if (inq.status === "closed" || tx?.status === "completed") return 3;
+    if (tx?.status === "escrow") return 2;
+    if (inq.status === "in_progress") return 1;
+    return 0;
+  };
+
+  const getBuyerStatusLabel = (inq: Inquiry) => {
+    const tx = getTransactionForInquiry(inq);
+    if (inq.status === "closed" || tx?.status === "completed") {
+      return inq.type === "rental" ? "Rented" : "Purchased";
+    }
+    if (tx?.status === "escrow") return "Escrow Funded — Awaiting Owner";
+    if (inq.status === "in_progress") return "Approved — Fund Escrow";
+    return "Under Review";
+  };
+
+  const getBuyerStatusVariant = (inq: Inquiry): "warning" | "secondary" | "success" => {
+    const tx = getTransactionForInquiry(inq);
+    if (inq.status === "closed" || tx?.status === "completed") return "success";
+    if (tx?.status === "escrow") return "secondary";
+    return "warning";
+  };
+
+  const canFundEscrow = (inq: Inquiry) => {
+    const tx = getTransactionForInquiry(inq);
+    return inq.status === "in_progress" && (!tx || tx.status === "initiated");
   };
 
   return (
     <div className="space-y-4">
       {inquiries.map((inq) => {
         const prop = properties.find((p) => p.id === inq.propertyId);
-        const stepIndex = getStepIndex(inq.status);
+        const stepIndex = getStepIndex(inq);
+        const tx = getTransactionForInquiry(inq);
+        const isComplete = inq.status === "closed" || tx?.status === "completed";
 
         return (
           <Card
@@ -234,20 +270,15 @@ export function InquiryList({
                       <SelectContent>
                         <SelectItem value="new">New / Under Review</SelectItem>
                         <SelectItem value="in_progress">Approved by Owner</SelectItem>
-                        <SelectItem value="closed">Closed / Funded</SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (
                     <div className="flex flex-col items-start sm:items-end gap-1.5">
-                      <Badge variant={STATUS_VARIANT[inq.status]} className="capitalize text-xs font-bold px-2.5 py-0.5">
-                        {inq.status === "new"
-                          ? "Under Review"
-                          : inq.status === "in_progress"
-                          ? "Approved (Unfunded)"
-                          : "Closed (Title Minted)"}
+                      <Badge variant={getBuyerStatusVariant(inq)} className="capitalize text-xs font-bold px-2.5 py-0.5">
+                        {getBuyerStatusLabel(inq)}
                       </Badge>
                       
-                      {!manageable && inq.status === "in_progress" && (
+                      {!manageable && canFundEscrow(inq) && (
                         <Button
                           size="sm"
                           variant="hero"
@@ -273,7 +304,7 @@ export function InquiryList({
                     <div
                       className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] bg-primary transition-all duration-500 -z-10"
                       style={{
-                        width: `${stepIndex === 0 ? 0 : stepIndex === 1 ? 50 : 100}%`,
+                        width: `${stepIndex === 0 ? 0 : stepIndex === 1 ? 33 : stepIndex === 2 ? 66 : 100}%`,
                       }}
                     />
 
@@ -309,12 +340,12 @@ export function InquiryList({
                     <div className="flex flex-col items-center gap-1.5 bg-background px-2">
                       <div
                         className={`h-7 w-7 rounded-full flex items-center justify-center border-2 text-xs font-bold transition-all ${
-                          stepIndex >= 3
+                          stepIndex >= 2
                             ? "bg-primary border-primary text-primary-foreground shadow-sm"
                             : "bg-background border-muted text-muted-foreground"
                         }`}
                       >
-                        {stepIndex >= 3 ? <Check className="h-4 w-4" /> : <Wallet className="h-3.5 w-3.5" />}
+                        {stepIndex > 2 ? <Check className="h-4 w-4" /> : <Wallet className="h-3.5 w-3.5" />}
                       </div>
                       <span className="text-[10px] font-bold text-foreground">Escrow Locked</span>
                     </div>
@@ -323,14 +354,16 @@ export function InquiryList({
                     <div className="flex flex-col items-center gap-1.5 bg-background px-2">
                       <div
                         className={`h-7 w-7 rounded-full flex items-center justify-center border-2 text-xs font-bold transition-all ${
-                          stepIndex >= 3
+                          isComplete
                             ? "bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/20"
                             : "bg-background border-muted text-muted-foreground"
                         }`}
                       >
                         <ShieldCheck className="h-4 w-4" />
                       </div>
-                      <span className="text-[10px] font-bold text-foreground text-center">NFT Transferred</span>
+                      <span className="text-[10px] font-bold text-foreground text-center">
+                        {inq.type === "rental" ? "Rental Active" : "Deed Transferred"}
+                      </span>
                     </div>
                   </div>
                 </div>
