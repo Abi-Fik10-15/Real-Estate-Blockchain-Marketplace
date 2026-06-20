@@ -24,24 +24,29 @@ async function bootstrap() {
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ limit: '10mb', extended: true }));
 
-  // --- UPDATED CORS CONFIGURATION ---
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      // 1. Allow server-to-server requests or tools like Postman
+      // Allow server-to-server requests or tools like Postman
       if (!origin) return callback(null, true);
 
-      // 2. Ensure config origins are an array
+      // Allow requests from the Railway service domain itself
+      if (origin.includes('giving-simplicity-production-b1bb.up.railway.app')) {
+        return callback(null, true);
+      }
+
+      // Ensure config origins are an array
       const configuredOrigins = Array.isArray(config.frontendOrigins)
         ? config.frontendOrigins
         : [config.frontendOrigins];
 
-      // 3. Define all allowed exact URLs
+      // Define all allowed exact URLs
       const allowedOrigins = [
         ...configuredOrigins,
         'http://localhost:3000',
+        'http://localhost:5173',
       ];
 
-      // 4. Check for Vercel Preview URLs via Regex
+      // Check for Vercel Preview URLs via Regex
       const isVercelPreview = /^https:\/\/real-estate-blockchain-marketplace-.*\.vercel\.app$/.test(origin);
 
       if (allowedOrigins.includes(origin) || isVercelPreview) {
@@ -52,7 +57,6 @@ async function bootstrap() {
     },
     credentials: true,
   });
-  // ----------------------------------
 
   app.useGlobalPipes(
     new ValidationPipe({
