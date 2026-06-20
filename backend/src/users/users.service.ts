@@ -36,8 +36,27 @@ export class UsersService {
       .exec();
   }
 
+  /** Fetch user with verification fields (for resend / verify flows). */
+  findByEmailWithVerification(email: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findOne({ email: email.trim().toLowerCase() })
+      .select('+emailVerificationToken +emailVerificationExpires')
+      .exec();
+  }
+
   findById(id: string): Promise<UserDocument | null> {
     return this.userModel.findById(id).select('-passwordHash').lean({ virtuals: true }).exec() as unknown as Promise<UserDocument | null>;
+  }
+
+  /** Used during email verification — includes hidden token fields. */
+  findByVerificationToken(token: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findOne({
+        emailVerificationToken: token,
+        emailVerificationExpires: { $gt: new Date() },
+      })
+      .select('+emailVerificationToken +emailVerificationExpires')
+      .exec();
   }
 
   async updateById(

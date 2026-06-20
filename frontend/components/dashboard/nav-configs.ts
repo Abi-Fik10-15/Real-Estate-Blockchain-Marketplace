@@ -6,12 +6,12 @@ import {
   Heart,
   LayoutDashboard,
   MessageSquare,
-  PlusCircle,
   Settings,
   ShieldCheck,
   ShoppingBag,
   UserCog,
   Users,
+  UsersRound,
   Wallet,
 } from "lucide-react";
 import type { NavItem } from "@/components/dashboard/dashboard-shell";
@@ -19,7 +19,7 @@ import type { NavItem } from "@/components/dashboard/dashboard-shell";
 export const OWNER_NAV: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard/owner" },
   { label: "My Properties", icon: Building2, href: "/dashboard/owner/properties" },
-  // { label: "Create Property", icon: PlusCircle, href: "/dashboard/owner/properties/new" },
+  { label: "Tenant Management", icon: UsersRound, href: "/dashboard/owner/tenants" },
   { label: "Assign Agents", icon: UserCog, href: "/dashboard/owner/agents" },
   { label: "Verification", icon: ShieldCheck, href: "/dashboard/owner/verification" },
   { label: "Ownership Transfer", icon: ArrowLeftRight, href: "/dashboard/owner/transfers" },
@@ -42,7 +42,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard/admin" },
   { label: "Users", icon: Users, href: "/dashboard/admin/users" },
   { label: "Properties", icon: Building2, href: "/dashboard/admin/properties" },
-  { label: "Transactions", icon: ArrowLeftRight, href: "/dashboard/sandbox" },
+  { label: "Transaction Audit", icon: ArrowLeftRight, href: "/dashboard/admin/audit" },
   { label: "Reports & Analytics", icon: BarChart3, href: "/dashboard/admin/reports" },
   { label: "KYC & Verification", icon: ShieldCheck, href: "/dashboard/admin/records" },
   { label: "Settings", icon: Settings, href: "/dashboard/admin/settings" },

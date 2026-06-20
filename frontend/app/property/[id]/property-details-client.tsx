@@ -41,7 +41,7 @@ const PropertyMap = dynamic(() => import("@/components/property/property-map"), 
 
 export function PropertyDetailsClient({ id, initialData }: { id: string; initialData?: any }) {
   const router = useRouter();
-  const { data: property, isLoading } = useProperty(id, initialData);
+  const { data: property, isLoading } = useProperty(id);
   const { isSaved, toggleSaved } = useSavedStore();
   const addInquiry = useInquiryStore((s) => s.add);
   const user = useAuthStore((s) => s.user);

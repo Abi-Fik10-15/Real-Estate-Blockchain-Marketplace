@@ -32,7 +32,7 @@ contract RealEstateMarketplace is ERC721, ERC721URIStorage, Ownable, ReentrancyG
 
     event PropertyListed(uint256 indexed tokenId, address indexed owner, string tokenURI);
     event EscrowDeposited(uint256 indexed tokenId, address indexed buyer, uint256 amount);
-    event OwnershipTransferred(uint256 indexed tokenId, address indexed from, address indexed to);
+    event PropertyOwnershipTransferred(uint256 indexed tokenId, address indexed from, address indexed to);
     event RentalCreated(uint256 indexed tokenId, uint256 startDate, uint256 endDate, uint256 monthlyRent);
 
     constructor(address initialOwner) ERC721("ChainEstate Property", "CEP") Ownable(initialOwner) {}
@@ -76,7 +76,7 @@ contract RealEstateMarketplace is ERC721, ERC721URIStorage, Ownable, ReentrancyG
         (bool sent, ) = payable(msg.sender).call{value: amount}("");
         require(sent, "Transfer failed");
 
-        emit OwnershipTransferred(tokenId, msg.sender, buyer);
+        emit PropertyOwnershipTransferred(tokenId, msg.sender, buyer);
     }
 
     function cancelEscrow(uint256 tokenId) external nonReentrant {
@@ -108,12 +108,12 @@ contract RealEstateMarketplace is ERC721, ERC721URIStorage, Ownable, ReentrancyG
         emit RentalCreated(tokenId, startDate, endDate, monthlyRent);
     }
 
-    function transferOwnership(uint256 tokenId, address newOwner) external {
+    function transferPropertyOwnership(uint256 tokenId, address newOwner) external {
         require(ownerOf(tokenId) == msg.sender, "Not owner");
         require(newOwner != address(0), "Zero address");
         _transfer(msg.sender, newOwner, tokenId);
         _properties[tokenId].owner = newOwner;
-        emit OwnershipTransferred(tokenId, msg.sender, newOwner);
+        emit PropertyOwnershipTransferred(tokenId, msg.sender, newOwner);
     }
 
     function getProperty(uint256 tokenId)

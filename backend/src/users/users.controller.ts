@@ -17,6 +17,7 @@ import { UsersService } from './users.service';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { resolveUserId } from '../common/utils/resolve-user-id';
 import type { UserDocument } from './schemas/user.schema';
 
 @ApiTags('users')
@@ -44,7 +45,7 @@ export class UsersController {
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Get saved property IDs for current user' })
   getSaved(@CurrentUser() user: UserDocument) {
-    return this.usersService.getSavedPropertyIds(user.id);
+    return this.usersService.getSavedPropertyIds(resolveUserId(user));
   }
 
   @Post('saved/:propertyId')
@@ -56,7 +57,7 @@ export class UsersController {
     @CurrentUser() user: UserDocument,
     @Param('propertyId') propertyId: string,
   ) {
-    return this.usersService.saveProperty(user.id, propertyId);
+    return this.usersService.saveProperty(resolveUserId(user), propertyId);
   }
 
   @Delete('saved/:propertyId')
@@ -68,6 +69,6 @@ export class UsersController {
     @CurrentUser() user: UserDocument,
     @Param('propertyId') propertyId: string,
   ) {
-    return this.usersService.unsaveProperty(user.id, propertyId);
+    return this.usersService.unsaveProperty(resolveUserId(user), propertyId);
   }
 }

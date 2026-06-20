@@ -44,6 +44,7 @@ export class SeedService implements OnModuleInit {
         avatar: 'https://i.pravatar.cc/150?img=47',
         kycStatus: 'verified',
         status: 'active',
+        emailVerified: true,
       },
       {
         name: 'Marcus Reed',
@@ -55,6 +56,7 @@ export class SeedService implements OnModuleInit {
         avatar: 'https://i.pravatar.cc/150?img=12',
         kycStatus: 'verified',
         status: 'active',
+        emailVerified: true,
       },
       {
         name: 'Elena Cruz',
@@ -66,6 +68,7 @@ export class SeedService implements OnModuleInit {
         avatar: 'https://i.pravatar.cc/150?img=32',
         kycStatus: 'verified',
         status: 'active',
+        emailVerified: true,
       },
       {
         name: 'Admin Control',
@@ -76,6 +79,7 @@ export class SeedService implements OnModuleInit {
         avatar: 'https://i.pravatar.cc/150?img=5',
         kycStatus: 'verified',
         status: 'active',
+        emailVerified: true,
       },
     ];
 

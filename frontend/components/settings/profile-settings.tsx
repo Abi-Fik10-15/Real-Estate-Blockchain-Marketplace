@@ -172,10 +172,51 @@ export function ProfileSettings({
 
   return (
     <DashboardShell title={title} roleLabel={roleLabel} nav={nav}>
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-1">
-          <Card className="border border-border/80 bg-card/40 shadow-md backdrop-blur-sm">
-            <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-card px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              <span className="text-primary">{user?.name ?? "Your account"}</span>
+              {" · "}
+              <span className="capitalize">{user?.role ?? role}</span>
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Manage profile, wallet connection, and identity verification
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {user?.kycStatus === "verified" || user?.verified ? (
+              <Badge variant="verified" className="text-[10px]">
+                KYC verified
+              </Badge>
+            ) : user?.kycStatus === "rejected" ? (
+              <Badge variant="destructive" className="text-[10px]">
+                KYC rejected
+              </Badge>
+            ) : (
+              <Badge
+                variant="outline"
+                className="border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-500"
+              >
+                KYC pending
+              </Badge>
+            )}
+            {wallet ? (
+              <Badge variant="outline" className="font-mono text-[10px]">
+                {shortenAddress(wallet.address, 6)}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                No wallet
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-[minmax(280px,320px)_1fr]">
+          <div className="space-y-4">
+            <Card className="border-border/60">
+              <CardContent className="flex flex-col items-center gap-4 px-5 py-6 text-center">
               <div className="relative">
                 <Avatar className="h-28 w-28 border-2 border-primary/20">
                   <AvatarImage src={displayAvatar} alt={user?.name} />
@@ -218,46 +259,29 @@ export function ProfileSettings({
               )}
 
               <div>
-                <p className="text-lg font-bold text-foreground">{user?.name ?? "User"}</p>
+                <p className="text-base font-semibold text-foreground">
+                  {user?.name ?? "User"}
+                </p>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>
-              </div>
-
-              <div className="flex flex-wrap justify-center gap-2">
-                {user?.kycStatus === "verified" || user?.verified ? (
-                  <Badge variant="verified">KYC Verified</Badge>
-                ) : user?.kycStatus === "rejected" ? (
-                  <Badge variant="destructive">KYC Rejected</Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="border-amber-500/30 bg-amber-500/10 text-amber-500"
-                  >
-                    KYC Pending
-                  </Badge>
-                )}
-                <Badge variant="secondary" className="capitalize">
-                  {user?.role ?? "user"}
-                </Badge>
               </div>
 
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="mt-1"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingAvatar}
               >
                 {uploadingAvatar ? "Uploading…" : "Change photo"}
               </Button>
 
-              <div className="mt-2 w-full border-t border-border/40 pt-4">
-                <p className="mb-2 text-xs font-semibold text-muted-foreground">
+              <div className="w-full border-t border-border/40 pt-4">
+                <p className="mb-2 text-left text-xs font-medium text-muted-foreground">
                   Linked wallet
                 </p>
                 {wallet ? (
-                  <div className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/50 px-3 py-2">
-                    <span className="font-mono text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                    <span className="font-mono text-xs text-foreground">
                       {shortenAddress(wallet.address, 10)}
                     </span>
                     <Button
@@ -274,29 +298,29 @@ export function ProfileSettings({
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-xs text-amber-600 dark:text-amber-500">
+                  <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-xs text-amber-700 dark:text-amber-500">
                     <ShieldAlert className="h-4 w-4 shrink-0" />
-                    <span>No wallet linked</span>
+                    <span>No wallet linked yet</span>
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-border/80 bg-card/40 shadow-md backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base font-bold">
-                <Wallet className="h-4 w-4 text-primary" />
-                MetaMask
+          <Card className="border-border/60">
+            <CardHeader className="border-b border-border/40 pb-3">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold text-primary">
+                <Wallet className="h-4 w-4" />
+                Web3 wallet
               </CardTitle>
               <CardDescription className="text-xs">
-                Connect on Sepolia for escrow and property NFTs
+                Connect MetaMask on Sepolia for escrow and property NFTs
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 pt-2">
+            <CardContent className="space-y-4 pt-4">
               {wallet ? (
                 <div className="space-y-3">
-                  <div className="space-y-2 rounded-lg border border-border/50 bg-background/40 p-3">
+                  <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span className="flex items-center gap-1 font-medium">
                         <Globe className="h-3.5 w-3.5" /> Network
@@ -336,7 +360,6 @@ export function ProfileSettings({
                   <Button
                     type="button"
                     size="sm"
-                    variant="hero"
                     className="w-full text-xs"
                     onClick={handleWalletConnect}
                     disabled={isConnecting}
@@ -359,15 +382,17 @@ export function ProfileSettings({
           </Card>
         </div>
 
-        <div className="space-y-6 lg:col-span-2">
-          <Card className="border border-border/80 bg-card/40 shadow-md backdrop-blur-sm">
-            <CardHeader className="border-b border-border/40 pb-4">
-              <CardTitle className="text-lg font-bold">Profile details</CardTitle>
-              <CardDescription>
-                Update your name, contact info, and how we reach you
+        <div className="min-w-0 space-y-4">
+          <Card className="border-border/60">
+            <CardHeader className="border-b border-border/40 pb-3">
+              <CardTitle className="text-sm font-semibold text-primary">
+                Profile details
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Update your name, contact info, and notification preferences
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="pt-5">
               <form className="space-y-6" onSubmit={handleProfileSubmit}>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
@@ -405,7 +430,7 @@ export function ProfileSettings({
 
                 <Separator />
 
-                <div className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/20 p-4">
+                <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 p-4">
                   <div className="space-y-0.5">
                     <p className="text-sm font-semibold">Email notifications</p>
                     <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
@@ -416,7 +441,7 @@ export function ProfileSettings({
                 </div>
 
                 <div className="flex justify-end">
-                  <Button type="submit" variant="hero" disabled={saving}>
+                  <Button type="submit" disabled={saving}>
                     {saving ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -431,13 +456,17 @@ export function ProfileSettings({
             </CardContent>
           </Card>
 
-          <Card className="border border-border/80 bg-card/40 shadow-md backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-bold">Account</CardTitle>
-              <CardDescription>Read-only account information</CardDescription>
+          <Card className="border-border/60">
+            <CardHeader className="border-b border-border/40 pb-3">
+              <CardTitle className="text-sm font-semibold text-primary">
+                Account info
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Read-only details tied to your ChainEstate account
+              </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-border/50 bg-muted/10 p-3">
+            <CardContent className="grid gap-3 pt-4 sm:grid-cols-2">
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
                 <p className="text-xs text-muted-foreground">Member since</p>
                 <p className="text-sm font-medium">
                   {user?.joinedAt
@@ -445,11 +474,11 @@ export function ProfileSettings({
                     : "—"}
                 </p>
               </div>
-              <div className="rounded-lg border border-border/50 bg-muted/10 p-3">
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
                 <p className="text-xs text-muted-foreground">Account role</p>
                 <p className="text-sm font-medium capitalize">{user?.role ?? "—"}</p>
               </div>
-              <div className="rounded-lg border border-border/50 bg-muted/10 p-3 sm:col-span-2">
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3 sm:col-span-2">
                 <p className="text-xs text-muted-foreground">Wallet on file</p>
                 <p className="font-mono text-sm">
                   {user?.walletAddress
@@ -461,6 +490,7 @@ export function ProfileSettings({
           </Card>
 
           <KycVerification role={role} />
+        </div>
         </div>
       </div>
     </DashboardShell>

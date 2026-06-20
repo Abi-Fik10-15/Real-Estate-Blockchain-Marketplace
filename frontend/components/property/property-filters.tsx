@@ -1,6 +1,6 @@
 "use client";
 
-import { SlidersHorizontal, X } from "lucide-react";
+import { RotateCcw, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 import type { PropertyFilters, PropertyType, ListingStatus } from "@/types";
 
@@ -26,7 +26,13 @@ const TYPES: (PropertyType | "all")[] = [
   "Commercial",
 ];
 
-const STATUSES: (ListingStatus | "all")[] = ["all", "active", "pending", "sold", "rented"];
+const STATUSES: (ListingStatus | "all")[] = [
+  "all",
+  "active",
+  "pending",
+  "sold",
+  "rented",
+];
 
 export function PropertyFiltersPanel({
   filters,
@@ -39,64 +45,111 @@ export function PropertyFiltersPanel({
   onReset: () => void;
   hideStatusFilter?: boolean;
 }) {
-  return (
-    <Card className="lg:sticky lg:top-20">
-      <CardContent className="space-y-5 p-4">
-        <div className="flex items-center justify-between">
-          <h3 className="flex items-center gap-1.5 font-medium">
-            <SlidersHorizontal className="h-4 w-4" /> Filters
-          </h3>
-          <Button variant="ghost" size="sm" onClick={onReset}>
-            <X className="h-3.5 w-3.5" /> Reset
-          </Button>
-        </div>
+  const isModified =
+    filters.location !== "" ||
+    filters.type !== "all" ||
+    filters.listingType !== "all" ||
+    filters.maxPrice !== DEFAULT_FILTERS.maxPrice ||
+    filters.bedrooms !== 0 ||
+    filters.bathrooms !== 0;
 
-        <div className="space-y-1.5">
-          <Label>Location</Label>
+  return (
+    <div className="sticky top-20 rounded-xl border border-border/60 bg-card text-card-foreground shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-primary">
+          <SlidersHorizontal className="h-4 w-4 text-primary" />
+          Filters
+        </h3>
+        {isModified && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onReset}
+            className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <RotateCcw className="h-3 w-3" />
+            Reset
+          </Button>
+        )}
+      </div>
+
+      <div className="space-y-5 p-4">
+        {/* Location */}
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Location
+          </Label>
           <Input
             placeholder="City or country"
             value={filters.location}
             onChange={(e) => onChange({ location: e.target.value })}
+            className="h-9 text-sm"
           />
         </div>
 
-        <div className="space-y-2.5">
+        <Separator />
+
+        {/* Price range */}
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label>Price range</Label>
-            <span className="text-xs text-muted-foreground">
-              up to {formatCurrency(filters.maxPrice)}
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Max price
+            </Label>
+            <span className="text-xs font-semibold text-foreground">
+              {formatCurrency(filters.maxPrice)}
             </span>
           </div>
           <Slider
             min={0}
-            max={2000000}
-            step={50000}
+            max={2_000_000}
+            step={50_000}
             value={[filters.maxPrice]}
             onValueChange={([v]) => onChange({ maxPrice: v })}
+            className="py-1"
           />
+          <div className="flex justify-between text-[10px] text-muted-foreground">
+            <span>$0</span>
+            <span>$2M</span>
+          </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Listing type</Label>
+        <Separator />
+
+        {/* Listing type */}
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Listing type
+          </Label>
           <Select
             value={filters.listingType}
-            onValueChange={(v) => onChange({ listingType: v as PropertyFilters["listingType"] })}
+            onValueChange={(v) =>
+              onChange({ listingType: v as PropertyFilters["listingType"] })
+            }
           >
-            <SelectTrigger>
+            <SelectTrigger className="h-9 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="all">All types</SelectItem>
               <SelectItem value="sale">For Sale</SelectItem>
               <SelectItem value="rent">For Rent</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Property type</Label>
-          <Select value={filters.type} onValueChange={(v) => onChange({ type: v as PropertyType | "all" })}>
-            <SelectTrigger>
+        {/* Property type */}
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Property type
+          </Label>
+          <Select
+            value={filters.type}
+            onValueChange={(v) =>
+              onChange({ type: v as PropertyType | "all" })
+            }
+          >
+            <SelectTrigger className="h-9 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -109,14 +162,19 @@ export function PropertyFiltersPanel({
           </Select>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1.5">
-            <Label>Bedrooms</Label>
+        <Separator />
+
+        {/* Bedrooms + bathrooms */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Beds
+            </Label>
             <Select
               value={String(filters.bedrooms)}
               onValueChange={(v) => onChange({ bedrooms: Number(v) })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -129,13 +187,15 @@ export function PropertyFiltersPanel({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
-            <Label>Bathrooms</Label>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Baths
+            </Label>
             <Select
               value={String(filters.bathrooms)}
               onValueChange={(v) => onChange({ bathrooms: Number(v) })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -150,28 +210,38 @@ export function PropertyFiltersPanel({
           </div>
         </div>
 
+        {/* Status (admin views) */}
         {!hideStatusFilter && (
-          <div className="space-y-1.5">
-            <Label>Listing status</Label>
-            <Select
-              value={filters.status}
-              onValueChange={(v) => onChange({ status: v as ListingStatus | "all" })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s === "all" ? "All statuses" : s[0].toUpperCase() + s.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <>
+            <Separator />
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Listing status
+              </Label>
+              <Select
+                value={filters.status}
+                onValueChange={(v) =>
+                  onChange({ status: v as ListingStatus | "all" })
+                }
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s === "all"
+                        ? "All statuses"
+                        : s.charAt(0).toUpperCase() + s.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -179,7 +249,7 @@ export const DEFAULT_FILTERS: PropertyFilters = {
   search: "",
   type: "all",
   minPrice: 0,
-  maxPrice: 2000000,
+  maxPrice: 2_000_000,
   bedrooms: 0,
   bathrooms: 0,
   location: "",

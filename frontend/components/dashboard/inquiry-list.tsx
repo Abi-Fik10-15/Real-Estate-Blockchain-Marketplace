@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { MessageSquare, Check, Loader2, Wallet, ShieldCheck, Activity, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -31,17 +32,19 @@ import { api } from "@/services/api";
 import { contractClient } from "@/lib/contract";
 import { escrowEthAmount, isOnChainTokenId } from "@/lib/blockchain-utils";
 import { CONTRACT_ADDRESS } from "@/lib/constants";
-import { formatDate, formatCurrency, shortenAddress } from "@/lib/utils";
+import { formatDate, formatCurrency, shortenAddress, cn } from "@/lib/utils";
 import type { Inquiry } from "@/types";
 
 export function InquiryList({
   inquiries,
   manageable = false,
   emptyLabel = "No inquiries yet.",
+  emptyAction,
 }: {
   inquiries: Inquiry[];
   manageable?: boolean;
   emptyLabel?: string;
+  emptyAction?: { label: string; href: string };
 }) {
   const setStatus = useInquiryStore((s) => s.setStatus);
   const fetchMine = useInquiryStore((s) => s.fetchMine);
@@ -153,12 +156,18 @@ export function InquiryList({
 
   if (inquiries.length === 0) {
     return (
-      <Card className="border border-dashed border-border/80 bg-card/10">
-        <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-          <MessageSquare className="h-10 w-10 text-muted-foreground/60" />
-          <p className="text-sm text-muted-foreground">{emptyLabel}</p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/20 py-16 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+          <MessageSquare className="h-7 w-7 text-muted-foreground" />
+        </div>
+        <h3 className="mt-4 text-base font-semibold text-primary">No requests yet</h3>
+        <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{emptyLabel}</p>
+        {emptyAction && (
+          <Button size="sm" className="mt-5" asChild>
+            <Link href={emptyAction.href}>{emptyAction.label}</Link>
+          </Button>
+        )}
+      </div>
     );
   }
 
@@ -201,6 +210,14 @@ export function InquiryList({
     return inq.status === "in_progress" && (!tx || tx.status === "initiated");
   };
 
+  const typeBadgeClass = (type: Inquiry["type"]) =>
+    cn(
+      "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset",
+      type === "purchase" && "bg-emerald-50 text-emerald-700 ring-emerald-200/60",
+      type === "rental" && "bg-blue-50 text-blue-700 ring-blue-200/60",
+      type === "question" && "bg-amber-50 text-amber-700 ring-amber-200/60",
+    );
+
   return (
     <div className="space-y-4">
       {inquiries.map((inq) => {
@@ -212,46 +229,58 @@ export function InquiryList({
         return (
           <Card
             key={inq.id}
-            className="group border border-border/60 bg-card/20 backdrop-blur-sm shadow-sm transition-all hover:border-border/80 hover:bg-card/30"
+            className="group overflow-hidden border-border/60 transition-shadow hover:shadow-md"
           >
-            <CardContent className="p-5 space-y-4">
+            <CardContent className="space-y-4 p-4 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start min-w-0 flex-1">
+                <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-start">
                   {prop && (
-                    <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted shadow-sm">
+                    <div className="relative h-[72px] w-[88px] shrink-0 overflow-hidden rounded-lg bg-muted">
                       <img
                         src={prop.images[0]}
                         alt={prop.title}
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     </div>
                   )}
-                  <div className="min-w-0 space-y-1.5 flex-1">
+                  <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-bold text-base text-foreground leading-tight group-hover:text-primary transition-colors">
+                      <p className="text-sm font-semibold leading-tight text-foreground transition-colors group-hover:text-primary">
                         {inq.propertyTitle}
                       </p>
-                      <Badge variant="secondary" className="capitalize text-[10px] font-bold px-2 py-0">
-                        {inq.type}
-                      </Badge>
+                      <span className={typeBadgeClass(inq.type)}>
+                        {inq.type === "purchase"
+                          ? "Purchase"
+                          : inq.type === "rental"
+                            ? "Rental"
+                            : "Question"}
+                      </span>
                       {prop && (
-                        <span className="text-xs font-semibold text-muted-foreground">
+                        <span className="text-xs font-bold text-primary">
                           {formatCurrency(prop.price)}
                           {inq.type === "rental" && "/mo"}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed italic border-l-2 border-primary/20 pl-3 py-0.5">
-                      "{inq.message}"
+                    <p className="rounded-lg bg-muted/40 px-3 py-2 text-sm leading-relaxed text-muted-foreground">
+                      {inq.message}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      Sender: <span className="font-medium text-foreground">{inq.buyerName}</span> · {formatDate(inq.createdAt)}
+                      {manageable && (
+                        <>
+                          From{" "}
+                          <span className="font-medium text-foreground">
+                            {inq.buyerName}
+                          </span>
+                          {" · "}
+                        </>
+                      )}
+                      Submitted {formatDate(inq.createdAt)}
                     </p>
                   </div>
                 </div>
 
-                <div className="shrink-0 flex items-center md:items-end gap-2 self-start sm:self-auto">
+                <div className="flex shrink-0 items-center gap-2 self-start sm:flex-col sm:items-end">
                   {manageable ? (
                     <Select
                       value={inq.status}
@@ -273,20 +302,22 @@ export function InquiryList({
                       </SelectContent>
                     </Select>
                   ) : (
-                    <div className="flex flex-col items-start sm:items-end gap-1.5">
-                      <Badge variant={getBuyerStatusVariant(inq)} className="capitalize text-xs font-bold px-2.5 py-0.5">
+                    <div className="flex flex-col items-start gap-2 sm:items-end">
+                      <Badge
+                        variant={getBuyerStatusVariant(inq)}
+                        className="px-2.5 py-0.5 text-[10px] font-semibold"
+                      >
                         {getBuyerStatusLabel(inq)}
                       </Badge>
-                      
+
                       {!manageable && canFundEscrow(inq) && (
                         <Button
                           size="sm"
-                          variant="hero"
-                          className="h-8 text-[11px] font-bold px-3 shadow-md shadow-primary/20 mt-1"
+                          className="h-8 px-3 text-xs font-semibold"
                           onClick={() => startPaymentSimulation(inq)}
                         >
                           <Wallet className="mr-1.5 h-3.5 w-3.5" />
-                          Fund Escrow
+                          Fund escrow
                         </Button>
                       )}
                     </div>
@@ -296,13 +327,11 @@ export function InquiryList({
 
               {/* Interactive Timeline Stepper for Buyer requests (manageable = false) */}
               {!manageable && (
-                <div className="border-t border-border/20 pt-4 mt-3">
-                  <div className="relative flex items-center justify-between w-full">
-                    {/* Stepper Line Background */}
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-[2px] bg-muted -z-10" />
-                    {/* Stepper Active Line Progress */}
+                <div className="border-t border-border/40 pt-4">
+                  <div className="relative flex w-full items-center justify-between">
+                    <div className="absolute left-0 top-1/2 -z-10 h-0.5 w-full -translate-y-1/2 bg-muted" />
                     <div
-                      className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] bg-primary transition-all duration-500 -z-10"
+                      className="absolute left-0 top-1/2 -z-10 h-0.5 -translate-y-1/2 bg-primary transition-all duration-500"
                       style={{
                         width: `${stepIndex === 0 ? 0 : stepIndex === 1 ? 33 : stepIndex === 2 ? 66 : 100}%`,
                       }}

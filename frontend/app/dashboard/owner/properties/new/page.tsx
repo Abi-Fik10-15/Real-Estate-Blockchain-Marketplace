@@ -166,25 +166,6 @@ export default function CreatePropertyPage() {
       toast.success("Property minted on-chain", {
         description: `Token ${mint.tokenId} · Tx ${shortenAddress(mint.txHash, 8)}`,
       });
-<<<<<<< HEAD
-
-      try {
-        const mint = await api.mintPropertyToken(wallet, `ipfs://chainestate/${property.id}`);
-        await usePropertyStore.getState().updateProperty(property.id, {
-          chainId: mint.tokenId,
-        });
-        toast.success("Property submitted for review", {
-          description: `Minted token ${mint.tokenId}. An admin must approve the listing before it appears on the marketplace.`,
-        });
-      } catch {
-        toast.success("Property submitted for review", {
-          description: "Listing saved as pending. An admin must approve it before it appears on the marketplace.",
-        });
-      }
-
-      router.push("/dashboard/owner/properties");
-=======
->>>>>>> 56582d7268f2e682398700b3d129901345f4a8be
     } catch {
       toast.success("Property created", {
         description: "Blockchain mint skipped — configure contract to enable on-chain deeds.",

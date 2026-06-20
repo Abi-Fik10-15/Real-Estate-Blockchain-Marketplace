@@ -42,6 +42,15 @@ export class User {
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Property' }], default: [] })
   savedPropertyIds!: Types.ObjectId[];
+
+  @Prop({ default: false })
+  emailVerified!: boolean;
+
+  @Prop({ select: false })
+  emailVerificationToken?: string;
+
+  @Prop({ select: false })
+  emailVerificationExpires?: Date;
 }
 
 export type UserDocument = HydratedDocument<User>;

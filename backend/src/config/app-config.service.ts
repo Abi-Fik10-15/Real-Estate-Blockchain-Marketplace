@@ -200,6 +200,30 @@ export class AppConfigService {
     return path?.replace(/^\/+|\/+$/g, '') || 'docs';
   }
 
+  // ── Email / Resend ───────────────────────────────────────────────────────
+
+  /** Resend API key (https://resend.com). Leave blank in dev to log links to console. */
+  get resendApiKey(): string | undefined {
+    return this.config.get<string>('RESEND_API_KEY')?.trim() || undefined;
+  }
+
+  /** From address used in outgoing emails. Must be a verified domain in Resend. */
+  get smtpFrom(): string {
+    return (
+      this.config.get<string>('EMAIL_FROM')?.trim() ||
+      'ChainEstate <noreply@chainestate.io>'
+    );
+  }
+
+  /** Public URL of the frontend app (no trailing slash). Used in email links. */
+  get frontendPublicUrl(): string {
+    return (
+      this.config.get<string>('FRONTEND_PUBLIC_URL')?.trim().replace(/\/$/, '') ||
+      this.frontendOrigins[0] ||
+      'http://localhost:3000'
+    );
+  }
+
   assertProductionSecrets(): void {
     if (this.nodeEnv !== 'production') return;
 
