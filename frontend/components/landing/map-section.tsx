@@ -1,10 +1,12 @@
 "use client";
 
-
-
+import * as React from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { MapProperty } from "@/components/landing/map-based-listing";
+import { useProperties } from "@/hooks/use-properties";
+import { formatCurrency } from "@/lib/utils";
+import { MapPinOff } from "lucide-react";
 
 const MapBasedListing = dynamic(
   () => import("@/components/landing/map-based-listing").then((m) => m.MapBasedListing),
@@ -21,120 +23,62 @@ const MapBasedListing = dynamic(
   }
 );
 
-// ─── Your property data — replace with a real API call / props ────────────────
-const PROPERTIES: MapProperty[] = [
-  {
-    id: "1",
-    title: "Bole District Apartment",
-    location: "Bole, Addis Ababa, Ethiopia",
-    lat: 9.0227,
-    lng: 38.7689,
-    priceLabel: "$320K",
-    ethPrice: "1.8 ETH",
-    images: [],
-    beds: 3, baths: 2, areaSqm: 180,
-    isVerified: true,
-    status: "for_sale",
-  },
-  {
-    id: "2",
-    title: "Kazanchis Office Space",
-    location: "Kazanchis, Addis Ababa, Ethiopia",
-    lat: 9.0192,
-    lng: 38.7614,
-    priceLabel: "$475K",
-    ethPrice: "2.1 ETH",
-    images: [],
-    areaSqm: 320,
-    isVerified: true,
-    status: "pending",
-  },
-  {
-    id: "3",
-    title: "Dubai Marina Penthouse",
-    location: "Marina, Dubai, UAE",
-    lat: 25.0757,
-    lng: 55.1394,
-    priceLabel: "$2.1M",
-    ethPrice: "11.8 ETH",
-    images: [],
-    beds: 4, baths: 3, areaSqm: 340,
-    isVerified: true,
-    status: "for_sale",
-  },
-  {
-    id: "4",
-    title: "Nairobi Westlands Studio",
-    location: "Westlands, Nairobi, Kenya",
-    lat: -1.2635,
-    lng: 36.8029,
-    priceLabel: "$85K",
-    ethPrice: "0.47 ETH",
-    images: [],
-    beds: 1, baths: 1, areaSqm: 55,
-    isVerified: false,
-    status: "for_rent",
-  },
-  {
-    id: "5",
-    title: "London Shoreditch Flat",
-    location: "Shoreditch, London, UK",
-    lat: 51.5246,
-    lng: -0.0799,
-    priceLabel: "$950K",
-    ethPrice: "5.3 ETH",
-    images: [],
-    beds: 2, baths: 1, areaSqm: 90,
-    isVerified: true,
-    status: "for_sale",
-  },
-  {
-    id: "6",
-    title: "New York Midtown Condo",
-    location: "Midtown, New York, USA",
-    lat: 40.7549,
-    lng: -73.9840,
-    priceLabel: "$1.8M",
-    ethPrice: "10.1 ETH",
-    images: [],
-    beds: 3, baths: 2, areaSqm: 145,
-    isVerified: true,
-    status: "for_sale",
-  },
-   {
-    id: "7",
-    title: "New York Midtown Condo",
-    location: "Midtown, New York, USA",
-    lat: 40.7549,
-    lng: -73.9840,
-    priceLabel: "$1.8M",
-    ethPrice: "10.1 ETH",
-    images: [],
-    beds: 3, baths: 2, areaSqm: 145,
-    isVerified: true,
-    status: "for_sale",
-  },
-   {
-    id: "8",
-    title: "New York Midtown Condo",
-    location: "Midtown, New York, USA",
-    lat: 40.7549,
-    lng: -73.9840,
-    priceLabel: "$1.8M",
-    ethPrice: "10.1 ETH",
-    images: [],
-    beds: 3, baths: 2, areaSqm: 145,
-    isVerified: true,
-    status: "for_sale",
-  },
-];
-
 export function MapSection() {
   const router = useRouter();
 
+  const { data, isLoading } = useProperties({ status: "active" });
+
+ 
+  const properties: MapProperty[] = React.useMemo(() => {
+    if (!data) return [];
+
+    return data
+      .filter((p) => p.location?.lat != null && p.location?.lng != null)
+      .map((p) => ({
+        id: p.id,
+        title: p.title,
+        location: [p.location.city, p.location.country].filter(Boolean).join(", "),
+        lat: p.location.lat,
+        lng: p.location.lng,
+        priceLabel: formatCurrency(p.price),
+        ethPrice: p.priceEth ? `${p.priceEth} ETH` : undefined,
+        images: p.images ?? [],
+        beds: p.bedrooms,
+        baths: p.bathrooms,
+        areaSqm: p.area,
+        isVerified: p.verification?.status === "verified",
+        status: p.listingType === "rent" ? "for_rent" : p.status === "pending" ? "pending" : "for_sale",
+      }));
+  }, [data]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[600px] items-center justify-center rounded-2xl border border-border bg-muted/20">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Loading properties…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (properties.length === 0) {
+    return (
+      <div className="flex h-[600px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-muted/20 text-center">
+        <MapPinOff className="h-10 w-10 text-muted-foreground" />
+        <div>
+          <p className="font-medium">No mappable listings yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Properties will appear here once they have a location set.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <MapBasedListing
-      properties={PROPERTIES}
+      properties={properties}
       className="h-[600px]"
       onViewProperty={(id) => router.push(`/properties/${id}`)}
     />

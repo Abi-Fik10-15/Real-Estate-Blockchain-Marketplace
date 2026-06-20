@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { LocationPicker } from "@/components/property/location-picker";
 import { usePropertyStore } from "@/store/property-store";
 import { useAuthStore } from "@/store/auth-store";
 import { api } from "@/services/api";
@@ -65,11 +66,18 @@ export default function CreatePropertyPage() {
       priceEth: 0.01,
       images: [],
       imagePublicIds: [],
+      location: {
+        address: "",
+        city: "",
+        country: "",
+      },
     },
   });
 
   const images = watch("images") || [];
   const imagePublicIds = watch("imagePublicIds") || [];
+  const lat = watch("location.lat");
+  const lng = watch("location.lng");
 
   const handleUpload = async (files: File[]) => {
     const validTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -137,18 +145,28 @@ export default function CreatePropertyPage() {
     setValue("imagePublicIds", newPublicIds, { shouldValidate: true });
   };
 
-  const onSubmit = async (values: CreatePropertyValues) => {
-    if (!user) {
-      toast.error("Please log in to create a property");
-      return;
-    }
-    setPending(true);
+ const onSubmit = async (values: CreatePropertyValues) => {
+  if (!user) {
+    toast.error("Please log in to create a property");
+    return;
+  }
+  setPending(true);
+  try {
+    const wallet = user.walletAddress || "0x0000000000000000000000000000000000000000";
+    const property = await createProperty(values, {
+      id: user.id,
+      wallet,
+    });
+
     try {
-      const wallet = user.walletAddress || "0x0000000000000000000000000000000000000000";
-      const property = await createProperty(values, {
-        id: user.id,
-        wallet,
+      const mint = await api.mintPropertyToken(wallet, `ipfs://chainestate/${property.id}`);
+      await usePropertyStore.getState().updateProperty(property.id, {
+        chainId: mint.tokenId,
       });
+      toast.success("Property minted on-chain", {
+        description: `Token ${mint.tokenId} · Tx ${shortenAddress(mint.txHash, 8)}`,
+      });
+<<<<<<< HEAD
 
       try {
         const mint = await api.mintPropertyToken(wallet, `ipfs://chainestate/${property.id}`);
@@ -165,12 +183,24 @@ export default function CreatePropertyPage() {
       }
 
       router.push("/dashboard/owner/properties");
+=======
+>>>>>>> 56582d7268f2e682398700b3d129901345f4a8be
     } catch {
-      toast.error("Failed to create property");
-    } finally {
-      setPending(false);
+      toast.success("Property created", {
+        description: "Blockchain mint skipped — configure contract to enable on-chain deeds.",
+      });
     }
-  };
+
+    router.push("/dashboard/owner/properties");
+  } catch (error) {
+    console.error("Create property failed:", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to create property. Check the console for details.";
+    toast.error(message);
+  } finally {
+    setPending(false);
+  }
+};
 
   return (
     <DashboardShell title="Create Property" roleLabel="Property Owner" nav={OWNER_NAV}>
@@ -296,11 +326,75 @@ export default function CreatePropertyPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input id="location" placeholder="Miami, USA" {...register("location")} />
-              {errors.location && (
-                <p className="text-xs text-destructive">{errors.location.message}</p>
+            {/* ── Location ─────────────────────────────────────────────── */}
+            <div className="space-y-3">
+              <Label>Location</Label>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="location.address" className="text-xs font-normal text-muted-foreground">
+                    Street address
+                  </Label>
+                  <Input id="location.address" placeholder="123 Main St" {...register("location.address")} />
+                  {errors.location?.address && (
+                    <p className="text-xs text-destructive">{errors.location.address.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="location.city" className="text-xs font-normal text-muted-foreground">
+                    City
+                  </Label>
+                  <Input id="location.city" placeholder="Miami" {...register("location.city")} />
+                  {errors.location?.city && (
+                    <p className="text-xs text-destructive">{errors.location.city.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="location.country" className="text-xs font-normal text-muted-foreground">
+                    Country
+                  </Label>
+                  <Input id="location.country" placeholder="USA" {...register("location.country")} />
+                  {errors.location?.country && (
+                    <p className="text-xs text-destructive">{errors.location.country.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <LocationPicker
+                lat={lat}
+                lng={lng}
+                onChange={(newLat, newLng) => {
+                  setValue("location.lat", newLat, { shouldValidate: true });
+                  setValue("location.lng", newLng, { shouldValidate: true });
+                }}
+              />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-normal text-muted-foreground">Latitude</Label>
+                  <Input
+                    type="number"
+                    step="0.000001"
+                    value={lat ?? ""}
+                    onChange={(e) =>
+                      setValue("location.lat", parseFloat(e.target.value), { shouldValidate: true })
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-normal text-muted-foreground">Longitude</Label>
+                  <Input
+                    type="number"
+                    step="0.000001"
+                    value={lng ?? ""}
+                    onChange={(e) =>
+                      setValue("location.lng", parseFloat(e.target.value), { shouldValidate: true })
+                    }
+                  />
+                </div>
+              </div>
+              {(errors.location?.lat || errors.location?.lng) && (
+                <p className="text-xs text-destructive">Click the map or enter coordinates manually.</p>
               )}
             </div>
 
@@ -332,7 +426,6 @@ export default function CreatePropertyPage() {
                 <p className="text-xs text-destructive">{errors.images.message}</p>
               )}
 
-              {/* Image Preview Grid */}
               {images.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
                   {images.map((url, i) => (
@@ -356,7 +449,6 @@ export default function CreatePropertyPage() {
                 </div>
               )}
 
-              {/* Uploading Files Progress */}
               {uploads.length > 0 && (
                 <div className="space-y-2 pt-2">
                   {uploads.map((upload) => (

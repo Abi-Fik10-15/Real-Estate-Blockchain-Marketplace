@@ -477,6 +477,7 @@ function CollapseToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle:
 // ─── Root export ──────────────────────────────────────────────────────────────
 
 export function MapBasedListing({ properties, className, onViewProperty }: MapBasedListingProps) {
+  console.log("Property map:", properties);
   const dark = useDarkMode();
   const [activeId, setActiveId]                 = React.useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
