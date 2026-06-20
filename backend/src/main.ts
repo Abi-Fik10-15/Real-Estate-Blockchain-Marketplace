@@ -26,7 +26,7 @@ async function bootstrap() {
 
   // --- UPDATED CORS CONFIGURATION ---
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // 1. Allow server-to-server requests or tools like Postman
       if (!origin) return callback(null, true);
 
