@@ -41,7 +41,7 @@ import type { UserDocument } from '../users/schemas/user.schema';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @ApiTags('properties')
-@Controller('properties')
+@Controller('api/properties')
 export class PropertiesController {
   constructor(
     private readonly propertiesService: PropertiesService,
