@@ -145,43 +145,45 @@ export default function CreatePropertyPage() {
     setValue("imagePublicIds", newPublicIds, { shouldValidate: true });
   };
 
- const onSubmit = async (values: CreatePropertyValues) => {
-  if (!user) {
-    toast.error("Please log in to create a property");
-    return;
-  }
-  setPending(true);
-  try {
-    const wallet = user.walletAddress || "0x0000000000000000000000000000000000000000";
-    const property = await createProperty(values, {
-      id: user.id,
-      wallet,
-    });
-
-    try {
-      const mint = await api.mintPropertyToken(wallet, `ipfs://chainestate/${property.id}`);
-      await usePropertyStore.getState().updateProperty(property.id, {
-        chainId: mint.tokenId,
-      });
-      toast.success("Property minted on-chain", {
-        description: `Token ${mint.tokenId} · Tx ${shortenAddress(mint.txHash, 8)}`,
-      });
-    } catch {
-      toast.success("Property created", {
-        description: "Blockchain mint skipped — configure contract to enable on-chain deeds.",
-      });
+  const onSubmit = async (values: CreatePropertyValues) => {
+    if (!user) {
+      toast.error("Please log in to create a property");
+      return;
     }
+    setPending(true);
+    try {
+      const wallet = user.walletAddress || "0x0000000000000000000000000000000000000000";
+      const property = await createProperty(values, {
+        id: user.id,
+        wallet,
+      });
 
-    router.push("/dashboard/owner/properties");
-  } catch (error) {
-    console.error("Create property failed:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to create property. Check the console for details.";
-    toast.error(message);
-  } finally {
-    setPending(false);
-  }
-};
+      try {
+        // Attempt to mint the property on-chain
+        const mint = await api.mintPropertyToken(wallet, `ipfs://chainestate/${property.id}`);
+        await usePropertyStore.getState().updateProperty(property.id, {
+          chainId: mint.tokenId,
+        });
+        toast.success("Property submitted for review", {
+          description: `Minted token ${mint.tokenId}. An admin must approve the listing before it appears on the marketplace.`,
+        });
+      } catch {
+        // Fallback if blockchain mint fails or is skipped
+        toast.success("Property submitted for review", {
+          description: "Listing saved as pending. An admin must approve it before it appears on the marketplace.",
+        });
+      }
+
+      router.push("/dashboard/owner/properties");
+    } catch (error) {
+      console.error("Create property failed:", error);
+      const message =
+        error instanceof Error ? error.message : "Failed to create property. Check the console for details.";
+      toast.error(message);
+    } finally {
+      setPending(false);
+    }
+  };
 
   return (
     <DashboardShell title="Create Property" roleLabel="Property Owner" nav={OWNER_NAV}>

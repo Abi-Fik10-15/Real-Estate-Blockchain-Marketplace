@@ -96,7 +96,9 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
 
   assignAgent: async (id, agent) => {
     const updated = await api.updateProperty(id, {
-      agentId: agent ? agent.id : undefined,
+      // FIXED: Used optional chaining (?.) so that a null agent resolves 
+      // to 'undefined' rather than 'null' to satisfy strict TypeScript types.
+      agentId: agent?.id,
       agentWallet: agent?.wallet ?? "",
     });
     set((s) => ({

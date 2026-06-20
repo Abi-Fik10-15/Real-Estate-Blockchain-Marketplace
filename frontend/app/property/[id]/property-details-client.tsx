@@ -41,7 +41,12 @@ const PropertyMap = dynamic(() => import("@/components/property/property-map"), 
 
 export function PropertyDetailsClient({ id, initialData }: { id: string; initialData?: any }) {
   const router = useRouter();
-  const { data: property, isLoading } = useProperty(id);
+  
+  // Only pass id to hook, fall back to initialData if hook hasn't returned yet
+  const { data: fetchedProperty, isLoading: hookLoading } = useProperty(id);
+  const property = fetchedProperty || initialData;
+  const isLoading = hookLoading && !property;
+
   const { isSaved, toggleSaved } = useSavedStore();
   const addInquiry = useInquiryStore((s) => s.add);
   const user = useAuthStore((s) => s.user);
@@ -285,7 +290,8 @@ export function PropertyDetailsClient({ id, initialData }: { id: string; initial
             </CardHeader>
             <CardContent>
               <ol className="relative space-y-5 border-l border-border pl-5">
-                {property.history.map((ev) => (
+                {/* FIXED LINE BELOW: Added explicit 'any' type to 'ev' */}
+                {property.history.map((ev: any) => (
                   <li key={ev.id} className="relative">
                     <span className="absolute -left-[1.45rem] top-1 h-2.5 w-2.5 rounded-full bg-primary" />
                     <p className="text-sm font-medium">{ev.description}</p>
