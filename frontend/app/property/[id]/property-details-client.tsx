@@ -41,7 +41,12 @@ const PropertyMap = dynamic(() => import("@/components/property/property-map"), 
 
 export function PropertyDetailsClient({ id, initialData }: { id: string; initialData?: any }) {
   const router = useRouter();
-  const { data: property, isLoading } = useProperty(id, initialData);
+  
+  // Only pass id to hook, fall back to initialData if hook hasn't returned yet
+  const { data: fetchedProperty, isLoading: hookLoading } = useProperty(id);
+  const property = fetchedProperty || initialData;
+  const isLoading = hookLoading && !property;
+
   const { isSaved, toggleSaved } = useSavedStore();
   const addInquiry = useInquiryStore((s) => s.add);
   const user = useAuthStore((s) => s.user);
