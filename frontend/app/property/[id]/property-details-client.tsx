@@ -290,10 +290,8 @@ export function PropertyDetailsClient({ id, initialData }: { id: string; initial
             </CardHeader>
             <CardContent>
               <ol className="relative space-y-5 border-l border-border pl-5">
-                {/* FIX APPLIED HERE: 
-                  Typed 'ev' to ensure TypeScript knows its properties 
-                */}
-                {property.history.map((ev: { id: string | number; description: string; txHash: string }) => (
+                {/* FIXED LINE BELOW: Added explicit 'any' type to 'ev' */}
+                {property.history.map((ev: any) => (
                   <li key={ev.id} className="relative">
                     <span className="absolute -left-[1.45rem] top-1 h-2.5 w-2.5 rounded-full bg-primary" />
                     <p className="text-sm font-medium">{ev.description}</p>
