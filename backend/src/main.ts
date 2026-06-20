@@ -24,10 +24,35 @@ async function bootstrap() {
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ limit: '10mb', extended: true }));
 
+  // --- UPDATED CORS CONFIGURATION ---
   app.enableCors({
-    origin: config.frontendOrigins,
+    origin: (origin, callback) => {
+      // 1. Allow server-to-server requests or tools like Postman
+      if (!origin) return callback(null, true);
+
+      // 2. Ensure config origins are an array
+      const configuredOrigins = Array.isArray(config.frontendOrigins)
+        ? config.frontendOrigins
+        : [config.frontendOrigins];
+
+      // 3. Define all allowed exact URLs
+      const allowedOrigins = [
+        ...configuredOrigins,
+        'http://localhost:3000',
+      ];
+
+      // 4. Check for Vercel Preview URLs via Regex
+      const isVercelPreview = /^https:\/\/real-estate-blockchain-marketplace-.*\.vercel\.app$/.test(origin);
+
+      if (allowedOrigins.includes(origin) || isVercelPreview) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   });
+  // ----------------------------------
 
   app.useGlobalPipes(
     new ValidationPipe({
