@@ -1,6 +1,7 @@
 # ChainEstate - Current-State Engineering Plan
 
-Last updated: 2026-06-20  
+Last updated: 2026-06-20 (buyer UI overhaul + property detail polish)  
+Branch: `feat/ui-overhaul-auth-email-verification`  
 Scope: `frontend/` + `backend/` + blockchain integration path
 
 ---
@@ -33,16 +34,21 @@ It is updated after each meaningful delivery increment — not only at major mil
 - [x] **Admin transaction audit API:** `GET /api/transactions` (admin-only) returns full platform transaction ledger.
 - [x] **Solidity naming fix:** `transferOwnership(uint256,address)` renamed to `transferPropertyOwnership` to avoid shadowing OpenZeppelin `Ownable.transferOwnership`; event renamed to `PropertyOwnershipTransferred`. ABIs synced in backend + frontend.
 
-### Frontend
-- [x] **Buyer property detail UX:** compact hero card layout, badges above price, stats row without icons, primary-colored titles.
-- [x] **Ownership verification card:** state expressed via background wash instead of colored borders.
+### Frontend — Buyer dashboard UI overhaul (shared design language)
+- [x] **Design tokens applied across buyer subtree:** summary bars (`rounded-xl border-border/60 bg-card`), primary counts/titles, muted subtitles/descriptions, dashed empty states, outline CTAs, rose save hearts, `roleLabel="Buyer"`.
+- [x] **Marketplace:** `marketplace-view.tsx` — hero search, grid/list/map toggle, empty state; `buyer/marketplace/page.tsx` simplified (removed duplicate toggle/dead imports).
+- [x] **Property cards & filters:** `property-card.tsx` (16:10 images, chainId badge, list view, save toggle props); `property-filters.tsx` (outline styling, section dividers).
+- [x] **Map view:** `map-based-listing.tsx` — light embed, bounds fit, sidebar cards (no duplicate page heading in dashboard context).
+- [x] **Buyer home:** `buyer/page.tsx` + `buyer/layout.tsx` — welcome summary bar, KPI cards, loading skeleton aligned with dashboard shell.
+- [x] **Saved:** `buyer/saved/page.tsx` — summary bar + `PropertyCard` grid, server-synced bookmarks (`saved-store.ts` syncGeneration, optimistic toggle).
+- [x] **Requests:** `buyer/requests/page.tsx` + `inquiry-list.tsx` — summary bar, card list, status badges, empty state.
+- [x] **Verification:** `buyer/verification/page.tsx` — on-chain verification workflow UI aligned with requests/saved patterns.
+- [x] **Settings:** `profile-settings.tsx`, `kyc-verification.tsx`, `buyer/settings/page.tsx` — summary bar, card layout (subtitles stay muted; section titles primary).
+- [x] **Sandbox:** `dashboard/sandbox/page.tsx` — ledger explorer UI aligned with buyer dashboard styling.
+- [x] **Buyer property detail:** `buyer/marketplace/property/[id]/page.tsx` — summary bar (back link, `text-primary-500` title, listing/verified/save badges), 16:10 hero, stats pills, gallery/map cards, sticky sidebar (inquiries + activity timeline), loading/not-found states.
 - [x] **Buyer nav cleanup:** removed static "Property Detail" nav item (detail is reached from marketplace cards).
-- [x] **Saved properties flow:** optimistic save/unsave on property pages, server sync on buyer login, dedicated `/dashboard/buyer/saved` page wired to API.
-  - `saved-store.ts`: `syncGeneration` race guard, auth checks, toast on failure
-  - `property-card.tsx`: direct Zustand selector for reactive saved state
-  - Saved page uses `useProperties()` (same data source as marketplace)
+- [x] **Dev cache recovery:** `npm run dev:clean` script clears `.next` before starting (fixes corrupted webpack pack / spurious 404s on Windows after hot reload).
 - [x] **Leaflet stability fix:** map renders only after client mount; invalid `0,0` coordinates show fallback UI.
-- [x] **Marketplace map view:** grid / list / map toggle in `marketplace-view.tsx` with SSR-safe dynamic `MapBasedListing`.
 - [x] **Owner rental yield KPI:** gross rental yield card on owner dashboard derived from completed rental transactions.
 - [x] **Owner tenant management:** `/dashboard/owner/tenants` — active/pending rental tenants, Etherscan links, tenant names from inquiry store.
 - [x] **Admin transaction audit:** `/dashboard/admin/audit` — searchable/filterable ledger of all platform transactions.
@@ -68,6 +74,7 @@ It is updated after each meaningful delivery increment — not only at major mil
 - Zustand stores + partial React Query usage (hybrid state architecture).
 - Buyer saved listings: `store/saved-store.ts` (optimistic toggle + server sync) + `app/dashboard/buyer/saved/page.tsx`.
 - Marketplace: grid/list/map views; map uses `MapBasedListing` with dynamic import.
+- Buyer dashboard pages share a consistent summary-bar + card layout pattern (home, marketplace, saved, requests, verification, settings, sandbox, property detail).
 - Auth pages: register → email verification → login (Resend-backed on backend).
 
 ### Backend (`backend/`)
@@ -99,7 +106,8 @@ It is updated after each meaningful delivery increment — not only at major mil
 - [x] Contract client utilities in frontend and blockchain service in backend.
 - [x] **Saved/bookmarked properties** — backend persistence + buyer UI (property page toggle + saved listings page); user-ID bug fixed.
 - [x] **Local dev resilience** — backend starts without Docker/local Mongo via in-memory fallback.
-- [x] **Buyer property detail page** — professional compact layout (Phase 2 UX polish, buyer path).
+- [x] **Buyer dashboard UI overhaul** — consistent design language across home, marketplace, saved, requests, verification, settings, sandbox, and property detail.
+- [x] **Buyer property detail page** — summary bar, hero image, stats pills, inquiry sidebar, activity timeline (buyer dashboard path).
 - [x] **Marketplace map view** — grid/list/map toggle with Leaflet map.
 - [x] **Owner rental yield panel** — gross yield KPI on owner dashboard.
 - [x] **Owner tenant management page** — `/dashboard/owner/tenants`.
@@ -111,8 +119,11 @@ It is updated after each meaningful delivery increment — not only at major mil
 - [~] Role-based access exists, but resource-level authorization checks are incomplete on some endpoints.
 - [~] Frontend role routing is partly guarded (buyer subtree has guard; owner/agent/admin are not consistently protected).
 - [~] Owner/agent dashboards still contain hardcoded mock user IDs in some views (tenant page fixed to use inquiry store for names).
-- [~] Duplicate property detail implementations (public vs buyer dashboard) — not yet consolidated into one shared component.
+- [~] Duplicate property detail implementations (public `property/[id]` vs buyer dashboard detail) — buyer path polished; shared component extraction still pending.
+- [~] **`ownership-verification.tsx` sidebar** on buyer property detail — not yet restyled to match new card/summary patterns.
+- [~] **`/verify-email` production build** — may need `<Suspense>` wrapper around `useSearchParams` (Next.js 15 static generation).
 - [~] Email delivery in dev requires backend restart after `.env` changes; Resend `onboarding@resend.dev` only delivers to the Resend account owner email until a domain is verified.
+- [~] **Next.js dev cache on Windows** — webpack pack files under `.next/cache` can corrupt after restarts; use `npm run dev:clean` when routes return 404 or compile errors reference missing `.pack.gz` files.
 
 ### Not Complete (Production Critical)
 - [ ] Security hardening (restrict registration role to buyer-only, rate limiting, httpOnly token strategy).
@@ -235,18 +246,20 @@ Exit criteria:
 5. Complete seller-side confirm-sale UI/API/chain flow.
 6. Define canonical state ownership pattern (Query vs Zustand).
 7. Block seed/demo users in production runtime.
-8. Extract shared `PropertyDetailView` from public + buyer dashboard pages.
+8. Extract shared `PropertyDetailView` from public + buyer dashboard pages (buyer path is the reference implementation).
+9. Restyle `ownership-verification.tsx` to match buyer property detail sidebar cards.
 
 ### P2
-9. Add DTO validation coverage for currently raw body params (e.g. resend-verification email).
-10. Add paginated list APIs for scale-sensitive endpoints.
-11. Add notification center persistence (not only badge/toast).
-12. Geocode property locations on create (currently defaults to `lat: 0, lng: 0`).
+10. Add DTO validation coverage for currently raw body params (e.g. resend-verification email).
+11. Add paginated list APIs for scale-sensitive endpoints.
+12. Add notification center persistence (not only badge/toast).
+13. Geocode property locations on create (currently defaults to `lat: 0, lng: 0`).
+14. Wrap `/verify-email` in Suspense for production `next build`.
 
 ### P3
-13. Add SEO/accessibility completeness for public listing pages.
-14. Add upload/document pipeline for property media.
-15. Add observability (structured logs + basic metrics).
+15. Add SEO/accessibility completeness for public listing pages.
+16. Add upload/document pipeline for property media.
+17. Add observability (structured logs + basic metrics).
 
 ---
 
@@ -327,12 +340,15 @@ cd backend
 npm run build   # run if you see "Cannot find module" from dist/
 npm run start:dev
 
-# Frontend
+# Frontend (use dev:clean if routes 404 or webpack cache errors appear)
 cd ../frontend
 npm run dev
+# or: npm run dev:clean
 ```
 
 **Important:** After changing `backend/.env` (e.g. `RESEND_API_KEY`), restart the backend so NestJS reloads config. Without a restart, emails fall back to console logging only.
+
+**Next.js cache (Windows):** If the dev server logs `Caching failed for pack` / missing `.pack.gz` and pages return 404, stop all `node` processes, run `npm run dev:clean` from `frontend/`, then hard-refresh the browser. Do not commit `frontend/.next/`.
 
 ### Runtime smoke checks
 
@@ -372,6 +388,8 @@ curl -X DELETE http://localhost:3001/api/users/saved/PROPERTY_ID -H "Authorizati
 - Owner → Tenant Management → active/pending tenants listed with inquiry-derived names.
 - Admin → Transaction Audit → full ledger searchable by property, user, tx hash.
 - Marketplace → switch grid / list / map views; map markers navigate to property detail.
+- Buyer property detail → summary bar title/badges readable; save heart toggles; inquiry buttons submit; activity timeline renders when history exists.
+- Buyer home, saved, requests, verification, settings, sandbox → summary bars and empty states match shared dashboard styling.
 - Mint property token and confirm token linkage in property record.
 - Trigger escrow from buyer flow and verify status transitions.
 - Confirm sale and validate final property/transaction status on API response.
