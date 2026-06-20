@@ -41,10 +41,10 @@ async function bootstrap() {
         'http://localhost:3000',
       ];
 
-      // 4. Check for Vercel Preview URLs via Regex
-      const isVercelPreview = /^https:\/\/real-estate-blockchain-marketplace-.*\.vercel\.app$/.test(origin);
+      // 4. Check for Vercel URLs via Regex (production + preview)
+      const isVercelDomain = /^https:\/\/real-estate-blockchain-marketplace(-.*)?\.vercel\.app$/.test(origin);
 
-      if (allowedOrigins.includes(origin) || isVercelPreview) {
+      if (allowedOrigins.includes(origin) || isVercelDomain) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
