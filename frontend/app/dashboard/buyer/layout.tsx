@@ -3,9 +3,29 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
-import { BUYER_MARKETPLACE_PATH } from "@/lib/routes";
 
-export default function BuyerLayout({ children }: { children: React.ReactNode }) {
+function BuyerLayoutSkeleton() {
+  return (
+    <div className="space-y-5 p-1 animate-pulse">
+      <div className="h-24 rounded-xl bg-muted" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-20 rounded-xl bg-muted" />
+        ))}
+      </div>
+      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
+        <div className="h-64 rounded-xl bg-muted" />
+        <div className="h-64 rounded-xl bg-muted" />
+      </div>
+    </div>
+  );
+}
+
+export default function BuyerLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
@@ -19,7 +39,11 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
     }
   }, [user, token, isHydrating, hasHydrated, router]);
 
-  if (!hasHydrated || isHydrating || !token || (user && user.role !== "buyer")) {
+  if (!hasHydrated || isHydrating) {
+    return <BuyerLayoutSkeleton />;
+  }
+
+  if (!token || (user && user.role !== "buyer")) {
     return null;
   }
 
