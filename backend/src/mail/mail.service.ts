@@ -43,8 +43,14 @@ export class MailService {
     });
 
     if (error) {
-      this.logger.error(`Resend error for ${opts.to}: ${error.message}`);
-      throw new Error(`Failed to send verification email: ${error.message}`);
+      // Log but don't throw — registration should still succeed even if the
+      // email provider rejects the send (e.g. unverified domain in dev/staging).
+      this.logger.error(
+        `Resend failed for ${opts.to}: ${error.message} — falling back to console link.`,
+      );
+      this.logger.log(
+        `[DEV FALLBACK] Verification link for ${opts.to}:\n  ${opts.verifyUrl}`,
+      );
     }
   }
 

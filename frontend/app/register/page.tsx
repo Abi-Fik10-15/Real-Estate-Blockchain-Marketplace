@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -123,7 +124,7 @@ function CheckEmailState({ email }: { email: string }) {
 }
 
 export default function RegisterPage() {
-  const [submittedEmail, setSubmittedEmail] = React.useState<string | null>(null);
+  const router = useRouter();
   const registerUser = useAuthStore((s) => s.register);
 
   const {
@@ -139,7 +140,8 @@ export default function RegisterPage() {
   const onSubmit = async (values: RegisterValues) => {
     try {
       await registerUser(values);
-      setSubmittedEmail(values.email);
+      toast.success("Account created! You can now sign in.");
+      router.push("/login");
     } catch (err: unknown) {
       const msg =
         typeof err === "object" &&
@@ -168,10 +170,7 @@ export default function RegisterPage() {
           <span className="font-semibold text-foreground">ChainEstate</span>
         </Link>
 
-        {submittedEmail ? (
-          <CheckEmailState email={submittedEmail} />
-        ) : (
-          <>
+        <>
             {/* Heading */}
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-primary">Join ChainEstate</h1>
@@ -313,8 +312,7 @@ export default function RegisterPage() {
                 Sign in
               </Link>
             </p>
-          </>
-        )}
+        </>
       </div>
     </AuthSplitShell>
   );

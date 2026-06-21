@@ -32,8 +32,6 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationExpires = new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS);
 
     await this.usersService.create({
       name: dto.name,
@@ -45,22 +43,11 @@ export class AuthService {
       avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(dto.email)}`,
       kycStatus: 'pending',
       status: 'active',
-      emailVerified: false,
-      emailVerificationToken: verificationToken,
-      emailVerificationExpires: verificationExpires,
-    });
-
-    const verifyUrl = `${this.config.frontendPublicUrl}/verify-email?token=${verificationToken}`;
-
-    await this.mailService.sendVerificationEmail({
-      to: dto.email,
-      name: dto.name,
-      verifyUrl,
+      emailVerified: true,
     });
 
     return {
-      message:
-        'Account created. Please check your email and click the verification link to activate your account.',
+      message: 'Account created. You can now sign in.',
     };
   }
 
@@ -120,12 +107,6 @@ export class AuthService {
 
     if (user.status !== 'active') {
       throw new UnauthorizedException('Account is suspended');
-    }
-
-    if (!user.emailVerified) {
-      throw new UnauthorizedException(
-        'Please verify your email address before logging in. Check your inbox or request a new verification link.',
-      );
     }
 
     return this.buildAuthResponse(user);
