@@ -13,6 +13,7 @@ import {
 } from './dto/property.dto';
 import type { UserDocument } from '../users/schemas/user.schema';
 import { BlockchainService } from '../blockchain/blockchain.service';
+import { resolveDocumentId } from '../common/utils/document-id';
 
 @Injectable()
 export class PropertiesService {
@@ -174,9 +175,9 @@ export class PropertiesService {
     id: string,
     status: PropertyDocument['status'],
   ): Promise<PropertyDocument> {
-    const property = await this.findById(id);
+    await this.findById(id);
     const updated = await this.propertyModel
-      .findByIdAndUpdate(property._id ?? property.id, { status }, { new: true })
+      .findByIdAndUpdate(resolveDocumentId(id), { status }, { new: true })
       .exec();
 
     if (!updated) {

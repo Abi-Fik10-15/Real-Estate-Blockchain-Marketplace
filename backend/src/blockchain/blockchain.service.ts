@@ -58,32 +58,91 @@ export class BlockchainService {
     tokenURI: string,
   ): Promise<{ tokenId: string; txHash: string }> {
     const contract = this.getContract();
-    const tx = await contract.listProperty(tokenURI);
-    const receipt = await tx.wait();
+    const deployerAddress = await this.wallet!.getAddress();
+    const hasRecipient =
+      Boolean(ownerAddress) &&
+      ethers.isAddress(ownerAddress) &&
+      ownerAddress !== ethers.ZeroAddress;
+    const recipient = hasRecipient
+      ? ethers.getAddress(ownerAddress)
+      : deployerAddress;
 
-    let tokenId = '';
-    for (const log of receipt.logs) {
-      try {
-        const parsed = contract.interface.parseLog(log);
-        if (parsed?.name === 'PropertyListed') {
-          tokenId = parsed.args.tokenId.toString();
-          break;
-        }
-      } catch {
-        // skip unrelated logs
-      }
+    let tokenId: string;
+    try {
+      tokenId = (await contract.listProperty.staticCall(tokenURI)).toString();
+    } catch (error) {
+      throw this.toMintError(
+        'listProperty',
+        error,
+        'Mint failed — ensure the backend wallet is the contract owner and has Sepolia ETH.',
+      );
     }
 
-    if (!tokenId) {
-      throw new BadRequestException('Could not parse PropertyListed event');
+    let receipt;
+    try {
+      const tx = await contract.listProperty(tokenURI);
+      receipt = await tx.wait();
+    } catch (error) {
+      throw this.toMintError(
+        'listProperty',
+        error,
+        'Mint transaction failed on Sepolia.',
+      );
     }
 
-    if (ownerAddress && ownerAddress !== ethers.ZeroAddress) {
-      const transferTx = await contract.transferPropertyOwnership(tokenId, ownerAddress);
-      await transferTx.wait();
+    if (recipient === deployerAddress) {
+      return { tokenId, txHash: receipt.hash };
+    }
+
+    try {
+      await this.transferMintedToken(contract, deployerAddress, recipient, tokenId);
+    } catch (error) {
+      throw this.toMintError(
+        'transfer',
+        error,
+        `Token ${tokenId} was minted but transfer to ${recipient} failed. The deed may still be held by the deployer wallet.`,
+      );
     }
 
     return { tokenId, txHash: receipt.hash };
+  }
+
+  private async transferMintedToken(
+    contract: Contract,
+    from: string,
+    to: string,
+    tokenId: string,
+  ): Promise<void> {
+    const owner = await contract.ownerOf(tokenId);
+    if (owner.toLowerCase() !== from.toLowerCase()) {
+      throw new BadRequestException(
+        `Deployer wallet does not own token ${tokenId} (current owner: ${owner}).`,
+      );
+    }
+
+    try {
+      const transferTx = await contract.transferPropertyOwnership(tokenId, to);
+      await transferTx.wait();
+      return;
+    } catch (error) {
+      this.logger.warn(
+        `transferPropertyOwnership failed for token ${tokenId}, falling back to safeTransferFrom: ${error instanceof Error ? error.message : error}`,
+      );
+    }
+
+    const transferTx = await contract.safeTransferFrom(from, to, tokenId);
+    await transferTx.wait();
+  }
+
+  private toMintError(
+    step: 'listProperty' | 'transfer',
+    error: unknown,
+    fallback: string,
+  ): BadRequestException {
+    const detail =
+      error instanceof Error && error.message ? error.message : String(error);
+    this.logger.error(`Blockchain mint ${step} failed: ${detail}`);
+    return new BadRequestException(`${fallback} (${detail})`);
   }
 
   async getTokenProperty(tokenId: string): Promise<OnChainProperty> {
@@ -154,6 +213,26 @@ export class BlockchainService {
     this.logger.log(
       `Blockchain connected — contract ${this.config.contractAddress}`,
     );
+    void this.verifyDeployerIsOwner();
+  }
+
+  private async verifyDeployerIsOwner() {
+    if (!this.contract || !this.wallet) return;
+    try {
+      const [owner, deployer] = await Promise.all([
+        this.contract.owner(),
+        this.wallet.getAddress(),
+      ]);
+      if (owner.toLowerCase() !== deployer.toLowerCase()) {
+        this.logger.warn(
+          `Backend wallet ${deployer} is not the contract owner (${owner}). listProperty will revert until PRIVATE_KEY matches the deployer account.`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Could not verify contract owner: ${error instanceof Error ? error.message : error}`,
+      );
+    }
   }
 
   private getContract(): Contract {
