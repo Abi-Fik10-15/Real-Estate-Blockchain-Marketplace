@@ -194,7 +194,11 @@ export class BlockchainService {
     expectedBuyerWallet: string,
   ): Promise<boolean> {
     if (!this.isEnabled()) return true;
-    this.ensureAddress(expectedBuyerWallet);
+    // Return false (unverified) rather than throwing when the buyer has no wallet.
+    // The caller decides whether to treat an unverified + no-wallet result as an error.
+    if (!expectedBuyerWallet || !ethers.isAddress(expectedBuyerWallet)) {
+      return false;
+    }
     const onChain = await this.getTokenProperty(tokenId);
     return (
       !onChain.inEscrow &&

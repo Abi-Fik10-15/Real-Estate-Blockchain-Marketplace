@@ -123,7 +123,12 @@ export class TransactionsService {
       return tx;
     }
 
-    if (!tx.blockchainTokenId) {
+    // Only treat fully numeric IDs (e.g. "369189") as real Sepolia NFT tokens.
+    // Placeholder IDs like "EST-F51F05" are off-chain references and must skip
+    // blockchain verification, matching the same check used by the frontend.
+    const isOnChainToken = /^\d+$/.test(tx.blockchainTokenId ?? '');
+
+    if (!isOnChainToken) {
       tx.status = 'completed';
       tx.confirmTxHash = confirmTxHash;
       await tx.save();
