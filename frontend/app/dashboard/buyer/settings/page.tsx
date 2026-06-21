@@ -4,7 +4,7 @@ export default function BuyerSettingsPage() {
   return (
     <ProfileSettings
       title="Account Settings"
-      roleLabel="Buyer / Renter"
+      roleLabel="Buyer"
       role="buyer"
     />
   );

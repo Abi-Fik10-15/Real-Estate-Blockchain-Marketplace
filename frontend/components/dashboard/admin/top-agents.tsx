@@ -2,15 +2,17 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import type { User, Property } from "@/types";
+import { cn } from "@/lib/utils";
+import type { Property, User } from "@/types";
 
-/* ------------------------------------------------------------------ */
-/*  Top Agents Component                                               */
-/* ------------------------------------------------------------------ */
 export function TopAgents({
   users,
   properties,
@@ -19,12 +21,10 @@ export function TopAgents({
   properties: Property[];
 }) {
   const agents = React.useMemo(() => {
-    const agentUsers = users.filter((u) => u.role === "agent");
-    return agentUsers
+    return users
+      .filter((u) => u.role === "agent")
       .map((agent) => {
-        const assignedProps = properties.filter(
-          (p) => p.agentId === agent.id
-        );
+        const assignedProps = properties.filter((p) => p.agentId === agent.id);
         const totalValue = assignedProps.reduce((sum, p) => sum + p.price, 0);
         return {
           ...agent,
@@ -50,66 +50,73 @@ export function TopAgents({
     return `$${v}`;
   };
 
-  const rankColors = [
-    "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-    "bg-slate-500/10 text-slate-500 border-slate-500/20",
-    "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
+  const rankStyles = [
+    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400",
+    "border-border bg-muted/30 text-muted-foreground",
+    "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-400",
   ];
 
   return (
     <Card className="border-border/60">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold">
-            Top Performing Agents
-          </CardTitle>
+      <CardHeader className="border-b border-border/60 pb-4">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <CardTitle className="text-base text-primary">
+              Top Performing Agents
+            </CardTitle>
+            <CardDescription className="mt-1">
+              Agents ranked by total assigned listing value.
+            </CardDescription>
+          </div>
           <Link
             href="/dashboard/admin/users"
-            className="text-xs font-medium text-primary hover:underline"
+            className="shrink-0 text-xs font-medium text-primary hover:underline"
           >
             View all
           </Link>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2 pb-4">
-        {agents.length === 0 && (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            No agents registered yet
-          </p>
-        )}
-        {agents.map((agent, i) => (
-          <motion.div
-            key={agent.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1, duration: 0.35 }}
-            className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/40"
-          >
-            <span
-              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${rankColors[i] || rankColors[2]}`}
+
+      <CardContent className="space-y-2 pt-4">
+        {agents.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border/60 py-8 text-center text-sm text-muted-foreground">
+            No agents registered yet.
+          </div>
+        ) : (
+          agents.map((agent, i) => (
+            <div
+              key={agent.id}
+              className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/10 px-3 py-2.5"
             >
-              {i + 1}
-            </span>
-            <Avatar className="h-8 w-8 shrink-0">
-              <AvatarImage src={agent.avatar} alt={agent.name} />
-              <AvatarFallback className="text-xs">
-                {initials(agent.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{agent.name}</p>
+              <span
+                className={cn(
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-xs font-bold",
+                  rankStyles[i] ?? rankStyles[2],
+                )}
+              >
+                {i + 1}
+              </span>
+              <Avatar className="h-8 w-8 shrink-0 border border-border/60">
+                <AvatarImage src={agent.avatar} alt={agent.name} />
+                <AvatarFallback className="text-xs">
+                  {initials(agent.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {agent.name}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {agent.propertyCount}{" "}
+                  {agent.propertyCount === 1 ? "property" : "properties"}
+                </p>
+              </div>
+              <span className="shrink-0 text-sm font-bold tabular-nums text-primary">
+                {formatValue(agent.totalValue)}
+              </span>
             </div>
-            <Badge
-              variant="secondary"
-              className="shrink-0 text-[10px] font-semibold"
-            >
-              {agent.propertyCount} Properties
-            </Badge>
-            <span className="shrink-0 text-sm font-bold tabular-nums">
-              {formatValue(agent.totalValue)}
-            </span>
-          </motion.div>
-        ))}
+          ))
+        )}
       </CardContent>
     </Card>
   );

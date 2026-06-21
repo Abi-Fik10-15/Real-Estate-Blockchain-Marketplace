@@ -79,7 +79,7 @@ export class BlockchainService {
     }
 
     if (ownerAddress && ownerAddress !== ethers.ZeroAddress) {
-      const transferTx = await contract.transferOwnership(tokenId, ownerAddress);
+      const transferTx = await contract.transferPropertyOwnership(tokenId, ownerAddress);
       await transferTx.wait();
     }
 

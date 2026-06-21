@@ -200,6 +200,22 @@
   z-index: 0;
 }
 
+/* Dashboard embedded map — always light chrome regardless of app dark mode */
+.map-light .leaflet-container {
+  background: #f1f5f9;
+}
+
+.map-light .leaflet-control-zoom a {
+  background: #ffffff !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.map-light .leaflet-control-zoom a:hover {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
 @keyframes chat-dot-bounce {
   0%,
   80%,

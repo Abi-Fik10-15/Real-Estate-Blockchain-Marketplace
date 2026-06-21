@@ -1,7 +1,7 @@
 [
   "event PropertyListed(uint256 indexed tokenId, address indexed owner, string tokenURI)",
   "event EscrowDeposited(uint256 indexed tokenId, address indexed buyer, uint256 amount)",
-  "event OwnershipTransferred(uint256 indexed tokenId, address indexed from, address indexed to)",
+  "event PropertyOwnershipTransferred(uint256 indexed tokenId, address indexed from, address indexed to)",
   "event RentalCreated(uint256 indexed tokenId, uint256 startDate, uint256 endDate, uint256 monthlyRent)",
   "function listProperty(string memory tokenURI) returns (uint256 tokenId)",
   "function initiateEscrow(uint256 tokenId) payable",
@@ -9,6 +9,6 @@
   "function createRental(uint256 tokenId, uint256 startDate, uint256 endDate, uint256 monthlyRent)",
   "function cancelEscrow(uint256 tokenId)",
   "function getProperty(uint256 tokenId) view returns (address owner, string memory tokenURI, bool inEscrow, address escrowBuyer, uint256 escrowAmount)",
-  "function transferOwnership(uint256 tokenId, address newOwner)",
+  "function transferPropertyOwnership(uint256 tokenId, address newOwner)",
   "function ownerOf(uint256 tokenId) view returns (address)"
 ]

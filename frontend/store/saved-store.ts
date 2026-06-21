@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { toast } from "sonner";
+import { getStoredToken } from "@/lib/api";
 import { api } from "@/services/api";
 
 interface SavedState {
@@ -10,6 +12,9 @@ interface SavedState {
   syncWithServer: () => Promise<void>;
 }
 
+/** Prevents a slow initial sync from overwriting a newer toggle result. */
+let syncGeneration = 0;
+
 export const useSavedStore = create<SavedState>()(
   persist(
     (set, get) => ({
@@ -19,9 +24,19 @@ export const useSavedStore = create<SavedState>()(
       isSaved: (id: string) => get().savedIds.includes(id),
 
       toggleSaved: async (id: string) => {
-        const already = get().savedIds.includes(id);
+        if (!id) {
+          toast.error("Cannot save this listing (missing property id).");
+          return;
+        }
 
-        // Optimistic update first so the UI responds instantly
+        if (!getStoredToken()) {
+          toast.error("Sign in to save properties.");
+          return;
+        }
+
+        const already = get().savedIds.includes(id);
+        const generation = ++syncGeneration;
+
         set((s) => ({
           savedIds: already
             ? s.savedIds.filter((x) => x !== id)
@@ -32,29 +47,45 @@ export const useSavedStore = create<SavedState>()(
           const updated = already
             ? await api.unsaveProperty(id)
             : await api.saveProperty(id);
-          set({ savedIds: updated });
+
+          if (generation === syncGeneration) {
+            set({ savedIds: updated });
+          }
         } catch {
-          // Revert optimistic update if request failed
+          if (generation !== syncGeneration) return;
+
           set((s) => ({
             savedIds: already
               ? [...s.savedIds, id]
               : s.savedIds.filter((x) => x !== id),
           }));
+          toast.error("Could not update saved properties. Please try again.");
         }
       },
 
       syncWithServer: async () => {
+        if (!getStoredToken()) return;
+
+        const generation = ++syncGeneration;
         set({ isSyncing: true });
+
         try {
           const ids = await api.getSavedPropertyIds();
-          set({ savedIds: ids });
+          if (generation === syncGeneration) {
+            set({ savedIds: ids });
+          }
         } catch {
           // Keep local state as fallback if unauthenticated or offline
         } finally {
-          set({ isSyncing: false });
+          if (generation === syncGeneration) {
+            set({ isSyncing: false });
+          }
         }
       },
     }),
-    { name: "chainestate-saved" }
+    {
+      name: "chainestate-saved",
+      partialize: (state) => ({ savedIds: state.savedIds }),
+    }
   )
 );

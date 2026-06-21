@@ -68,7 +68,7 @@ export function QuickActions() {
   return (
     <Card className="border-border/60">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
+        <CardTitle className="text-base font-semibold text-primary">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-3 gap-2">

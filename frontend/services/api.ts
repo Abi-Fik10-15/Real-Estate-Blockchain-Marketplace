@@ -36,12 +36,28 @@ export const api = {
     role: UserRole;
     phone?: string;
     walletAddress?: string;
-  }) {
-    const { data: res } = await apiClient.post<{ accessToken: string; user: ApiUser }>(
+  }): Promise<{ message: string }> {
+    const { data: res } = await apiClient.post<{ message: string }>(
       "/auth/register",
       data
     );
+    return res;
+  },
+
+  async verifyEmail(token: string): Promise<{ accessToken: string; user: User }> {
+    const { data: res } = await apiClient.get<{ accessToken: string; user: ApiUser }>(
+      "/auth/verify-email",
+      { params: { token } }
+    );
     return { accessToken: res.accessToken, user: mapUser(res.user) };
+  },
+
+  async resendVerification(email: string): Promise<{ message: string }> {
+    const { data: res } = await apiClient.post<{ message: string }>(
+      "/auth/resend-verification",
+      { email }
+    );
+    return res;
   },
 
   async login(email: string, password: string) {
@@ -299,8 +315,31 @@ export const api = {
         confirmTxHash: string;
         blockchainTokenId: string;
         contractAddress: string;
+        createdAt?: string;
+        updatedAt?: string;
       }>
     >("/transactions/mine");
+    return data;
+  },
+
+  async getAllTransactions() {
+    const { data } = await apiClient.get<
+      Array<{
+        id: string;
+        propertyId: string;
+        buyerId: string;
+        sellerId: string;
+        type: string;
+        amount: number;
+        status: string;
+        txHash: string;
+        confirmTxHash: string;
+        blockchainTokenId: string;
+        contractAddress: string;
+        createdAt?: string;
+        updatedAt?: string;
+      }>
+    >("/transactions");
     return data;
   },
 

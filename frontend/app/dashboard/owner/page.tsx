@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Clock,
   ExternalLink,
+  Percent,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { OWNER_NAV } from "@/components/dashboard/nav-configs";
@@ -24,6 +25,7 @@ import { formatCurrency } from "@/lib/utils";
 import { ScaleOnHover } from "@/components/ui/motion";
 
 import { useOwnerProperties } from "@/hooks/use-owner-properties";
+import { useMyTransactions } from "@/hooks/use-transactions";
 
 const STATUS_VARIANT: Record<string, "success" | "warning" | "secondary" | "outline"> = {
   active: "success",
@@ -39,6 +41,7 @@ export default function OwnerDashboard() {
   const inquiries = useInquiryStore((s) => s.inquiries).filter((i) =>
     properties.some((p) => p.id === i.propertyId)
   );
+  const { data: transactions = [] } = useMyTransactions();
 
   const activeCount = properties.filter((p) => p.status === "active").length;
   const pendingInquiries = inquiries.filter((i) => i.status === "new").length;
@@ -46,6 +49,16 @@ export default function OwnerDashboard() {
   const unverifiedCount = properties.filter(
     (p) => p.verification.status !== "verified"
   ).length;
+
+  // Rental yield: completed rental transactions where this owner is the seller
+  const completedRentals = transactions.filter(
+    (t) => t.type === "rental" && t.status === "completed" && t.sellerId === user?.id
+  );
+  const annualRentalIncome = completedRentals.reduce((sum, t) => sum + t.amount * 12, 0);
+  const totalPortfolioValue = properties.reduce((sum, p) => sum + p.price, 0);
+  const grossYield = totalPortfolioValue > 0
+    ? ((annualRentalIncome / totalPortfolioValue) * 100).toFixed(1)
+    : null;
 
   const QUICK_ACTIONS = [
     {
@@ -99,7 +112,7 @@ export default function OwnerDashboard() {
       </div>
 
       {/* Stats grid */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5 mb-6">
         <ScaleOnHover>
           <Card className="border-border/60 bg-card/50">
             <CardContent className="flex items-center justify-between gap-4 p-5">
@@ -151,6 +164,25 @@ export default function OwnerDashboard() {
               </div>
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-500">
                 <ShieldCheck className="h-5 w-5" />
+              </div>
+            </CardContent>
+          </Card>
+        </ScaleOnHover>
+
+        <ScaleOnHover>
+          <Card className="border-border/60 bg-card/50">
+            <CardContent className="flex items-center justify-between gap-4 p-5">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Gross Rental Yield</p>
+                <p className="mt-1.5 text-3xl font-bold tracking-tight text-primary">
+                  {grossYield !== null ? `${grossYield}%` : "—"}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {completedRentals.length} active rental{completedRentals.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Percent className="h-5 w-5" />
               </div>
             </CardContent>
           </Card>

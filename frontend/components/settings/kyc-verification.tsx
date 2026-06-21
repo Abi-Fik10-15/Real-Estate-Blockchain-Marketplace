@@ -182,7 +182,7 @@ export function KycVerification({ role }: { role: UserRole }) {
 
   if (isLoading) {
     return (
-      <Card className="border border-border/80 bg-card/40">
+      <Card className="border-border/60">
         <CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading verification status…
@@ -192,15 +192,15 @@ export function KycVerification({ role }: { role: UserRole }) {
   }
 
   return (
-    <Card className="border border-border/80 bg-card/40 shadow-md backdrop-blur-sm">
-      <CardHeader className="border-b border-border/40 pb-4">
+    <Card className="border-border/60">
+      <CardHeader className="border-b border-border/40 pb-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle className="flex items-center gap-2 text-lg font-bold">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              Identity Verification (KYC)
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold text-primary">
+              <ShieldCheck className="h-4 w-4" />
+              Identity verification (KYC)
             </CardTitle>
-            <CardDescription className="mt-1 max-w-2xl">
+            <CardDescription className="mt-1 max-w-2xl text-xs">
               Upload government ID, a selfie, and proof of address. Agents also submit a broker
               license. An administrator reviews submissions within 24–48 hours.
             </CardDescription>

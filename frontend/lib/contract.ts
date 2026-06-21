@@ -238,7 +238,7 @@ export const contractClient = {
     }
     await ensureSepolia();
     const contract = await this.getContract();
-    const tx = await contract.transferOwnership(tokenId, newOwner);
+    const tx = await contract.transferPropertyOwnership(tokenId, newOwner);
     const receipt = await tx.wait();
     return {
       txHash: receipt.hash as string,

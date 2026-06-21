@@ -12,7 +12,7 @@ interface AuthState {
   isHydrating: boolean;
   hasHydrated: boolean;
   setHasHydrated: (value: boolean) => void;
-  login: (email: string, password: string) => Promise<User | null>;
+  login: (email: string, password: string) => Promise<User>;
   loginAs: (role: UserRole) => Promise<User | null>;
   register: (data: {
     name: string;
@@ -20,7 +20,8 @@ interface AuthState {
     password: string;
     role: UserRole;
     phone?: string;
-  }) => Promise<User>;
+  }) => Promise<{ message: string }>;
+  loginAfterVerify: (accessToken: string, user: User) => void;
   updateUser: (patch: Partial<Pick<User, "name" | "email" | "phone" | "avatar" | "walletAddress">>) => Promise<void>;
   setUser: (user: User) => void;
   hydrateProfile: () => Promise<void>;
@@ -38,14 +39,10 @@ export const useAuthStore = create<AuthState>()(
       setHasHydrated: (value) => set({ hasHydrated: value }),
 
       login: async (email: string, password: string) => {
-        try {
-          const { accessToken, user } = await api.login(email, password);
-          setStoredToken(accessToken);
-          set({ user, token: accessToken });
-          return user;
-        } catch {
-          return null;
-        }
+        const { accessToken, user } = await api.login(email, password);
+        setStoredToken(accessToken);
+        set({ user, token: accessToken });
+        return user;
       },
 
       loginAs: async (role: UserRole) => {
@@ -62,16 +59,14 @@ export const useAuthStore = create<AuthState>()(
       },
 
       register: async ({ name, email, password, role, phone }) => {
-        const { accessToken, user } = await api.register({
-          name,
-          email,
-          password,
-          role,
-          phone,
-        });
+        const result = await api.register({ name, email, password, role, phone });
+        // Do NOT set user/token here — account is not active until email is verified.
+        return result;
+      },
+
+      loginAfterVerify: (accessToken: string, user: User) => {
         setStoredToken(accessToken);
         set({ user, token: accessToken });
-        return user;
       },
 
       hydrateProfile: async () => {

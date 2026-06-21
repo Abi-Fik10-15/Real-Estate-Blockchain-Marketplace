@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -35,17 +36,38 @@ export class AuthController {
   ) {}
 
   @Post('register')
-  @ApiOperation({ summary: 'Register a new account' })
-  @ApiResponse({ status: 201, description: 'Returns JWT accessToken and user' })
+  @ApiOperation({ summary: 'Register a new account — sends email verification link' })
+  @ApiResponse({ status: 201, description: 'Verification email sent' })
   @ApiResponse({ status: 409, description: 'Email already registered' })
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
+  @Get('verify-email')
+  @ApiOperation({ summary: 'Verify email address via token from email link' })
+  @ApiResponse({ status: 200, description: 'Returns JWT accessToken and user on success' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  verifyEmail(@Query('token') token: string) {
+    if (!token) {
+      throw new BadRequestException('Verification token is required');
+    }
+    return this.authService.verifyEmail(token);
+  }
+
+  @Post('resend-verification')
+  @ApiOperation({ summary: 'Resend email verification link' })
+  @ApiResponse({ status: 200, description: 'Verification email resent if account exists' })
+  resendVerification(@Body('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+    return this.authService.resendVerification(email);
+  }
+
   @Post('login')
   @ApiOperation({ summary: 'Login and receive JWT' })
   @ApiResponse({ status: 201, description: 'Returns JWT accessToken and user' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials or unverified email' })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
