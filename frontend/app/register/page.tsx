@@ -147,15 +147,22 @@ export default function RegisterPage() {
         typeof err === "object" &&
         err !== null &&
         "response" in err &&
-        typeof (err as { response?: { data?: { message?: string } } }).response?.data
+        typeof (err as { response?: { data?: { message?: string | string[] } } }).response?.data
           ?.message === "string"
           ? (err as { response: { data: { message: string } } }).response.data.message
-          : null;
+          : Array.isArray(
+                (err as { response?: { data?: { message?: string[] } } }).response?.data
+                  ?.message,
+              )
+            ? (err as { response: { data: { message: string[] } } }).response.data.message[0]
+            : null;
 
       if (msg?.toLowerCase().includes("already registered")) {
         toast.error("That email is already registered. Try signing in instead.");
+      } else if (msg) {
+        toast.error(msg);
       } else {
-        toast.error("Registration failed — please try again.");
+        toast.error("Registration failed — check your connection and try again.");
       }
     }
   };
@@ -179,7 +186,15 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <form
+              method="post"
+              noValidate
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleSubmit(onSubmit)(e);
+              }}
+              className="space-y-5"
+            >
               {/* Role selector */}
               <div className="space-y-2">
                 <Label>Account type</Label>

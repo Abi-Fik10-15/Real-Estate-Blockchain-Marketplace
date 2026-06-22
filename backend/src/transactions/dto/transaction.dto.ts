@@ -1,8 +1,8 @@
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsMongoId, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import type { TransactionStatus, TransactionType } from '../schemas/transaction.schema';
 
 export class CreateTransactionDto {
-  @IsString()
+  @IsMongoId()
   propertyId!: string;
 
   @IsEnum(['sale', 'rental'])

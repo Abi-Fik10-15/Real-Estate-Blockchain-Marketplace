@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -33,8 +34,13 @@ export class TransactionsController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   @ApiOperation({ summary: 'List all transactions (admin)' })
-  findAll() {
-    return this.transactionsService.findAll();
+  findAll(
+    @Query('limit') limit?: string,
+    @Query('page') page?: string,
+  ) {
+    const take = Math.min(Number(limit) || 100, 200);
+    const skip = (Math.max(Number(page) || 1, 1) - 1) * take;
+    return this.transactionsService.findAll(take, skip);
   }
 
   @Get('mine')
@@ -50,16 +56,18 @@ export class TransactionsController {
   }
 
   @Patch(':id')
-  @UseGuards(RolesGuard)
-  @Roles('admin', 'owner')
-  @ApiOperation({ summary: 'Update transaction status or tx metadata' })
+  @ApiOperation({ summary: 'Update transaction metadata (participant only)' })
   @ApiParam({ name: 'id', description: 'Transaction id' })
-  update(@Param('id') id: string, @Body() dto: UpdateTransactionDto) {
-    return this.transactionsService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @CurrentUser() user: UserDocument,
+    @Body() dto: UpdateTransactionDto,
+  ) {
+    return this.transactionsService.update(id, dto, user.id);
   }
 
   @Post(':id/escrow')
-  @ApiOperation({ summary: 'Record escrow deposit tx hash' })
+  @ApiOperation({ summary: 'Record escrow deposit tx hash (buyer only)' })
   @ApiParam({ name: 'id', description: 'Transaction id' })
   @ApiBody({
     schema: {
@@ -68,8 +76,12 @@ export class TransactionsController {
       properties: { txHash: { type: 'string', example: '0xabc...' } },
     },
   })
-  markEscrow(@Param('id') id: string, @Body('txHash') txHash: string) {
-    return this.transactionsService.markEscrow(id, txHash);
+  markEscrow(
+    @Param('id') id: string,
+    @CurrentUser() user: UserDocument,
+    @Body('txHash') txHash: string,
+  ) {
+    return this.transactionsService.markEscrow(id, txHash, user.id);
   }
 
   @Post(':id/confirm')

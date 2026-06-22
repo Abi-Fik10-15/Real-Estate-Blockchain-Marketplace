@@ -13,6 +13,8 @@ import { HealthController } from './health/health.controller';
 import { SeedModule } from './seed/seed.module';
 import { KycModule } from './kyc/kyc.module';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 @Module({
   imports: [
     AppConfigModule,
@@ -27,7 +29,8 @@ import { KycModule } from './kyc/kyc.module';
         maxIdleTimeMS: 60_000,
       }),
     }),
-    SeedModule,
+    // SeedModule only runs in non-production to avoid exposing known demo credentials
+    ...(isProduction ? [] : [SeedModule]),
     AuthModule,
     UsersModule,
     PropertiesModule,

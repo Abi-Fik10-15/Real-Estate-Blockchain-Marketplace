@@ -5,6 +5,7 @@ import { persist } from "zustand/middleware";
 import { api } from "@/services/api";
 import { setStoredToken } from "@/lib/api";
 import type { User, UserRole } from "@/types";
+import { clearSessionData } from "./clear-session-data";
 
 interface AuthState {
   user: User | null;
@@ -105,6 +106,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         setStoredToken(null);
         set({ user: null, token: null });
+        clearSessionData();
       },
     }),
     {

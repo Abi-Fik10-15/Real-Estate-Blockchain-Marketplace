@@ -55,11 +55,6 @@ export class CreatePropertyDto {
   @IsEnum(['ETH', 'USD'])
   currency?: 'ETH' | 'USD';
 
-  @ApiPropertyOptional({ enum: ['draft', 'pending', 'active', 'sold', 'rented'], default: 'pending' })
-  @IsOptional()
-  @IsEnum(['draft', 'pending', 'active', 'sold', 'rented'])
-  status?: PropertyStatus;
-
   @ApiPropertyOptional({ description: 'Type of property', default: 'House' })
   @IsOptional()
   @IsString()
@@ -141,11 +136,6 @@ export class UpdatePropertyDto {
   @IsOptional()
   @IsEnum(['ETH', 'USD'])
   currency?: 'ETH' | 'USD';
-
-  @ApiPropertyOptional({ enum: ['draft', 'pending', 'active', 'sold', 'rented'] })
-  @IsOptional()
-  @IsEnum(['draft', 'pending', 'active', 'sold', 'rented'])
-  status?: PropertyStatus;
 
   @ApiPropertyOptional({ description: 'Type of property' })
   @IsOptional()
@@ -282,4 +272,16 @@ export class PropertyQueryDto {
   @IsOptional()
   @IsString()
   agentId?: string;
+
+  @ApiPropertyOptional({ description: 'Page number (1-based)', default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  page?: number;
+
+  @ApiPropertyOptional({ description: 'Results per page (max 100)', default: 50 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  limit?: number;
 }

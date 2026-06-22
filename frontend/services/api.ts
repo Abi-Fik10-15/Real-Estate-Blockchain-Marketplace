@@ -39,7 +39,10 @@ export const api = {
   }): Promise<{ message: string }> {
     const { data: res } = await apiClient.post<{ message: string }>(
       "/auth/register",
-      data
+      {
+        ...data,
+        email: data.email.trim().toLowerCase(),
+      }
     );
     return res;
   },
@@ -210,6 +213,11 @@ export const api = {
   async getUsers(): Promise<User[]> {
     const { data } = await apiClient.get<ApiUser[]>("/users");
     return data.map(mapUser);
+  },
+
+  async setUserStatus(id: string, status: "active" | "suspended"): Promise<User> {
+    const { data } = await apiClient.patch<ApiUser>(`/users/${id}/status`, { status });
+    return mapUser(data);
   },
 
   async getInquiries(): Promise<Inquiry[]> {

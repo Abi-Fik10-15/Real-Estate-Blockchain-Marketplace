@@ -57,10 +57,10 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
-      "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://images.unsplash.com https://source.unsplash.com https://res.cloudinary.com https://i.pravatar.cc https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org",
+      "font-src 'self' https://fonts.gstatic.com https://unpkg.com",
+      "img-src 'self' data: blob: https://images.unsplash.com https://source.unsplash.com https://res.cloudinary.com https://i.pravatar.cc https://*.basemaps.cartocdn.com https://*.tile.openstreetmap.org https://unpkg.com",
       `connect-src ${uniqueConnectSrc}`,
 
       "frame-ancestors 'none'",

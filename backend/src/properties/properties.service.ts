@@ -65,7 +65,9 @@ export class PropertiesService {
         break;
     }
 
-    return this.propertyModel.find(filter).sort(sort).limit(200).lean({ virtuals: true }).exec() as unknown as Promise<PropertyDocument[]>;
+    const limit = Math.min(query.limit ?? 50, 100);
+    const skip = ((query.page ?? 1) - 1) * limit;
+    return this.propertyModel.find(filter).sort(sort).skip(skip).limit(limit).lean({ virtuals: true }).exec() as unknown as Promise<PropertyDocument[]>;
   }
 
   async findById(id: string): Promise<PropertyDocument> {
@@ -120,7 +122,7 @@ export class PropertiesService {
       },
       ownerId: user._id,
       ownerWallet: dto.ownerWallet ?? user.walletAddress,
-      status: dto.status ?? 'pending',
+      status: 'pending',
     });
   }
 

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
@@ -67,6 +67,21 @@ export class UsersService {
       .findByIdAndUpdate(id, patch, { new: true })
       .select('-passwordHash')
       .exec();
+  }
+
+  async setStatus(
+    id: string,
+    status: 'active' | 'suspended',
+  ): Promise<UserDocument> {
+    if (!['active', 'suspended'].includes(status)) {
+      throw new BadRequestException('Status must be "active" or "suspended"');
+    }
+    const user = await this.userModel
+      .findByIdAndUpdate(id, { status }, { new: true })
+      .select('-passwordHash')
+      .exec();
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 
   async getSavedPropertyIds(userId: string): Promise<string[]> {

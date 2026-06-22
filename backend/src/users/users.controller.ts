@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -34,8 +36,23 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Patch(':id/status')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Suspend or reactivate a user account (admin)' })
+  @ApiParam({ name: 'id', description: 'User id' })
+  setStatus(
+    @Param('id') id: string,
+    @Body('status') status: 'active' | 'suspended',
+  ) {
+    return this.usersService.setStatus(id, status);
+  }
+
   @Get('agents')
-  @ApiOperation({ summary: 'List active agents (public)' })
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'List active agents (authenticated users only)' })
   findAgents() {
     return this.usersService.findAgents();
   }

@@ -27,8 +27,8 @@ export class TransactionsService {
     private readonly inquiriesService: InquiriesService,
   ) {}
 
-  findAll(): Promise<TransactionDocument[]> {
-    return this.transactionModel.find().sort({ createdAt: -1 }).exec();
+  findAll(limit = 100, skip = 0): Promise<TransactionDocument[]> {
+    return this.transactionModel.find().sort({ createdAt: -1 }).skip(skip).limit(limit).exec();
   }
 
   findByUser(userId: string): Promise<TransactionDocument[]> {
@@ -59,14 +59,32 @@ export class TransactionsService {
     return tx;
   }
 
-  async markEscrow(id: string, txHash: string): Promise<TransactionDocument> {
-    const tx = await this.transactionModel
-      .findByIdAndUpdate(id, { status: 'escrow', txHash }, { new: true })
-      .exec();
+  async markEscrow(
+    id: string,
+    txHash: string,
+    callerId: string,
+  ): Promise<TransactionDocument> {
+    const tx = await this.transactionModel.findById(id).exec();
 
     if (!tx) {
       throw new NotFoundException('Transaction not found');
     }
+
+    if (tx.buyerId.toString() !== callerId) {
+      throw new ForbiddenException('Only the buyer can fund escrow for this transaction');
+    }
+
+    if (tx.status !== 'initiated') {
+      throw new BadRequestException('Transaction is not in a state that accepts escrow funding');
+    }
+
+    if (!txHash) {
+      throw new BadRequestException('txHash is required to record the escrow deposit');
+    }
+
+    tx.status = 'escrow';
+    tx.txHash = txHash;
+    await tx.save();
 
     this.notifications.emitEscrowDeposited(
       tx.buyerId.toString(),
@@ -203,14 +221,26 @@ export class TransactionsService {
     return tx;
   }
 
-  async update(id: string, dto: UpdateTransactionDto): Promise<TransactionDocument> {
-    const tx = await this.transactionModel
-      .findByIdAndUpdate(id, dto, { new: true })
-      .exec();
+  async update(
+    id: string,
+    dto: UpdateTransactionDto,
+    callerId: string,
+  ): Promise<TransactionDocument> {
+    const tx = await this.transactionModel.findById(id).exec();
 
     if (!tx) {
       throw new NotFoundException('Transaction not found');
     }
-    return tx;
+
+    if (
+      tx.buyerId.toString() !== callerId &&
+      tx.sellerId.toString() !== callerId
+    ) {
+      throw new ForbiddenException('You are not a participant in this transaction');
+    }
+
+    // Only admin can force-set terminal states directly via PATCH
+    Object.assign(tx, dto);
+    return tx.save();
   }
 }

@@ -25,6 +25,7 @@ export default function AdminUsersPage() {
   const users = useUserStore((s) => s.users);
   const toggleStatus = useUserStore((s) => s.toggleStatus);
   const [query, setQuery] = React.useState("");
+  const [pendingId, setPendingId] = React.useState<string | null>(null);
 
   const filtered = users.filter(
     (u) =>
@@ -126,16 +127,29 @@ export default function AdminUsersPage() {
                         <Button
                           size="sm"
                           variant={u.status === "active" ? "outline" : "default"}
-                          onClick={() => {
-                            toggleStatus(u.id);
-                            toast.success(
-                              u.status === "active"
-                                ? "Account suspended"
-                                : "Account reactivated",
-                            );
+                          disabled={pendingId === u.id}
+                          onClick={async () => {
+                            const action = u.status === "active" ? "Suspend" : "Activate";
+                            setPendingId(u.id);
+                            try {
+                              await toggleStatus(u.id);
+                              toast.success(
+                                u.status === "active"
+                                  ? "Account suspended"
+                                  : "Account reactivated",
+                              );
+                            } catch {
+                              toast.error(`Failed to ${action.toLowerCase()} account`);
+                            } finally {
+                              setPendingId(null);
+                            }
                           }}
                         >
-                          {u.status === "active" ? "Suspend" : "Activate"}
+                          {pendingId === u.id
+                            ? "Saving…"
+                            : u.status === "active"
+                            ? "Suspend"
+                            : "Activate"}
                         </Button>
                       </TableCell>
                     </TableRow>

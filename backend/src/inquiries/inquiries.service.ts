@@ -17,8 +17,8 @@ export class InquiriesService {
     private readonly notifications: NotificationsService,
   ) {}
 
-  findAll(): Promise<InquiryDocument[]> {
-    return this.inquiryModel.find().sort({ createdAt: -1 }).exec();
+  findAll(limit = 100, skip = 0): Promise<InquiryDocument[]> {
+    return this.inquiryModel.find().sort({ createdAt: -1 }).skip(skip).limit(limit).exec();
   }
 
   async findForUser(user: UserDocument): Promise<InquiryDocument[]> {

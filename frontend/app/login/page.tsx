@@ -105,7 +105,15 @@ export default function LoginPage() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form
+          method="post"
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSubmit(onSubmit)(e);
+          }}
+          className="space-y-5"
+        >
           <div className="space-y-1.5">
             <Label htmlFor="email">Email address</Label>
             <Input
@@ -121,12 +129,6 @@ export default function LoginPage() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <Link
-                href="/forgot-password"
-                className="text-xs text-primary hover:underline"
-              >
-                Forgot password?
-              </Link>
             </div>
             <Input
               id="password"

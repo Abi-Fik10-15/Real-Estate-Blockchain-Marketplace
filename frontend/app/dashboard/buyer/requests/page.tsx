@@ -92,9 +92,10 @@ export default function BuyerRequestsPage() {
     }
   }, [user?.id, fetchMine]);
 
+  // Show nothing until user is resolved to avoid briefly exposing other users' inquiries
   const myInquiries = user?.id
     ? allInquiries.filter((i) => i.buyerId === user.id)
-    : allInquiries;
+    : [];
 
   const [activeTab, setActiveTab] = React.useState<TabValue>("all");
 

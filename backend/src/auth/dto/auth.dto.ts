@@ -22,7 +22,7 @@ export class RegisterDto {
   @MinLength(8)
   password!: string;
 
-  @IsEnum(['buyer', 'owner', 'agent', 'admin'])
+  @IsEnum(['buyer', 'owner', 'agent'])
   role!: UserRole;
 
   @IsOptional()
