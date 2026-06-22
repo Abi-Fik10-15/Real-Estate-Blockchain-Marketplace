@@ -34,9 +34,16 @@ const STATUS_COLOR: Record<ListingStatus, string> = {
 export default function AgentPropertiesPage() {
   const user = useAuthStore((s) => s.user);
   const userId = user?.id;
+  const fetchByAgent = usePropertyStore((s) => s.fetchByAgent);
   const properties = usePropertyStore((s) => s.properties);
   const assigned = userId ? properties.filter((p) => p.agentId === userId) : [];
   const setStatus = usePropertyStore((s) => s.setStatus);
+
+  React.useEffect(() => {
+    if (userId) {
+      void fetchByAgent(userId);
+    }
+  }, [userId, fetchByAgent]);
 
   const activeCount = assigned.filter((p) => p.status === "active").length;
   const verifiedCount = assigned.filter((p) => p.verification.status === "verified").length;
@@ -149,7 +156,7 @@ export default function AgentPropertiesPage() {
                       )}
 
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" asChild>
-                        <Link href={`/property/${p.id}`}>View</Link>
+                        <Link href={`/dashboard/agent/properties/${p.id}`}>View</Link>
                       </Button>
                     </div>
                   </div>

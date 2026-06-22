@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -12,8 +13,10 @@ import {
   UpdatePropertyDto,
 } from './dto/property.dto';
 import type { UserDocument } from '../users/schemas/user.schema';
+import { UsersService } from '../users/users.service';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { resolveDocumentId } from '../common/utils/document-id';
+import { resolveUserId } from '../common/utils/resolve-user-id';
 
 @Injectable()
 export class PropertiesService {
@@ -21,6 +24,7 @@ export class PropertiesService {
     @InjectModel(Property.name)
     private readonly propertyModel: Model<PropertyDocument>,
     private readonly blockchainService: BlockchainService,
+    private readonly usersService: UsersService,
   ) {}
 
   async findAll(query: PropertyQueryDto): Promise<PropertyDocument[]> {
@@ -88,6 +92,13 @@ export class PropertiesService {
     return this.propertyModel.find({ ownerId: new Types.ObjectId(ownerId) }).lean({ virtuals: true }).exec() as unknown as Promise<PropertyDocument[]>;
   }
 
+  async findByAgent(agentId: string): Promise<PropertyDocument[]> {
+    return this.propertyModel
+      .find({ agentId: new Types.ObjectId(agentId) })
+      .lean({ virtuals: true })
+      .exec() as unknown as Promise<PropertyDocument[]>;
+  }
+
   async findIdsByOwner(ownerId: string): Promise<Types.ObjectId[]> {
     const properties = await this.propertyModel
       .find({ ownerId: new Types.ObjectId(ownerId) })
@@ -114,7 +125,16 @@ export class PropertiesService {
       ? dto.location.country
       : addressCountry;
 
-    return this.propertyModel.create({
+    let agentId: Types.ObjectId | undefined;
+    let agentWallet = '';
+
+    if (dto.agentId) {
+      const agent = await this.resolveAssignableAgent(dto.agentId);
+      agentId = new Types.ObjectId(agent.id ?? resolveUserId(agent));
+      agentWallet = agent.walletAddress ?? '';
+    }
+
+    const payload: Record<string, unknown> = {
       ...dto,
       location: {
         ...dto.location,
@@ -123,7 +143,74 @@ export class PropertiesService {
       ownerId: user._id,
       ownerWallet: dto.ownerWallet ?? user.walletAddress,
       status: 'pending',
-    });
+    };
+
+    delete payload.agentId;
+
+    if (agentId) {
+      payload.agentId = agentId;
+      payload.agentWallet = agentWallet;
+    }
+
+    return this.propertyModel.create(payload);
+  }
+
+  async assignAgent(
+    id: string,
+    user: UserDocument,
+    agentId: string,
+  ): Promise<{ property: PropertyDocument; previousAgentId: string | null }> {
+    const property = await this.findById(id);
+    this.assertCanAssignAgent(property, user);
+
+    const agent = await this.resolveAssignableAgent(agentId);
+    const previousAgentId = property.agentId ? String(property.agentId) : null;
+
+    const updated = await this.propertyModel
+      .findByIdAndUpdate(
+        resolveDocumentId(id),
+        {
+          $set: {
+            agentId: new Types.ObjectId(resolveUserId(agent)),
+            agentWallet: agent.walletAddress ?? '',
+          },
+        },
+        { new: true },
+      )
+      .exec();
+
+    if (!updated) {
+      throw new NotFoundException('Property not found');
+    }
+
+    return { property: updated, previousAgentId };
+  }
+
+  async removeAgent(
+    id: string,
+    user: UserDocument,
+  ): Promise<{ property: PropertyDocument; previousAgentId: string | null }> {
+    const property = await this.findById(id);
+    this.assertCanAssignAgent(property, user);
+
+    const previousAgentId = property.agentId ? String(property.agentId) : null;
+
+    const updated = await this.propertyModel
+      .findByIdAndUpdate(
+        resolveDocumentId(id),
+        {
+          $set: { agentWallet: '' },
+          $unset: { agentId: 1 },
+        },
+        { new: true },
+      )
+      .exec();
+
+    if (!updated) {
+      throw new NotFoundException('Property not found');
+    }
+
+    return { property: updated, previousAgentId };
   }
 
   async update(
@@ -134,6 +221,15 @@ export class PropertiesService {
     const property = await this.findById(id);
     this.assertCanManage(property, user);
 
+    const userId = resolveUserId(user);
+    const isOwner = String(property.ownerId) === userId;
+    const isAdmin = user.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      delete dto.agentId;
+      delete dto.agentWallet;
+    }
+
     const set: Record<string, unknown> = { ...dto };
     const unset: Record<string, 1> = {};
 
@@ -143,6 +239,12 @@ export class PropertiesService {
     }
     if ('agentWallet' in dto && dto.agentWallet === '') {
       set.agentWallet = '';
+    }
+
+    if ('agentId' in set && set.agentId) {
+      const agent = await this.resolveAssignableAgent(String(set.agentId));
+      set.agentId = new Types.ObjectId(resolveUserId(agent));
+      set.agentWallet = agent.walletAddress ?? '';
     }
 
     const updateOps: Record<string, unknown> = {};
@@ -301,8 +403,37 @@ export class PropertiesService {
     };
   }
 
+  private assertCanAssignAgent(property: PropertyDocument, user: UserDocument) {
+    const userId = resolveUserId(user);
+    const isOwner = String(property.ownerId) === userId;
+    const isAdmin = user.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('Only the property owner can manage agent assignments');
+    }
+  }
+
+  private async resolveAssignableAgent(agentId: string): Promise<UserDocument> {
+    if (!Types.ObjectId.isValid(agentId)) {
+      throw new BadRequestException('Invalid agent id');
+    }
+
+    const agent = await this.usersService.findById(agentId);
+    if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+    if (agent.role !== 'agent') {
+      throw new BadRequestException('Selected user is not an agent');
+    }
+    if (agent.status !== 'active') {
+      throw new BadRequestException('Agent account is not active');
+    }
+
+    return agent;
+  }
+
   private assertCanManage(property: PropertyDocument, user: UserDocument) {
-    const userId = String((user as any)._id ?? user.id);
+    const userId = resolveUserId(user);
     const isOwner = String(property.ownerId) === userId;
     const isAdmin = user.role === 'admin';
     const isAgent =

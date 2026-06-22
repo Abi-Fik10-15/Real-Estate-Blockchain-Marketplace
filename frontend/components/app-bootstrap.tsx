@@ -18,10 +18,19 @@ export function AppBootstrap() {
   const syncSaved = useSavedStore((s) => s.syncWithServer);
 
   React.useEffect(() => {
-    // Only fetch properties when authenticated — skips /login and /register
     if (!token) return;
     void fetchProperties();
   }, [token, fetchProperties]);
+
+  React.useEffect(() => {
+    if (!token || !user) return;
+
+    if (user.role === "owner") {
+      void usePropertyStore.getState().fetchByOwner(user.id);
+    } else if (user.role === "agent") {
+      void usePropertyStore.getState().fetchByAgent(user.id);
+    }
+  }, [token, user]);
 
   React.useEffect(() => {
     if (!token || !user) return;

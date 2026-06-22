@@ -54,6 +54,53 @@ export class MailService {
     }
   }
 
+  async sendAgentInviteEmail(opts: {
+    to: string;
+    ownerName: string;
+    registerUrl: string;
+    message?: string;
+  }): Promise<void> {
+    const from = this.config.smtpFrom;
+    const subject = `${opts.ownerName} invited you to join ChainEstate as an agent`;
+    const note = opts.message
+      ? `<p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.6"><strong>Message from ${opts.ownerName}:</strong><br>${opts.message.replace(/</g, '&lt;')}</p>`
+      : '';
+
+    const html = `
+<!DOCTYPE html>
+<html><body style="font-family:Segoe UI,Arial,sans-serif;background:#f4f4f5;padding:24px">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px">
+    <h2 style="color:#111827;margin-top:0">You're invited to ChainEstate</h2>
+    <p style="color:#6b7280;line-height:1.6">${opts.ownerName} invited you to register as a <strong>property agent</strong> on ChainEstate.</p>
+    ${note}
+    <p style="text-align:center;margin:28px 0">
+      <a href="${opts.registerUrl}" style="display:inline-block;padding:12px 28px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">Create agent account</a>
+    </p>
+    <p style="word-break:break-all;font-size:12px;color:#2563eb">${opts.registerUrl}</p>
+  </div>
+</body></html>`;
+
+    if (!this.resend) {
+      this.logger.log(
+        `[DEV] Agent invite → ${opts.to}\n  Register: ${opts.registerUrl}`,
+      );
+      return;
+    }
+
+    const { error } = await this.resend.emails.send({
+      from,
+      to: opts.to,
+      subject,
+      html,
+      text: `${opts.ownerName} invited you to join ChainEstate as an agent.\n\n${opts.registerUrl}`,
+    });
+
+    if (error) {
+      this.logger.error(`Agent invite failed for ${opts.to}: ${error.message}`);
+      this.logger.log(`[DEV FALLBACK] Agent register link:\n  ${opts.registerUrl}`);
+    }
+  }
+
   private buildVerificationHtml(name: string, verifyUrl: string): string {
     return `
 <!DOCTYPE html>

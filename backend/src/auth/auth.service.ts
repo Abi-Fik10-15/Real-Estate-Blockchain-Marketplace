@@ -13,6 +13,7 @@ import { MailService } from '../mail/mail.service';
 import { LoginDto, RegisterDto, UpdateProfileDto } from './dto/auth.dto';
 import type { UserDocument } from '../users/schemas/user.schema';
 import { AppConfigService } from '../config/app-config.service';
+import { resolveUserId } from '../common/utils/resolve-user-id';
 
 const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -122,8 +123,9 @@ export class AuthService {
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     if (dto.email) {
+      dto.email = dto.email.trim().toLowerCase();
       const existing = await this.usersService.findByEmail(dto.email);
-      if (existing && existing.id !== userId) {
+      if (existing && resolveUserId(existing) !== userId) {
         throw new ConflictException('Email already in use');
       }
     }

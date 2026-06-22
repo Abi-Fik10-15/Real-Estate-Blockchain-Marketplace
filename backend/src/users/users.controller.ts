@@ -6,7 +6,10 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
@@ -21,6 +24,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { resolveUserId } from '../common/utils/resolve-user-id';
 import type { UserDocument } from './schemas/user.schema';
+import { InviteAgentDto } from './dto/invite-agent.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -49,12 +53,42 @@ export class UsersController {
     return this.usersService.setStatus(id, status);
   }
 
+  @Get('agents/lookup')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('owner', 'admin')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Look up an active agent by email' })
+  async lookupAgent(@Query('email') email: string) {
+    if (!email?.trim()) {
+      throw new BadRequestException('Email is required');
+    }
+    const agent = await this.usersService.lookupAgentByEmail(email);
+    if (!agent) {
+      throw new NotFoundException('No active agent found with that email');
+    }
+    return agent;
+  }
+
+  @Post('agents/invite')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('owner', 'admin')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Invite someone to register as an agent' })
+  inviteAgent(
+    @CurrentUser() user: UserDocument,
+    @Body() dto: InviteAgentDto,
+  ) {
+    return this.usersService.inviteAgent(user, dto.email, dto.message);
+  }
+
   @Get('agents')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'List active agents (authenticated users only)' })
-  findAgents() {
-    return this.usersService.findAgents();
+  findAgents(@Query('verified') verified?: string) {
+    return this.usersService.findAgents({
+      verifiedOnly: verified === 'true',
+    });
   }
 
   @Get('saved')

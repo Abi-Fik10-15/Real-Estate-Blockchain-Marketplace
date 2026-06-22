@@ -5,7 +5,9 @@ export type NotificationEvent =
   | 'visit_request'
   | 'escrow_deposited'
   | 'transaction_completed'
-  | 'property_verified';
+  | 'property_verified'
+  | 'agent_assigned'
+  | 'agent_removed';
 
 @Injectable()
 export class NotificationsService {
@@ -58,6 +60,42 @@ export class NotificationsService {
       propertyId,
       title,
       message: `Listing "${title}" has been verified by an administrator`,
+    });
+  }
+
+  emitAgentAssigned(
+    agentId: string,
+    ownerId: string,
+    propertyId: string,
+    title: string,
+  ) {
+    const payload = {
+      propertyId,
+      title,
+      message: `You have been assigned to manage "${title}"`,
+    };
+    this.gateway.emitToUser(agentId, 'agent_assigned', payload);
+    this.gateway.emitToUser(ownerId, 'agent_assigned', {
+      ...payload,
+      message: `An agent has been assigned to "${title}"`,
+    });
+  }
+
+  emitAgentRemoved(
+    agentId: string,
+    ownerId: string,
+    propertyId: string,
+    title: string,
+  ) {
+    const payload = {
+      propertyId,
+      title,
+      message: `You are no longer assigned to "${title}"`,
+    };
+    this.gateway.emitToUser(agentId, 'agent_removed', payload);
+    this.gateway.emitToUser(ownerId, 'agent_removed', {
+      ...payload,
+      message: `The agent has been removed from "${title}"`,
     });
   }
 }

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { AuthSplitShell } from "@/components/auth/auth-shell";
+import { SafeForm } from "@/components/auth/safe-form";
 import { useAuthStore } from "@/store/auth-store";
 import { api } from "@/services/api";
 import { registerSchema, type RegisterValues } from "@/lib/validations";
@@ -124,18 +125,54 @@ function CheckEmailState({ email }: { email: string }) {
 }
 
 export default function RegisterPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <AuthSplitShell>
+          <div className="flex min-h-[320px] items-center justify-center text-sm text-muted-foreground">
+            Loading…
+          </div>
+        </AuthSplitShell>
+      }
+    >
+      <RegisterPageContent />
+    </React.Suspense>
+  );
+}
+
+function RegisterPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const registerUser = useAuthStore((s) => s.register);
+
+  const inviteRole = searchParams.get("role");
+  const inviteEmail = searchParams.get("email") ?? "";
 
   const {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: "owner" },
+    defaultValues: {
+      role:
+        inviteRole === "agent" || inviteRole === "owner" || inviteRole === "buyer"
+          ? inviteRole
+          : "owner",
+      email: inviteEmail,
+    },
   });
+
+  React.useEffect(() => {
+    if (inviteRole === "agent" || inviteRole === "owner" || inviteRole === "buyer") {
+      setValue("role", inviteRole);
+    }
+    if (inviteEmail) {
+      setValue("email", inviteEmail);
+    }
+  }, [inviteRole, inviteEmail, setValue]);
 
   const onSubmit = async (values: RegisterValues) => {
     try {
@@ -186,11 +223,8 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            <form
-              method="post"
-              noValidate
+            <SafeForm
               onSubmit={(e) => {
-                e.preventDefault();
                 void handleSubmit(onSubmit)(e);
               }}
               className="space-y-5"
@@ -319,7 +353,7 @@ export default function RegisterPage() {
                 By creating an account you agree to use ChainEstate for verified
                 property discovery and blockchain-backed transaction workflows.
               </p>
-            </form>
+            </SafeForm>
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}

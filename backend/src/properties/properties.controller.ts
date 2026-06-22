@@ -33,12 +33,14 @@ import {
   CreatePropertyDto,
   PropertyQueryDto,
   UpdatePropertyDto,
+  AssignAgentDto,
 } from './dto/property.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { UserDocument } from '../users/schemas/user.schema';
 import { NotificationsService } from '../notifications/notifications.service';
+import { resolveUserId } from '../common/utils/resolve-user-id';
 
 @ApiTags('properties')
 @Controller('properties')
@@ -68,6 +70,15 @@ export class PropertiesController {
   @ApiResponse({ status: 200, description: 'Return ownership records' })
   getOwnershipRecords() {
     return this.propertiesService.getOwnershipRecords();
+  }
+
+  @Get('mine/assigned')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('agent')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Get properties assigned to the current agent' })
+  findMineAssigned(@CurrentUser() user: UserDocument) {
+    return this.propertiesService.findByAgent(resolveUserId(user));
   }
 
   @Get('owner/:ownerId')
@@ -181,6 +192,68 @@ export class PropertiesController {
   @ApiResponse({ status: 244, description: 'Property deleted' })
   async delete(@Param('id') id: string, @CurrentUser() user: UserDocument) {
     await this.propertiesService.delete(id, user);
+  }
+
+  @Post(':id/agent')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('owner', 'admin')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Assign an agent to a property listing' })
+  @ApiResponse({ status: 200, description: 'Agent assigned' })
+  async assignAgent(
+    @Param('id') id: string,
+    @CurrentUser() user: UserDocument,
+    @Body() dto: AssignAgentDto,
+  ) {
+    const { property, previousAgentId } = await this.propertiesService.assignAgent(
+      id,
+      user,
+      dto.agentId,
+    );
+    const propertyOwnerId = String(property.ownerId);
+    const agentId = String(property.agentId);
+
+    if (previousAgentId && previousAgentId !== agentId) {
+      this.notifications.emitAgentRemoved(
+        previousAgentId,
+        propertyOwnerId,
+        property.id,
+        property.title,
+      );
+    }
+
+    this.notifications.emitAgentAssigned(
+      agentId,
+      propertyOwnerId,
+      property.id,
+      property.title,
+    );
+
+    return property;
+  }
+
+  @Delete(':id/agent')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('owner', 'admin')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Remove the assigned agent from a property listing' })
+  @ApiResponse({ status: 200, description: 'Agent removed' })
+  async removeAgent(
+    @Param('id') id: string,
+    @CurrentUser() user: UserDocument,
+  ) {
+    const { property, previousAgentId } = await this.propertiesService.removeAgent(id, user);
+
+    if (previousAgentId) {
+      this.notifications.emitAgentRemoved(
+        previousAgentId,
+        String(property.ownerId),
+        property.id,
+        property.title,
+      );
+    }
+
+    return property;
   }
 
   @Patch(':id/approve')

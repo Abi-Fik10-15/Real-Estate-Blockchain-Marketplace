@@ -16,6 +16,10 @@ export class SeedService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    await this.ensureDemoData();
+  }
+
+  async ensureDemoData(): Promise<void> {
     this.logger.log('Ensuring demo users exist…');
 
     // Check if demo users already exist before hashing (skips bcrypt on warm boots)

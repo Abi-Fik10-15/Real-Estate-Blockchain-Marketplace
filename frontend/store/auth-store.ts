@@ -95,8 +95,22 @@ export const useAuthStore = create<AuthState>()(
       },
 
       updateUser: async (patch) => {
-        const user = await api.updateProfile(patch);
-        set({ user });
+        try {
+          const user = await api.updateProfile({
+            ...patch,
+            email: patch.email?.trim().toLowerCase(),
+          });
+          set({ user });
+        } catch (error) {
+          let message = "Failed to update profile";
+          if (typeof error === "object" && error !== null && "response" in error) {
+            const apiMsg = (error as { response?: { data?: { message?: string | string[] } } })
+              .response?.data?.message;
+            if (typeof apiMsg === "string") message = apiMsg;
+            else if (Array.isArray(apiMsg) && apiMsg[0]) message = apiMsg[0];
+          }
+          throw new Error(message);
+        }
       },
 
       setUser: (user: User) => {

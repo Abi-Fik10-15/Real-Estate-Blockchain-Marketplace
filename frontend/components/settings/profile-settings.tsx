@@ -113,7 +113,11 @@ export function ProfileSettings({
 
     setSaving(true);
     try {
-      await updateUser({ name: name.trim(), email: email.trim(), phone: phone.trim() });
+      await updateUser({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+      });
       toast.success("Profile saved");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save profile");

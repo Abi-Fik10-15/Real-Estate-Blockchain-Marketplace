@@ -12,6 +12,7 @@ import {
   MapPin,
   PlusCircle,
   Upload,
+  UserCog,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -37,6 +38,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LocationPicker } from "@/components/property/location-picker";
+import { SafeForm } from "@/components/auth/safe-form";
+import { useAgents } from "@/hooks/use-properties";
 import { usePropertyStore } from "@/store/property-store";
 import { useAuthStore } from "@/store/auth-store";
 import { api } from "@/services/api";
@@ -79,6 +82,8 @@ export default function CreatePropertyPage() {
     Array<{ id: string; name: string; progress: number }>
   >([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [selectedAgentId, setSelectedAgentId] = React.useState("");
+  const { data: agents = [] } = useAgents();
 
   const {
     register,
@@ -190,10 +195,14 @@ export default function CreatePropertyPage() {
     try {
       const wallet =
         user.walletAddress || "0x0000000000000000000000000000000000000000";
-      const property = await createProperty(values, {
-        id: user.id,
-        wallet,
-      });
+      const property = await createProperty(
+        values,
+        {
+          id: user.id,
+          wallet,
+        },
+        selectedAgentId ? { agentId: selectedAgentId } : undefined
+      );
 
       try {
         const mint = await api.mintPropertyToken(
@@ -216,10 +225,15 @@ export default function CreatePropertyPage() {
       router.push("/dashboard/owner/properties");
     } catch (error) {
       console.error("Create property failed:", error);
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to create property. Check the console for details.";
+      let message = "Failed to create property. Check the console for details.";
+      if (typeof error === "object" && error !== null && "response" in error) {
+        const apiMsg = (error as { response?: { data?: { message?: string | string[] } } })
+          .response?.data?.message;
+        if (typeof apiMsg === "string") message = apiMsg;
+        else if (Array.isArray(apiMsg) && apiMsg[0]) message = apiMsg[0];
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
       toast.error(message);
     } finally {
       setPending(false);
@@ -276,11 +290,8 @@ export default function CreatePropertyPage() {
           </p>
         </div>
 
-        <form
-          method="post"
-          noValidate
+        <SafeForm
           onSubmit={(e) => {
-            e.preventDefault();
             void handleSubmit(onSubmit)(e);
           }}
           className="space-y-5"
@@ -609,6 +620,58 @@ export default function CreatePropertyPage() {
             </Card>
           </div>
 
+          <div>
+            <SectionLabel>Agent (optional)</SectionLabel>
+            <Card className="mt-2 border-border/60">
+              <CardHeader className="border-b border-border/60 pb-3">
+                <CardTitle className="flex items-center gap-2 text-sm text-primary">
+                  <UserCog className="h-4 w-4" />
+                  Assign Agent
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Optionally assign an agent now, or do it later from Agent Management.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {agents.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No active agents registered yet. You can assign one after creating the listing.
+                  </p>
+                ) : (
+                  <div className="max-w-sm space-y-2">
+                    <Label htmlFor="create-agent">Agent</Label>
+                    <Select
+                      value={selectedAgentId || undefined}
+                      onValueChange={setSelectedAgentId}
+                    >
+                      <SelectTrigger id="create-agent">
+                        <SelectValue placeholder="No agent (assign later)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {agents.map((agent) => (
+                          <SelectItem key={agent.id} value={agent.id}>
+                            {agent.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedAgentId && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-0 text-xs text-muted-foreground"
+                        onClick={() => setSelectedAgentId("")}
+                      >
+                        Clear selection
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
           {/* ── Actions ───────────────────────────────────────────── */}
           <div className="flex flex-wrap items-center justify-end gap-2 rounded-xl border border-border/60 bg-card px-5 py-4">
             <Button
@@ -633,7 +696,7 @@ export default function CreatePropertyPage() {
               )}
             </Button>
           </div>
-        </form>
+        </SafeForm>
 
       </div>
     </DashboardShell>
