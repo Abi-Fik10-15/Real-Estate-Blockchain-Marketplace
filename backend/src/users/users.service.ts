@@ -1,12 +1,16 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
+import { MailService } from '../mail/mail.service';
+import { AppConfigService } from '../config/app-config.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly mailService: MailService,
+    private readonly config: AppConfigService,
   ) {}
 
   create(data: Partial<User>): Promise<UserDocument> {
@@ -17,12 +21,62 @@ export class UsersService {
     return this.userModel.find().select('-passwordHash').lean({ virtuals: true }).exec() as unknown as Promise<UserDocument[]>;
   }
 
-  findAgents(): Promise<UserDocument[]> {
+  findAgents(options?: { verifiedOnly?: boolean }): Promise<UserDocument[]> {
+    const filter: Record<string, unknown> = { role: 'agent', status: 'active' };
+    if (options?.verifiedOnly) {
+      filter.kycStatus = 'verified';
+    }
+
     return this.userModel
-      .find({ role: 'agent', status: 'active' })
+      .find(filter)
       .select('-passwordHash')
+      .sort({ name: 1 })
       .lean({ virtuals: true })
       .exec() as unknown as Promise<UserDocument[]>;
+  }
+
+  async lookupAgentByEmail(email: string): Promise<UserDocument | null> {
+    const user = await this.findByEmail(email.trim().toLowerCase());
+    if (!user || user.role !== 'agent' || user.status !== 'active') {
+      return null;
+    }
+    return user;
+  }
+
+  async inviteAgent(
+    owner: UserDocument,
+    email: string,
+    message?: string,
+  ): Promise<{ status: 'existing' | 'invited'; message: string; user?: UserDocument }> {
+    const normalized = email.trim().toLowerCase();
+    const existing = await this.findByEmail(normalized);
+
+    if (existing) {
+      if (existing.role === 'agent' && existing.status === 'active') {
+        return {
+          status: 'existing',
+          message: 'This email is already registered as an active agent.',
+          user: existing,
+        };
+      }
+      throw new ConflictException(
+        'This email belongs to an account that is not an active agent.',
+      );
+    }
+
+    const registerUrl = `${this.config.frontendPublicUrl}/register?role=agent&email=${encodeURIComponent(normalized)}`;
+
+    await this.mailService.sendAgentInviteEmail({
+      to: normalized,
+      ownerName: owner.name,
+      registerUrl,
+      message,
+    });
+
+    return {
+      status: 'invited',
+      message: 'Invitation sent. They can register using the agent signup link.',
+    };
   }
 
   findByEmail(email: string): Promise<UserDocument | null> {

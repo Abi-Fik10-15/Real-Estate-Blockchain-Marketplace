@@ -24,6 +24,7 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, UpdateProfileDto } from './dto/auth.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { resolveUserId } from '../common/utils/resolve-user-id';
 import type { UserDocument } from '../users/schemas/user.schema';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
@@ -89,7 +90,7 @@ export class AuthController {
     @CurrentUser() user: UserDocument,
     @Body() dto: UpdateProfileDto,
   ) {
-    return this.authService.updateProfile(user.id, dto);
+    return this.authService.updateProfile(resolveUserId(user), dto);
   }
 
   @Post('avatar')
@@ -127,7 +128,7 @@ export class AuthController {
         file,
         'chainestate/avatars',
       );
-      const updatedUser = await this.authService.updateProfile(user.id, {
+      const updatedUser = await this.authService.updateProfile(resolveUserId(user), {
         avatar: upload.url,
       });
       return {

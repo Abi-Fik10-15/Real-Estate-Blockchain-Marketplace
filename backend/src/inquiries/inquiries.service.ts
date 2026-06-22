@@ -79,6 +79,15 @@ export class InquiriesService {
       buyer.name,
     );
 
+    if (property.agentId) {
+      this.notifications.emitVisitRequest(
+        property.agentId.toString(),
+        inquiry.id,
+        property.title,
+        buyer.name,
+      );
+    }
+
     return inquiry;
   }
 

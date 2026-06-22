@@ -143,4 +143,6 @@ export interface PropertyFilters {
   status: ListingStatus | "all";
   listingType: "all" | "sale" | "rent";
   sort: "newest" | "price_asc" | "price_desc" | "area_desc";
+  agentId?: string;
+  ownerId?: string;
 }

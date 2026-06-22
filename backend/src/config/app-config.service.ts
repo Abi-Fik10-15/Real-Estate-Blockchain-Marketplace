@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Wallet, ethers } from 'ethers';
 import { MongoMemoryServer } from 'mongodb-memory-server';
@@ -7,12 +7,27 @@ import mongoose from 'mongoose';
 const PLACEHOLDER_PATTERN =
   /your_|YOUR_|change-me|placeholder|example|xxx|<.*>/i;
 
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __chainestateMemoryMongo: MongoMemoryServer | undefined;
+}
+
+function getGlobalMemoryServer(): MongoMemoryServer | undefined {
+  return global.__chainestateMemoryMongo;
+}
+
+function setGlobalMemoryServer(server: MongoMemoryServer | undefined): void {
+  global.__chainestateMemoryMongo = server;
+}
+
 @Injectable()
-export class AppConfigService {
+export class AppConfigService implements OnApplicationShutdown {
   private readonly logger = new Logger(AppConfigService.name);
   private memoryMongoServer?: MongoMemoryServer;
+  private usingMemoryMongo = false;
 
-  constructor(private readonly config: ConfigService) { }
+  constructor(private readonly config: ConfigService) {}
 
   get port(): number {
     return this.config.get<number>('PORT', 3001);
@@ -33,12 +48,17 @@ export class AppConfigService {
     return this.getBooleanEnv('MONGODB_USE_MEMORY', false);
   }
 
+  get isUsingMemoryMongo(): boolean {
+    return this.usingMemoryMongo;
+  }
+
   async resolveMongoUri(): Promise<string> {
     if (this.nodeEnv === 'production') {
       return this.mongoUri;
     }
 
     if (this.useMemoryMongo) {
+      this.usingMemoryMongo = true;
       return this.getMemoryMongoUri(
         'MONGODB_USE_MEMORY=true is enabled for local development',
       );
@@ -48,9 +68,52 @@ export class AppConfigService {
       return this.mongoUri;
     }
 
+    this.usingMemoryMongo = true;
     return this.getMemoryMongoUri(
       `Cannot connect to MongoDB at ${this.mongoUri}; falling back to in-memory MongoDB`,
     );
+  }
+
+  /** Recreate in-memory MongoDB if the child process died (common on Windows dev). */
+  async ensureMemoryMongoAlive(): Promise<string> {
+    if (this.nodeEnv === 'production') {
+      return this.mongoUri;
+    }
+
+    if (!this.usingMemoryMongo && !this.useMemoryMongo) {
+      if (await this.canConnectToMongo(this.mongoUri)) {
+        return this.mongoUri;
+      }
+      this.usingMemoryMongo = true;
+    }
+
+    const server = this.memoryMongoServer ?? getGlobalMemoryServer();
+    if (server?.state === 'running') {
+      this.memoryMongoServer = server;
+      return server.getUri();
+    }
+
+    if (server && server.state !== 'new') {
+      await server.stop().catch(() => undefined);
+      setGlobalMemoryServer(undefined);
+      this.memoryMongoServer = undefined;
+    }
+
+    return this.getMemoryMongoUri(
+      'In-memory MongoDB was unavailable — starting a fresh instance',
+    );
+  }
+
+  async onApplicationShutdown(): Promise<void> {
+    const server = this.memoryMongoServer ?? getGlobalMemoryServer();
+    if (!server || server.state !== 'running') {
+      return;
+    }
+
+    await server.stop().catch(() => undefined);
+    setGlobalMemoryServer(undefined);
+    this.memoryMongoServer = undefined;
+    this.logger.log('In-memory MongoDB stopped');
   }
 
   private async canConnectToMongo(uri: string): Promise<boolean> {
@@ -68,18 +131,35 @@ export class AppConfigService {
   }
 
   private async getMemoryMongoUri(reason: string): Promise<string> {
-    if (!this.memoryMongoServer) {
-      this.logger.warn(reason);
-      this.memoryMongoServer = await MongoMemoryServer.create({
-        instance: {
-          dbName: this.getMongoDbName(),
-        },
-      });
-      this.logger.log(
-        `Using in-memory MongoDB for development: ${this.memoryMongoServer.getUri()}`,
-      );
+    const existing = this.memoryMongoServer ?? getGlobalMemoryServer();
+    if (existing?.state === 'running') {
+      this.memoryMongoServer = existing;
+      setGlobalMemoryServer(existing);
+      return existing.getUri();
     }
-    return this.memoryMongoServer.getUri();
+
+    if (existing && existing.state !== 'new') {
+      await existing.stop().catch(() => undefined);
+    }
+
+    this.logger.warn(reason);
+    const server = await MongoMemoryServer.create({
+      instance: {
+        dbName: this.getMongoDbName(),
+        ip: '127.0.0.1',
+        launchTimeout: 60_000,
+      },
+    });
+
+    this.memoryMongoServer = server;
+    setGlobalMemoryServer(server);
+    this.usingMemoryMongo = true;
+
+    this.logger.log(
+      `Using in-memory MongoDB for development: ${server.getUri()}`,
+    );
+
+    return server.getUri();
   }
 
   private getMongoDbName(): string {

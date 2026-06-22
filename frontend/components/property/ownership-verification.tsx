@@ -1,195 +1,90 @@
-"use client";
-
 import * as React from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { BadgeCheck, Clock, ExternalLink, Loader2, ShieldCheck } from "lucide-react";
-import { toast } from "sonner";
+import { BadgeCheck, Clock, ExternalLink, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { contractClient } from "@/lib/contract";
-import { api } from "@/services/api";
-import { usePropertyStore } from "@/store/property-store";
-import { useWalletStore } from "@/store/wallet-store";
 import { isOnChainTokenId, etherscanTxUrl, etherscanTokenUrl } from "@/lib/blockchain-utils";
 import { CONTRACT_ADDRESS } from "@/lib/constants";
-import { formatDateTime, shortenAddress } from "@/lib/utils";
+import { cn, formatDateTime, shortenAddress } from "@/lib/utils";
 import type { Property } from "@/types";
 
 export function OwnershipVerification({ property }: { property: Property }) {
-  const queryClient = useQueryClient();
-  const { wallet, connect, isConnecting } = useWalletStore();
-  const updateProperty = usePropertyStore((s) => s.updateProperty);
-
-  const [verifying, setVerifying] = React.useState(false);
-  const [verifiedAt, setVerifiedAt] = React.useState(property.verification.verifiedAt);
-  const [txHash, setTxHash] = React.useState(property.verification.txHash);
-
-  React.useEffect(() => {
-    setVerifiedAt(property.verification.verifiedAt);
-    setTxHash(property.verification.txHash);
-  }, [property]);
-
-  const handleVerify = async () => {
-    if (!wallet) {
-      try {
-        await connect();
-        toast.success("Wallet connected");
-      } catch {
-        toast.error("Wallet connection failed");
-      }
-      return;
-    }
-
-    setVerifying(true);
-    try {
-      const rawChainId = property.chainId;
-      const timestamp = new Date().toISOString();
-
-      // "EST-XXXXXX" IDs are display-only IDs generated from the MongoDB _id —
-      // they are NOT real on-chain tokens. Only a pure numeric ID means the
-      // property has actually been minted on Sepolia.
-      const isRealOnChainToken = /^\d+$/.test(rawChainId);
-
-      if (isRealOnChainToken) {
-        // ── Real on-chain path ───────────────────────────────────────────────
-        const tokenId = rawChainId;
-        const isOwner = await contractClient.verifyOwnership(tokenId, wallet.address);
-        if (!isOwner) {
-          let apiVerified = false;
-          try {
-            apiVerified = await api.verifyOwnershipOnChain(wallet.address, tokenId);
-          } catch (apiErr: unknown) {
-            const status = (apiErr as { response?: { status?: number } })?.response?.status;
-            if (status === 503) {
-              apiVerified = true; // blockchain service not configured — trust session
-            } else {
-              throw apiErr;
-            }
-          }
-          if (!apiVerified) {
-            throw new Error("On-chain owner does not match your connected wallet");
-          }
-        }
-        const onChain = await contractClient.getOnChainProperty(tokenId);
-        const recordHash = onChain ? `owner:${onChain.owner.slice(0, 10)}` : "verified";
-        setVerifiedAt(timestamp);
-        setTxHash(recordHash);
-        await updateProperty(property.id, {
-          ownerWallet: onChain?.owner ?? wallet.address,
-          verification: { status: "verified", verifiedAt: timestamp, txHash: recordHash },
-        });
-      } else {
-        // ── Off-chain / display-ID path ──────────────────────────────────────
-        // Property has no real blockchain token yet. Mark it as verified locally
-        // by updating the status to "active" (which the backend maps to "verified").
-        setVerifiedAt(timestamp);
-        setTxHash("verified");
-        await updateProperty(property.id, {
-          status: "active",
-        });
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["property", property.id] });
-      queryClient.invalidateQueries({ queryKey: ["properties"] });
-
-      toast.success("Ownership verified successfully");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Verification failed");
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-
   const isVerified = property.verification.status === "verified";
+  const { verifiedAt, txHash } = property.verification;
   const tokenExplorer =
     isOnChainTokenId(property.chainId) && CONTRACT_ADDRESS
       ? etherscanTokenUrl(CONTRACT_ADDRESS, property.chainId)
       : "";
 
   return (
-    <Card
-      className={
-        isVerified
-          ? "border-border/80 bg-success/5 shadow-none"
-          : "border-border/80 bg-amber-500/5 shadow-none"
-      }
-    >
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-2">
-            <span
-              className={
-                isVerified
-                  ? "rounded-md bg-success/10 p-1.5 text-success"
-                  : "rounded-md bg-amber-500/10 p-1.5 text-amber-600"
-              }
-            >
-              <ShieldCheck className="h-4 w-4" />
-            </span>
-            <span className="text-primary-600 font-semibold">Ownership Verification</span>
+    <Card className="border-border/60 bg-card shadow-none">
+      <CardHeader className="border-b border-border/40 px-4 pb-3 pt-4">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold text-primary">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/30 text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5" />
           </span>
-          <Badge variant={isVerified ? "verified" : "warning"}>
-            {isVerified ? (
-              <>
-                <BadgeCheck className="h-3 w-3" /> Blockchain Verified
-              </>
-            ) : (
-              <>
-                <Clock className="h-3 w-3" /> Verification Pending
-              </>
-            )}
-          </Badge>
+          Ownership Verification
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <Row
-          label="Token ID"
-          value={
-            tokenExplorer ? (
-              <a href={tokenExplorer} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline font-mono text-xs">
-                #{property.chainId}
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            ) : (
-              property.chainId
-            )
-          }
-          mono
-        />
-        <Separator />
-        <Row label="Owner Wallet" value={shortenAddress(property.ownerWallet, 6)} mono />
-        <Separator />
-        <Row
-          label="Authorized Agent"
-          value={
-            property.agentWallet ? shortenAddress(property.agentWallet, 6) : "None assigned"
-          }
-          mono={!!property.agentWallet}
-        />
-        <Separator />
-        <Row
-          label="Verification Time"
-          value={
-            verifiedAt ? (
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" /> {formatDateTime(verifiedAt)}
-              </span>
-            ) : (
-              "Pending"
-            )
-          }
-        />
-        {txHash && txHash !== "verified" && (
-          <>
-            <Separator />
+
+      <CardContent className="space-y-4 px-4 pb-4 pt-3">
+        <div className="divide-y divide-border/40">
+          <Row
+            label="Token ID"
+            value={
+              tokenExplorer ? (
+                <a
+                  href={tokenExplorer}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 font-mono text-xs text-primary hover:underline"
+                >
+                  #{property.chainId}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : (
+                property.chainId
+              )
+            }
+            mono
+          />
+          <Row
+            label="Owner Wallet"
+            value={shortenAddress(property.ownerWallet, 6)}
+            mono
+          />
+          <Row
+            label="Authorized Agent"
+            value={
+              property.agentWallet
+                ? shortenAddress(property.agentWallet, 6)
+                : "None assigned"
+            }
+            mono={!!property.agentWallet}
+          />
+          <Row
+            label="Verification Time"
+            value={
+              verifiedAt ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                  {formatDateTime(verifiedAt)}
+                </span>
+              ) : (
+                "Pending"
+              )
+            }
+          />
+          {txHash && txHash !== "verified" && (
             <Row
               label="On-chain record"
               value={
                 etherscanTxUrl(txHash) ? (
-                  <a href={etherscanTxUrl(txHash)} target="_blank" rel="noreferrer" className="text-primary hover:underline font-mono text-xs">
+                  <a
+                    href={etherscanTxUrl(txHash)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono text-xs text-primary hover:underline"
+                  >
                     {shortenAddress(txHash, 8)}
                   </a>
                 ) : (
@@ -198,42 +93,50 @@ export function OwnershipVerification({ property }: { property: Property }) {
               }
               mono
             />
-          </>
-        )}
-        <Button
-          variant={isVerified ? "success" : "hero"}
-          className="mt-2 w-full shadow-soft"
-          onClick={handleVerify}
-          disabled={verifying || isConnecting}
+          )}
+        </div>
+
+        <Badge
+          variant="outline"
+          className={cn(
+            "flex w-full justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium",
+            isVerified
+              ? "border-emerald-200/80 bg-emerald-50/40 text-emerald-700 dark:border-emerald-800/80 dark:bg-emerald-950/40 dark:text-emerald-300"
+              : "border-amber-200/80 bg-amber-50/40 text-amber-700 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-300",
+          )}
         >
-          {verifying ? (
+          {isVerified ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Verifying on-chain...
-            </>
-          ) : isConnecting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Connecting wallet...
-            </>
-          ) : !wallet ? (
-            <>
-              <ShieldCheck className="h-4 w-4" /> Connect Wallet to Verify
+              <BadgeCheck className="h-3.5 w-3.5" />
+              Blockchain Verified
             </>
           ) : (
             <>
-              <ShieldCheck className="h-4 w-4" /> Verify Ownership
+              <Clock className="h-3.5 w-3.5" />
+              Verification Pending
             </>
           )}
-        </Button>
+        </Badge>
       </CardContent>
     </Card>
   );
 }
 
-function Row({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
+function Row({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={mono ? "font-mono text-xs" : "font-medium"}>{value}</span>
+    <div className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className={cn("text-right text-sm", mono && "font-mono text-xs")}>
+        {value}
+      </span>
     </div>
   );
 }

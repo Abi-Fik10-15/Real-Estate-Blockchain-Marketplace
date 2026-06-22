@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsMongoId,
   Min,
   ValidateIf,
   ValidateNested,
@@ -113,6 +114,11 @@ export class CreatePropertyDto {
   @IsOptional()
   @IsString()
   ownerWallet?: string;
+
+  @ApiPropertyOptional({ description: 'Optional agent user ID to assign at creation' })
+  @IsOptional()
+  @IsMongoId()
+  agentId?: string;
 }
 
 export class UpdatePropertyDto {
@@ -206,6 +212,12 @@ export class UpdatePropertyDto {
   @IsOptional()
   @IsString()
   blockchainTokenId?: string;
+}
+
+export class AssignAgentDto {
+  @ApiProperty({ description: 'Agent user ID to assign to this property' })
+  @IsMongoId()
+  agentId!: string;
 }
 
 export class PropertyQueryDto {

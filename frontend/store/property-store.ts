@@ -13,9 +13,11 @@ interface PropertyState {
   lastFetchedAt: number | null;
   fetchProperties: (force?: boolean) => Promise<void>;
   fetchByOwner: (ownerId: string) => Promise<Property[]>;
+  fetchByAgent: (agentId: string) => Promise<Property[]>;
   createProperty: (
     values: CreatePropertyValues,
-    owner: { id: string; wallet: string }
+    owner: { id: string; wallet: string },
+    options?: { agentId?: string }
   ) => Promise<Property>;
   updateProperty: (id: string, patch: Partial<Property>) => Promise<void>;
   deleteProperty: (id: string) => void;
@@ -27,6 +29,14 @@ interface PropertyState {
   setProperties: (properties: Property[]) => void;
 }
 
+function mergeProperties(existing: Property[], incoming: Property[]): Property[] {
+  const map = new Map(existing.map((p) => [p.id, p]));
+  for (const property of incoming) {
+    map.set(property.id, property);
+  }
+  return Array.from(map.values());
+}
+
 export const usePropertyStore = create<PropertyState>()((set, get) => ({
   properties: [],
   isLoading: false,
@@ -36,9 +46,10 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
 
   fetchProperties: async (force = false) => {
     const { isLoading, lastFetchedAt, properties } = get();
-    // Skip if already loading, or data is fresh and not forced
     if (isLoading) return;
-    if (!force && lastFetchedAt && Date.now() - lastFetchedAt < PROPERTIES_TTL_MS && properties.length > 0) return;
+    if (!force && lastFetchedAt && Date.now() - lastFetchedAt < PROPERTIES_TTL_MS && properties.length > 0) {
+      return;
+    }
 
     set({ isLoading: true });
     try {
@@ -51,17 +62,21 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
 
   fetchByOwner: async (ownerId) => {
     const properties = await api.getPropertiesByOwner(ownerId);
-    set((s) => {
-      const others = s.properties.filter((p) => p.ownerId !== ownerId);
-      return { properties: [...properties, ...others] };
-    });
+    set((s) => ({ properties: mergeProperties(s.properties, properties) }));
     return properties;
   },
 
-  createProperty: async (values, owner) => {
+  fetchByAgent: async (agentId) => {
+    const properties = await api.getAssignedProperties();
+    set((s) => ({ properties: mergeProperties(s.properties, properties) }));
+    return properties;
+  },
+
+  createProperty: async (values, owner, options) => {
     const property = await api.createProperty({
       ...values,
       ownerWallet: owner.wallet,
+      agentId: options?.agentId,
     });
     set((s) => ({ properties: [property, ...s.properties] }));
     return property;
@@ -95,12 +110,9 @@ export const usePropertyStore = create<PropertyState>()((set, get) => ({
   },
 
   assignAgent: async (id, agent) => {
-    const updated = await api.updateProperty(id, {
-      // FIXED: Used optional chaining (?.) so that a null agent resolves 
-      // to 'undefined' rather than 'null' to satisfy strict TypeScript types.
-      agentId: agent?.id,
-      agentWallet: agent?.wallet ?? "",
-    });
+    const updated = agent
+      ? await api.assignPropertyAgent(id, agent.id)
+      : await api.removePropertyAgent(id);
     set((s) => ({
       properties: s.properties.map((p) => (p.id === id ? updated : p)),
     }));

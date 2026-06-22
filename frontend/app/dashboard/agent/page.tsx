@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import {
   Building2,
@@ -30,9 +31,16 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default function AgentDashboard() {
   const user = useAuthStore((s) => s.user);
   const userId = user?.id;
+  const fetchByAgent = usePropertyStore((s) => s.fetchByAgent);
   const properties = usePropertyStore((s) => s.properties);
   const assigned = userId ? properties.filter((p) => p.agentId === userId) : [];
   const allInquiries = useInquiryStore((s) => s.inquiries);
+
+  React.useEffect(() => {
+    if (userId) {
+      void fetchByAgent(userId);
+    }
+  }, [userId, fetchByAgent]);
 
   // Scope inquiries to only properties this agent manages
   const assignedIds = new Set(assigned.map((p) => p.id));

@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { LazyWalletConnect } from "@/components/wallet/lazy-wallet-connect";
 import { AuthSplitShell } from "@/components/auth/auth-shell";
+import { SafeForm } from "@/components/auth/safe-form";
 
 import { useAuthStore } from "@/store/auth-store";
 import { loginSchema, type LoginValues } from "@/lib/validations";
@@ -105,11 +106,8 @@ export default function LoginPage() {
         )}
 
         {/* Form */}
-        <form
-          method="post"
-          noValidate
+        <SafeForm
           onSubmit={(e) => {
-            e.preventDefault();
             void handleSubmit(onSubmit)(e);
           }}
           className="space-y-5"
@@ -150,7 +148,7 @@ export default function LoginPage() {
               </>
             )}
           </Button>
-        </form>
+        </SafeForm>
 
         <div className="my-6 flex items-center gap-3">
           <Separator className="flex-1" />

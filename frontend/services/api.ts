@@ -25,6 +25,8 @@ function toQuery(filters?: Partial<PropertyFilters>) {
   if (filters.status && filters.status !== "all") q.status = filters.status;
   if (filters.listingType && filters.listingType !== "all") q.listingType = filters.listingType;
   if (filters.sort) q.sort = filters.sort;
+  if (filters.agentId) q.agentId = filters.agentId;
+  if (filters.ownerId) q.ownerId = filters.ownerId;
   return q;
 }
 
@@ -137,31 +139,39 @@ export const api = {
   async createProperty(
     payload: CreatePropertyValues & {
       ownerWallet?: string;
+      agentId?: string;
     }
   ): Promise<Property> {
-    const { data } = await apiClient.post<ApiProperty>("/properties", {
+    const body: Record<string, unknown> = {
       title: payload.title,
       description: payload.description,
-      price: payload.price,
+      price: Number(payload.price),
       currency: "USD",
       type: payload.type,
       listingType: payload.listingType,
-      bedrooms: payload.bedrooms,
-      bathrooms: payload.bathrooms,
-      area: payload.area,
+      bedrooms: Number(payload.bedrooms),
+      bathrooms: Number(payload.bathrooms),
+      area: Number(payload.area),
       ownerWallet: payload.ownerWallet,
       priceEth: payload.priceEth ?? 0.01,
-   location: {
-  address: payload.location.address,
-  city: payload.location.city,
-  country: payload.location.country || "USA",
-  lat: payload.location.lat ?? 0,
-  lng: payload.location.lng ?? 0,
-},
+      location: {
+        address: payload.location.address,
+        city: payload.location.city,
+        country: payload.location.country || "USA",
+        lat: Number(payload.location.lat ?? 0),
+        lng: Number(payload.location.lng ?? 0),
+      },
       images: payload.images,
-      imagePublicIds: payload.imagePublicIds,
-      status: "pending",
-    });
+    };
+
+    if (payload.imagePublicIds?.length) {
+      body.imagePublicIds = payload.imagePublicIds;
+    }
+    if (payload.agentId) {
+      body.agentId = payload.agentId;
+    }
+
+    const { data } = await apiClient.post<ApiProperty>("/properties", body);
     return mapProperty(data);
   },
 
@@ -195,6 +205,23 @@ export const api = {
     return mapProperty(data);
   },
 
+  async assignPropertyAgent(propertyId: string, agentId: string): Promise<Property> {
+    const { data } = await apiClient.post<ApiProperty>(`/properties/${propertyId}/agent`, {
+      agentId,
+    });
+    return mapProperty(data);
+  },
+
+  async removePropertyAgent(propertyId: string): Promise<Property> {
+    const { data } = await apiClient.delete<ApiProperty>(`/properties/${propertyId}/agent`);
+    return mapProperty(data);
+  },
+
+  async getAssignedProperties(): Promise<Property[]> {
+    const { data } = await apiClient.get<ApiProperty[]>("/properties/mine/assigned");
+    return data.map(mapProperty);
+  },
+
   async approveProperty(id: string): Promise<Property> {
     const { data } = await apiClient.patch<ApiProperty>(`/properties/${id}/approve`);
     return mapProperty(data);
@@ -205,9 +232,41 @@ export const api = {
     return data;
   },
 
-  async getAgents(): Promise<User[]> {
-    const { data } = await apiClient.get<ApiUser[]>("/users/agents");
+  async getAgents(options?: { verifiedOnly?: boolean }): Promise<User[]> {
+    const { data } = await apiClient.get<ApiUser[]>("/users/agents", {
+      params: options?.verifiedOnly ? { verified: "true" } : undefined,
+    });
     return data.map(mapUser);
+  },
+
+  async lookupAgentByEmail(email: string): Promise<User | null> {
+    try {
+      const { data } = await apiClient.get<ApiUser>("/users/agents/lookup", {
+        params: { email: email.trim().toLowerCase() },
+      });
+      return mapUser(data);
+    } catch {
+      return null;
+    }
+  },
+
+  async inviteAgent(
+    email: string,
+    message?: string,
+  ): Promise<{ status: "existing" | "invited"; message: string; user?: User }> {
+    const { data } = await apiClient.post<{
+      status: "existing" | "invited";
+      message: string;
+      user?: ApiUser;
+    }>("/users/agents/invite", {
+      email: email.trim().toLowerCase(),
+      message,
+    });
+    return {
+      status: data.status,
+      message: data.message,
+      user: data.user ? mapUser(data.user) : undefined,
+    };
   },
 
   async getUsers(): Promise<User[]> {

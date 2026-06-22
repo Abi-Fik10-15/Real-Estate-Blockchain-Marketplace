@@ -13,6 +13,7 @@ import {
   MapPin,
   Maximize,
   ShieldCheck,
+  UserCog,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
@@ -24,11 +25,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { PropertyGallery } from "@/components/property/property-gallery";
 import { OwnershipVerification } from "@/components/property/ownership-verification";
-import { useProperty } from "@/hooks/use-properties";
+import { AssignAgentDialog } from "@/features/agents/assign-agent-dialog";
+import { useProperty, useAgents } from "@/hooks/use-properties";
 import { useSavedStore } from "@/store/saved-store";
 import { useInquiryStore } from "@/store/inquiry-store";
 import { useAuthStore } from "@/store/auth-store";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, shortenAddress } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const PropertyMap = dynamic(() => import("@/components/property/property-map"), {
   ssr: false,
@@ -42,6 +45,10 @@ export default function PropertyDetailsPage() {
   const { isSaved, toggleSaved } = useSavedStore();
   const addInquiry = useInquiryStore((s) => s.add);
   const user = useAuthStore((s) => s.user);
+  const { data: agents = [] } = useAgents();
+  const assignedAgent = property?.agentId
+    ? agents.find((a) => a.id === property.agentId)
+    : undefined;
 
   const submitInquiry = async (
     type: "purchase" | "rental" | "question",
@@ -218,6 +225,50 @@ export default function PropertyDetailsPage() {
 
           {/* Sidebar */}
           <div className="space-y-5">
+            <Card className="border-border/60">
+              <CardHeader className="border-b border-border/60 pb-3">
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="flex items-center gap-2 text-sm text-primary">
+                    <UserCog className="h-4 w-4" />
+                    Assigned Agent
+                  </CardTitle>
+                  <AssignAgentDialog
+                    propertyId={property.id}
+                    propertyTitle={property.title}
+                    currentAgentId={property.agentId}
+                    trigger={
+                      <Button variant="outline" size="sm" className="h-7 text-xs">
+                        Manage
+                      </Button>
+                    }
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {assignedAgent ? (
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={assignedAgent.avatar} alt={assignedAgent.name} />
+                      <AvatarFallback>{assignedAgent.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{assignedAgent.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{assignedAgent.email}</p>
+                      {property.agentWallet && (
+                        <p className="font-mono text-[10px] text-muted-foreground">
+                          {shortenAddress(property.agentWallet, 6)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No agent assigned. Assign one to help manage inquiries and listing updates.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Ownership verification */}
             <Card className="border-border/60">
               <CardHeader className="border-b border-border/60 pb-3">
